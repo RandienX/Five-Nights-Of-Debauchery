@@ -18,7 +18,7 @@ var state: states = states.OnAction
 
 var planning_phase: bool = true
 var current_attacker: Object
-var action_planner.current_party_plan_index: int = 0
+var current_party_plan_index: int = 0
 var selected_enemy: int = 1
 var previous_enemy: int = 1
 var is_animating_death: bool = false
@@ -365,20 +365,20 @@ func undo_last_action():
 	
 	current_attacker = last
 	state = states.OnAction
-	move_who_moves(action_planner.action_planner.current_party_plan_index)
+	move_who_moves(current_party_plan_index)
 	$Control/enemy_ui/CenterContainer/output.text = "Undid " + last.name + "'s move"
 
 func advance_planning():
-	var start = (initiative_manager.initiative_manager.initiative_who + 1) % initiative.size() if initiative.size() > 0 else 0
+	var start = (initiative_manager.initiative_who + 1) % initiative.size() if initiative.size() > 0 else 0
 	for i in range(initiative.size()):
 		var idx = (start + i) % initiative.size()
 		var actor = initiative[idx]
 		if actor is Party and not action_planner.has_planned_action(actor):
-			initiative_manager.initiative_manager.initiative_who = idx
+			initiative_manager.initiative_who = idx
 			current_attacker = actor
 			state = states.OnAction
-			action_planner.action_planner.current_party_plan_index += 1
-			move_who_moves(action_planner.action_planner.current_party_plan_index)
+			current_party_plan_index += 1
+			move_who_moves(current_party_plan_index)
 			return
 	start_resolution_phase()
 
@@ -390,7 +390,7 @@ func start_resolution_phase():
 	for actor in initiative:
 		if actor is Enemy:
 			add_enemy_attack(actor)
-	initiative_manager.initiative_manager.initiative_who = -1
+	initiative_manager.initiative_who = -1
 	await get_tree().create_timer(0.4).timeout
 	advance_initiative()
 
@@ -398,15 +398,15 @@ func advance_initiative():
 	if planning_phase:
 		return
 	initiative_manager.advance_initiative_step()
-	if initiative_manager.initiative_manager.initiative_who >= initiative.size():
-		initiative_manager.initiative_manager.initiative_who = -1
+	if initiative_manager.initiative_who >= initiative.size():
+		initiative_manager.initiative_who = -1
 		await get_tree().process_frame
 		await do_attacks()
 		return
-	var current = initiative[initiative_manager.initiative_manager.initiative_who]
+	var current = initiative[initiative_manager.initiative_who]
 	if effect_manager.get_effect_duration(current, Global.effect.Sleep) > 0:
 		if action_planner.has_planned_action(current):
-			action_planner.action_planner.action_planner.attack_array.erase(current)
+			action_planner.attack_array.erase(current)
 		$Control/enemy_ui/CenterContainer/output.text = current.name + " is asleep!"
 		await get_tree().create_timer(0.5).timeout
 		advance_initiative()
@@ -457,7 +457,7 @@ func add_enemy_attack(e: Enemy):
 func start_round():
 	update_effects() 
 	action_planner.attack_array.clear()
-	action_planner.action_planner.action_history.clear()
+	action_planner.action_history.clear()
 	planning_phase = true
 	initiative_manager.initiative_who = -1
 	action_planner.current_party_plan_index = -1
@@ -468,7 +468,7 @@ func start_round():
 
 func do_attacks() -> void:
 	for actor in initiative:
-		if action_planner.action_planner.has_planned_action(actor):
+		if action_planner.has_planned_action(actor):
 			if actor is Party:
 				current_attacker = actor
 			await execute_single_attack(actor)
@@ -874,7 +874,7 @@ func death(obj):
 	for i in range(initiative.size()-1, -1, -1):
 		if initiative[i] == obj:
 			initiative.remove_at(i)
-			if action_planner.action_planner.has_planned_action(obj): action_planner.action_planner.attack_array.erase(obj)
+			if action_planner.has_planned_action(obj): action_planner.attack_array.erase(obj)
 			if obj is Party and planning_phase and action_planner.action_history.has(obj):
 				action_planner.action_history.erase(obj)
 				action_planner.current_party_plan_index -= 1

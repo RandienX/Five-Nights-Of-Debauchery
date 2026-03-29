@@ -79,7 +79,7 @@ func handle_item_usage(attacker: Object, targets: Array, atk: Skill) -> void:
 		
 		await battle_engine.get_tree().create_timer(0.75).timeout
 
-async func execute_multi_attack(attacker: Object, target: Object, atk: Skill) -> void:
+func execute_multi_attack(attacker: Object, target: Object, atk: Skill) -> void:
 	var total_dmg = 0
 	var total_crits = 0
 	var total_misses = 0
@@ -136,7 +136,7 @@ async func execute_multi_attack(attacker: Object, target: Object, atk: Skill) ->
 	
 	await battle_engine.get_tree().create_timer(0.5).timeout
 
-async func execute_single_target_attack(attacker: Object, targets: Array, atk: Skill) -> void:
+func execute_single_target_attack(attacker: Object, targets: Array, atk: Skill) -> void:
 	var target = targets[0] if targets.size() > 0 else null
 	if not target:
 		return
