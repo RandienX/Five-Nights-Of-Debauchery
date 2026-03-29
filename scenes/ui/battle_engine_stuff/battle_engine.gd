@@ -807,6 +807,11 @@ func check_enemy_death_and_xp():
 		if battle.get('enemy_pos'+str(e+1)) and battle.get('enemy_pos'+str(e+1)).hp > 0:
 			all_dead = false
 			break
+	
+	# Check custom end conditions first
+	if await check_custom_end_conditions():
+		return
+	
 	if all_dead:
 		var total_xp = 0
 		for e in range(5):
@@ -829,6 +834,17 @@ func check_enemy_death_and_xp():
 					await get_tree().create_timer(1.0).timeout
 		await end_battle_victory()
 		return
+
+func check_custom_end_conditions() -> bool:
+	if not battle or not battle.end_conditions or battle.end_conditions.is_empty():
+		return false
+	
+	for condition in battle.end_conditions:
+		if condition.check(self):
+			condition.execute(self)
+			return true
+	
+	return false
 
 func end_battle_victory() -> void:
 	await get_tree().create_timer(1.0).timeout
