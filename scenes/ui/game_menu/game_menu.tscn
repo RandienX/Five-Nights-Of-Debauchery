@@ -1,0 +1,250 @@
+[gd_scene load_steps=16 format=4 uid="uid://boxlcoa7yx6um"]
+
+[ext_resource type="Script" uid="uid://875oleikcbyw" path="res://scenes/ui/game_menu/menu.gd" id="1_t8iaa"]
+[ext_resource type="Texture2D" uid="uid://c6t3yqacgcfe1" path="res://assets/menu/Window.png" id="2_88hgd"]
+[ext_resource type="Shader" uid="uid://78ytsnaia8ko" path="res://resources/battles/white_flash.tres" id="3_45a32"]
+[ext_resource type="FontFile" uid="uid://bbkqbneky7jdt" path="res://assets/courbd.ttf" id="3_n4xiy"]
+[ext_resource type="Script" uid="uid://jghaqibniequ" path="res://scenes/ui/game_menu/menu_button.gd" id="4_45a32"]
+[ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="5_075ci"]
+[ext_resource type="Script" uid="uid://x7ypkmxlnbhh" path="res://scenes/ui/game_menu/menu_back_button.gd" id="6_88hgd"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_288ov"]
+texture = ExtResource("2_88hgd")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+1:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_tub5d"]
+tile_size = Vector2i(64, 64)
+sources/0 = SubResource("TileSetAtlasSource_288ov")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_075ci"]
+shader = ExtResource("3_45a32")
+shader_parameter/is_flashing = false
+shader_parameter/FlashColor = Color(1, 1, 1, 1)
+shader_parameter/FlashSpeed = 1.0000000475
+shader_parameter/FlashIntensity = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_58q04"]
+shader = ExtResource("3_45a32")
+shader_parameter/is_flashing = false
+shader_parameter/FlashColor = Color(1, 1, 1, 1)
+shader_parameter/FlashSpeed = 1.0
+shader_parameter/FlashIntensity = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ex2pj"]
+shader = ExtResource("3_45a32")
+shader_parameter/is_flashing = false
+shader_parameter/FlashColor = Color(1, 1, 1, 1)
+shader_parameter/FlashSpeed = 1.0
+shader_parameter/FlashIntensity = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5qn1y"]
+shader = ExtResource("3_45a32")
+shader_parameter/is_flashing = false
+shader_parameter/FlashColor = Color(1, 1, 1, 1)
+shader_parameter/FlashSpeed = 1.0
+shader_parameter/FlashIntensity = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yvio7"]
+shader = ExtResource("3_45a32")
+shader_parameter/is_flashing = false
+shader_parameter/FlashColor = Color(1, 1, 1, 1)
+shader_parameter/FlashSpeed = 1.0
+shader_parameter/FlashIntensity = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_f6rfk"]
+shader = ExtResource("3_45a32")
+shader_parameter/is_flashing = false
+shader_parameter/FlashColor = Color(1, 1, 1, 1)
+shader_parameter/FlashSpeed = 1.0
+shader_parameter/FlashIntensity = 1.0
+
+[node name="game_menu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_t8iaa")
+
+[node name="TileMapLayer" type="TileMapLayer" parent="."]
+z_index = -1
+scale = Vector2(2, 2)
+tile_map_data = PackedByteArray("AAAAAAAAAAAAAAEAAAAAAAEAAAAAAAEAAAAAAAIAAAAAAAEAAAAAAAMAAAAAAAEAAAAAAAQAAAAAAAEAAAABAAAAAAAAAAEAAAABAAEAAAAAAAEAAAABAAIAAAAAAAEAAAABAAMAAAAAAAEAAAABAAQAAAAAAAEAAAACAAAAAAAAAAEAAAACAAEAAAAAAAEAAAACAAIAAAAAAAEAAAACAAMAAAAAAAEAAAACAAQAAAAAAAEAAAADAAAAAAAAAAEAAAADAAEAAAAAAAEAAAADAAIAAAAAAAEAAAADAAMAAAAAAAEAAAADAAQAAAAAAAEAAAAEAAAAAAAAAAEAAAAEAAEAAAAAAAEAAAAEAAIAAAAAAAEAAAAEAAMAAAAAAAEAAAAEAAQAAAAAAAEAAAAFAAAAAAAAAAEAAAAFAAEAAAAAAAEAAAAFAAIAAAAAAAEAAAAFAAMAAAAAAAEAAAAFAAQAAAAAAAEAAAAGAAAAAAAAAAEAAAAGAAEAAAAAAAEAAAAGAAIAAAAAAAEAAAAGAAMAAAAAAAEAAAAGAAQAAAAAAAEAAAAAAAUAAAAAAAEAAAABAAUAAAAAAAEAAAACAAUAAAAAAAEAAAADAAUAAAAAAAEAAAAEAAUAAAAAAAEAAAAFAAUAAAAAAAEAAAAGAAUAAAAAAAEAAAA=")
+tile_set = SubResource("TileSet_tub5d")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="HSplitContainer" type="HSplitContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="categories" type="VBoxContainer" parent="MarginContainer/HSplitContainer"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="party" type="Button" parent="MarginContainer/HSplitContainer/categories"]
+material = SubResource("ShaderMaterial_075ci")
+custom_minimum_size = Vector2(180, 87)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_n4xiy")
+theme_override_font_sizes/font_size = 28
+text = "Party"
+flat = true
+script = ExtResource("4_45a32")
+menu_path = "res://scenes/ui/game_menu/party/party_menu.tscn"
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/HSplitContainer/categories/party"]
+z_index = -1
+use_parent_material = true
+layout_mode = 0
+offset_right = 180.0
+offset_bottom = 87.0
+texture = ExtResource("5_075ci")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[node name="inventory" type="Button" parent="MarginContainer/HSplitContainer/categories"]
+material = SubResource("ShaderMaterial_58q04")
+custom_minimum_size = Vector2(180, 87)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_n4xiy")
+theme_override_font_sizes/font_size = 28
+text = "Inventory"
+flat = true
+script = ExtResource("4_45a32")
+menu_path = "res://scenes/ui/game_menu/inventory/inventory.tscn"
+id = 1
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/HSplitContainer/categories/inventory"]
+z_index = -1
+use_parent_material = true
+layout_mode = 0
+offset_right = 180.0
+offset_bottom = 87.0
+texture = ExtResource("5_075ci")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[node name="quests" type="Button" parent="MarginContainer/HSplitContainer/categories"]
+material = SubResource("ShaderMaterial_ex2pj")
+custom_minimum_size = Vector2(180, 87)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_n4xiy")
+theme_override_font_sizes/font_size = 28
+text = "Quests"
+flat = true
+script = ExtResource("4_45a32")
+id = 2
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/HSplitContainer/categories/quests"]
+z_index = -1
+use_parent_material = true
+layout_mode = 0
+offset_right = 180.0
+offset_bottom = 87.0
+texture = ExtResource("5_075ci")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[node name="settings" type="Button" parent="MarginContainer/HSplitContainer/categories"]
+material = SubResource("ShaderMaterial_5qn1y")
+custom_minimum_size = Vector2(180, 87)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_n4xiy")
+theme_override_font_sizes/font_size = 28
+text = "Settings"
+flat = true
+script = ExtResource("4_45a32")
+id = 3
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/HSplitContainer/categories/settings"]
+z_index = -1
+use_parent_material = true
+layout_mode = 0
+offset_right = 180.0
+offset_bottom = 87.0
+texture = ExtResource("5_075ci")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[node name="save" type="Button" parent="MarginContainer/HSplitContainer/categories"]
+material = SubResource("ShaderMaterial_yvio7")
+custom_minimum_size = Vector2(180, 87)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_n4xiy")
+theme_override_font_sizes/font_size = 28
+text = "Save"
+flat = true
+script = ExtResource("4_45a32")
+menu_path = "res://scenes/ui/game_menu/save/saves.tscn"
+id = 4
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/HSplitContainer/categories/save"]
+z_index = -1
+use_parent_material = true
+layout_mode = 0
+offset_right = 180.0
+offset_bottom = 87.0
+texture = ExtResource("5_075ci")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[node name="back" type="Button" parent="MarginContainer/HSplitContainer/categories"]
+material = SubResource("ShaderMaterial_f6rfk")
+custom_minimum_size = Vector2(180, 87)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_n4xiy")
+theme_override_font_sizes/font_size = 28
+text = "Back"
+flat = true
+script = ExtResource("6_88hgd")
+id = 5
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/HSplitContainer/categories/back"]
+z_index = -1
+use_parent_material = true
+layout_mode = 0
+offset_right = 180.0
+offset_bottom = 87.0
+texture = ExtResource("5_075ci")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[node name="display_category" type="MarginContainer" parent="MarginContainer/HSplitContainer"]
+layout_mode = 2
+mouse_filter = 2
+
+[connection signal="pressed" from="MarginContainer/HSplitContainer/categories/party" to="MarginContainer/HSplitContainer/categories/party" method="change_menu"]
+[connection signal="pressed" from="MarginContainer/HSplitContainer/categories/inventory" to="MarginContainer/HSplitContainer/categories/inventory" method="change_menu"]
+[connection signal="pressed" from="MarginContainer/HSplitContainer/categories/quests" to="MarginContainer/HSplitContainer/categories/quests" method="change_menu"]
+[connection signal="pressed" from="MarginContainer/HSplitContainer/categories/settings" to="MarginContainer/HSplitContainer/categories/settings" method="change_menu"]
+[connection signal="pressed" from="MarginContainer/HSplitContainer/categories/save" to="MarginContainer/HSplitContainer/categories/save" method="change_menu"]
+[connection signal="pressed" from="MarginContainer/HSplitContainer/categories/back" to="MarginContainer/HSplitContainer/categories/back" method="back"]

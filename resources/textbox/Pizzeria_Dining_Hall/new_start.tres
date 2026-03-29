@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TextboxData" load_steps=6 format=3 uid="uid://bk1e767ye1wq8"]
+
+[ext_resource type="Script" uid="uid://cd5yyj3bsemep" path="res://code/textbox/textbox_data.gd" id="1_nys1x"]
+[ext_resource type="AudioStream" uid="uid://dkwah3kuvrhau" path="res://assets/tts_lines/dining_hall/beginning/fuck this shit.mp3" id="2_ceetk"]
+[ext_resource type="AudioStream" uid="uid://cqmeeepeceag6" path="res://assets/tts_lines/dining_hall/beginning/im bored.mp3" id="3_grm3a"]
+[ext_resource type="AudioStream" uid="uid://b6wthluepti7x" path="res://assets/tts_lines/dining_hall/beginning/time to do some debauchery.mp3" id="4_cv87o"]
+[ext_resource type="AudioStream" uid="uid://bstv8puremnyq" path="res://assets/tts_lines/dining_hall/beginning/are you ready for freddy.mp3" id="5_00ohy"]
+
+[resource]
+script = ExtResource("1_nys1x")
+texts = Array[String](["Fuck this shit.", "I'm bored.", "Time to do some debauchery.", "Are you ready for freddy?"])
+speakers = Array[int]([0, 0, 0, 0])
+has_swag = Array[bool]([false, false, false, false])
+voices = Array[AudioStreamMP3]([ExtResource("2_ceetk"), ExtResource("3_grm3a"), ExtResource("4_cv87o"), ExtResource("5_00ohy")])
+metadata/_custom_type_script = "uid://cd5yyj3bsemep"

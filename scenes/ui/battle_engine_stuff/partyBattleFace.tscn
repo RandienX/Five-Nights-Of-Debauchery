@@ -1,0 +1,186 @@
+[gd_scene load_steps=7 format=3 uid="uid://xhaq6ip61aoh"]
+
+[ext_resource type="Texture2D" uid="uid://ok0s30ywbc5e" path="res://assets/party/Classics+Swag.png" id="1_3yrrq"]
+[ext_resource type="Script" uid="uid://dws0ekf7hl76q" path="res://scenes/ui/battle_engine_stuff/party_battle_face.gd" id="1_lvow5"]
+[ext_resource type="FontFile" uid="uid://bbkqbneky7jdt" path="res://assets/courbd.ttf" id="2_lvow5"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eqsro"]
+content_margin_right = 98.0
+bg_color = Color(0.19793725, 0.19793722, 0.19793728, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.15847227, 0.15847233, 0.15847221, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+corner_detail = 1
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o0w63"]
+bg_color = Color(0.88235295, 0.84705883, 0, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.70275724, 0.5586243, 0, 1)
+border_blend = true
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+corner_detail = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ks36d"]
+bg_color = Color(0.10448422, 0.6758198, 0.99999994, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.19215687, 0.48235294, 1, 1)
+border_blend = true
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+corner_detail = 1
+
+[node name="Control" type="Control"]
+z_index = 2
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -335.00003
+offset_right = 234.0
+grow_vertical = 0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+script = ExtResource("1_lvow5")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(116, 116)
+scale = Vector2(2.272727, 2.272727)
+texture = ExtResource("1_3yrrq")
+region_enabled = true
+region_rect = Rect2(0, 0, 96, 96)
+
+[node name="bg" type="Node2D" parent="."]
+position = Vector2(116, 116)
+scale = Vector2(2.2727268, 2.2727268)
+
+[node name="ColorRect" type="ColorRect" parent="bg"]
+z_index = -1
+offset_left = -51.333344
+offset_top = -51.333344
+offset_right = 51.666656
+offset_bottom = 51.666656
+
+[node name="ColorRect2" type="ColorRect" parent="bg"]
+z_index = -1
+offset_left = -51.0
+offset_top = 51.0
+offset_right = 52.0
+offset_bottom = 96.0
+
+[node name="ColorRect5" type="ColorRect" parent="bg"]
+z_index = -1
+offset_left = -48.000004
+offset_top = 51.333374
+offset_right = 49.333332
+offset_bottom = 93.333374
+color = Color(0.12955844, 0.12955847, 0.12955844, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 0
+offset_left = -0.6666565
+offset_top = 225.09091
+offset_right = 152.33334
+offset_bottom = 295.0909
+scale = Vector2(1.4, 1.4)
+size_flags_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="GridContainer" type="GridContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = -80
+columns = 2
+
+[node name="HP" type="Label" parent="MarginContainer/GridContainer"]
+z_index = 1
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_lvow5")
+theme_override_font_sizes/font_size = 24
+text = "HP:"
+
+[node name="HPAMOUNT" type="Label" parent="MarginContainer/GridContainer"]
+z_index = 1
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_lvow5")
+theme_override_font_sizes/font_size = 24
+text = "999/999"
+
+[node name="ProgressBar" type="ProgressBar" parent="MarginContainer/GridContainer/HPAMOUNT"]
+z_index = -1
+layout_mode = 1
+anchors_preset = -1
+anchor_bottom = 0.002
+offset_left = -1.4949479
+offset_top = 0.050534863
+offset_right = 99.50505
+offset_bottom = 26.994535
+theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
+theme_override_styles/fill = SubResource("StyleBoxFlat_o0w63")
+max_value = 999.0
+step = 1.0
+value = 10.0
+show_percentage = false
+
+[node name="MP" type="Label" parent="MarginContainer/GridContainer"]
+z_index = 1
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_lvow5")
+theme_override_font_sizes/font_size = 24
+text = "MP:"
+
+[node name="MPAMOUNT" type="Label" parent="MarginContainer/GridContainer"]
+z_index = 1
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_lvow5")
+theme_override_font_sizes/font_size = 24
+text = "999/999"
+
+[node name="ProgressBar" type="ProgressBar" parent="MarginContainer/GridContainer/MPAMOUNT"]
+z_index = -1
+layout_mode = 1
+anchors_preset = -1
+anchor_left = -0.0050000004
+anchor_right = -0.0050000004
+offset_left = -0.9899489
+offset_top = -0.63633287
+offset_right = 100.01005
+offset_bottom = 26.363667
+theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
+theme_override_styles/fill = SubResource("StyleBoxFlat_ks36d")
+max_value = 999.0
+step = 1.0
+value = 10.0
+show_percentage = false
+
+[node name="EffectContainer" type="GridContainer" parent="."]
+custom_minimum_size = Vector2(192, 64)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.085
+anchor_top = -0.19100001
+anchor_right = 0.906
+offset_left = 0.11000061
+offset_top = -0.014957428
+offset_right = -0.0039978027
+offset_bottom = 3.0517578e-05
+grow_vertical = 0
+columns = 3

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Skill" load_steps=2 format=3 uid="uid://dn2gyrpdrrwdk"]
+
+[ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_bepge"]
+
+[resource]
+script = ExtResource("1_bepge")
+attack_type = 0
+target_type = 0
+mana_cost = 5
+name = "Mic Toss"
+desc = "Freddy throws his mic at an enemy, deals a bit more than a simgle attack. Has a chance to deform enemy's head and make it meet god."
+effects = Dictionary[int, Array]({
+10: [5, 1]
+})
+attack_multiplier = 1.1
+attack_bonus = 5
+accuracy = 0.95
+metadata/_custom_type_script = "uid://o74imedfcjis"

@@ -1,0 +1,63 @@
+[gd_scene load_steps=6 format=3 uid="uid://dw0f15dvn0b3m"]
+
+[ext_resource type="Script" uid="uid://boqkwaru5awd3" path="res://scenes/ui/battle_engine_stuff/item_box.gd" id="1_fc3a4"]
+[ext_resource type="FontFile" uid="uid://bbkqbneky7jdt" path="res://assets/courbd.ttf" id="2_ig582"]
+
+[sub_resource type="Theme" id="Theme_fc3a4"]
+default_font = ExtResource("2_ig582")
+default_font_size = 48
+
+[sub_resource type="LabelSettings" id="LabelSettings_3ugnv"]
+font_size = 48
+font_color = Color(0, 0.49019608, 1, 1)
+outline_size = 8
+outline_color = Color(0.641934, 0.641934, 0.641934, 1)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3surh"]
+size = Vector2(413, 73)
+
+[node name="item_box" type="MarginContainer"]
+offset_right = 640.0
+offset_bottom = 73.0
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+script = ExtResource("1_fc3a4")
+
+[node name="HSplitContainer" type="HSplitContainer" parent="."]
+custom_minimum_size = Vector2(632, 65)
+layout_mode = 2
+split_offset = 10
+drag_area_margin_begin = 12
+drag_area_margin_end = 12
+drag_area_offset = 12
+
+[node name="HSplitContainer" type="HSplitContainer" parent="HSplitContainer"]
+layout_mode = 2
+
+[node name="item_texture" type="TextureRect" parent="HSplitContainer/HSplitContainer"]
+layout_mode = 2
+expand_mode = 4
+
+[node name="name" type="Label" parent="HSplitContainer/HSplitContainer"]
+custom_minimum_size = Vector2(370, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+theme = SubResource("Theme_fc3a4")
+theme_override_fonts/font = ExtResource("2_ig582")
+theme_override_font_sizes/font_size = 48
+text = "avocado"
+
+[node name="item_amount" type="Label" parent="HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_fonts/font = ExtResource("2_ig582")
+text = "30"
+label_settings = SubResource("LabelSettings_3ugnv")
+
+[node name="item_hitbox" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="item_hitbox"]
+position = Vector2(206.5, 36.5)
+shape = SubResource("RectangleShape2D_3surh")

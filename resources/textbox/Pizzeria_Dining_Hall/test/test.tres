@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="TextboxData" load_steps=3 format=3 uid="uid://gv2hunt1dmf"]
+
+[ext_resource type="Script" uid="uid://dvbhsriidox4h" path="res://resources/textbox/Pizzeria_Dining_Hall/test/test.gd" id="1_0np8g"]
+[ext_resource type="Script" uid="uid://cd5yyj3bsemep" path="res://code/textbox/textbox_data.gd" id="2_la7tx"]
+
+[resource]
+script = ExtResource("2_la7tx")
+texts = Array[String](["test", "used item", "not used item"])
+speakers = Array[int]([0, 0, 0])
+has_swag = Array[bool]([false, false, false])
+choices = Array[Array]([[{
+"label": "Use Item",
+"target": "1"
+}, {
+"label": "Don't Use Item",
+"target": "2"
+}], [], []])
+logic_script = ExtResource("1_0np8g")
+metadata/_custom_type_script = "uid://cd5yyj3bsemep"

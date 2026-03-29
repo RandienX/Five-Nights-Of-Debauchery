@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Enemy" load_steps=5 format=3 uid="uid://db8jxonnacfbc"]
+
+[ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_u28qh"]
+[ext_resource type="Resource" uid="uid://bm2swlibbpbh4" path="res://resources/attacks/attack.tres" id="2_kqhyf"]
+[ext_resource type="Texture2D" uid="uid://cgsaxwoxv55ux" path="res://assets/battlesprites/Party Hat.png" id="2_ktqw3"]
+[ext_resource type="Script" uid="uid://cwh5eo0yj74pf" path="res://code/battle/Enemy.gd" id="3_kqhyf"]
+
+[resource]
+script = ExtResource("3_kqhyf")
+hp = 50
+max_hp = 50
+max_mp = null
+damage = 5
+defense = 1
+ai = 2
+ai_type = 0
+name = "Alpha Party Hat"
+description = "Weakest of the pack, tries to appear strong whilst whining from being screamed at."
+attacks = Array[ExtResource("1_u28qh")]([ExtResource("2_kqhyf")])
+xp_reward = 25
+battleSprite = ExtResource("2_ktqw3")
+metadata/_custom_type_script = "uid://cwh5eo0yj74pf"

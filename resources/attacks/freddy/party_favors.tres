@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Skill" load_steps=2 format=3 uid="uid://dglgbjt53w88p"]
+
+[ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_mdiom"]
+
+[resource]
+script = ExtResource("1_mdiom")
+attack_type = 1
+target_type = 2
+mana_cost = 20
+name = "Party Favors"
+desc = "Freddy creates a speech on the spot and inspires his teammates and himself to fight better. Sometimes he can fumble though."
+accuracy = 0.95
+effects = Dictionary[int, Array]({
+5: [1, 3],
+6: [1, 3],
+7: [1, 3]
+})
+metadata/_custom_type_script = "uid://o74imedfcjis"

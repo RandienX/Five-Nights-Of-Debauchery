@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Skill" load_steps=2 format=3 uid="uid://ccoqwn1j6sjps"]
+
+[ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_y8bik"]
+
+[resource]
+script = ExtResource("1_y8bik")
+attack_type = 2
+target_type = 0
+mana_cost = 20
+name = "Torreador's March"
+desc = "Freddy sings a song to an enemy, he is a terrible singer so the enemy might die from it."
+hit_count = 5
+hit_damage_multiplier = 0.33
+metadata/_custom_type_script = "uid://o74imedfcjis"

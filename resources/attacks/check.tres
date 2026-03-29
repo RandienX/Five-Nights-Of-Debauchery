@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Skill" load_steps=2 format=3 uid="uid://cq600ldyq2j8g"]
+
+[ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_wg5p0"]
+
+[resource]
+script = ExtResource("1_wg5p0")
+attack_type = 0
+target_type = 0
+name = "Check"
+desc = "Checks enemy hp and may tell you something about them."
+metadata/_custom_type_script = "uid://o74imedfcjis"

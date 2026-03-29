@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="Party" load_steps=8 format=3 uid="uid://b5q7ejjxhvf84"]
+
+[ext_resource type="Script" uid="uid://bs1ldyhqd8o1t" path="res://code/player/party.gd" id="1_6oh67"]
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="1_dn21l"]
+[ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="2_2vo3l"]
+[ext_resource type="Texture2D" uid="uid://ew2t231vsrog" path="res://assets/party/Bonnie-Overlay.png" id="2_7ddu4"]
+[ext_resource type="Resource" uid="uid://cq600ldyq2j8g" path="res://resources/attacks/check.tres" id="3_2vo3l"]
+[ext_resource type="Resource" uid="uid://duj14sl0ett0i" path="res://resources/attacks/bonnie/bunny_hop.tres" id="4_2lmmp"]
+[ext_resource type="Resource" uid="uid://b5yjitpcodq3o" path="res://resources/attacks/bonnie/guitarist_inspiration.tres" id="7_ohk4t"]
+
+[resource]
+script = ExtResource("1_6oh67")
+name = "Bonnie"
+face_path = "res://assets/battlesprites/Classics+Swag.png"
+face_part_rect = Rect2(96, 0, 96, 96)
+base_stats = Dictionary[String, int]({
+"ai": 5,
+"atk": 6,
+"cool": 0,
+"def": 3,
+"hp": 80,
+"mp": 40
+})
+max_stats = Dictionary[String, int]({
+"ai": 5,
+"atk": 6,
+"cool": 0,
+"def": 3,
+"hp": 80,
+"mp": 40
+})
+hp = 80
+mp = 40
+level_up = Dictionary[String, int]({
+"ai": 1,
+"atk": 1,
+"cool": 0,
+"def": 1,
+"hp": 9,
+"mp": 7
+})
+level_up_xp_multilpier = 1.33
+path_to = "res://resources/party/bonnie.tres"
+overview = "This bunny is a chill buddy. He doesn't have fucks to give, unless it's about his face or toilets. In spare time dude chills in the dark and sometimes goons with Foxy. Although aloof in nature, he will do debauchery with friends."
+overview_model = ExtResource("2_7ddu4")
+skills = Dictionary[int, ExtResource("2_2vo3l")]({
+0: ExtResource("3_2vo3l"),
+1: ExtResource("4_2lmmp"),
+2: ExtResource("7_ohk4t")
+})
+metadata/_custom_type_script = "uid://bs1ldyhqd8o1t"

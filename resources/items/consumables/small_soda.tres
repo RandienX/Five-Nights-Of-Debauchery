@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="Item" load_steps=2 format=3 uid="uid://bw0e1yparf4hs"]
+
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="1_6r8v1"]
+
+[resource]
+script = ExtResource("1_6r8v1")
+type = 2
+item_name = "Small Soda"
+desc = "Tiny refreshing beverage. Good for a quick bost to mind-fuckery."
+weapon_type = null
+armor_type = null
+mana_amount = 10
+metadata/_custom_type_script = "uid://dn31qme1ukrys"

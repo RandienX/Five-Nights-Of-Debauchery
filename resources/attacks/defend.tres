@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="Skill" load_steps=2 format=3 uid="uid://57rsbbakliog"]
+
+[ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_sei50"]
+
+[resource]
+script = ExtResource("1_sei50")
+attack_type = 1
+target_type = 1
+name = "Defend"
+effects = Dictionary[int, Array]({
+9: [1, 1]
+})
+metadata/_custom_type_script = "uid://o74imedfcjis"

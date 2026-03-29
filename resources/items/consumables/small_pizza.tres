@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Item" load_steps=3 format=3 uid="uid://dlxeylilwh1gg"]
+
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="1_4xfe2"]
+[ext_resource type="Texture2D" uid="uid://cn5hpouiu2idk" path="res://assets/item_textures/pizza.png" id="2_eqju6"]
+
+[resource]
+script = ExtResource("1_4xfe2")
+type = 2
+item_name = "Small Pizza"
+desc = "A small ass portion for the big bois like you, even Chica sometimes ignores those."
+texture = ExtResource("2_eqju6")
+weapon_type = null
+armor_type = null
+heal_amount = 25
+metadata/_custom_type_script = "uid://dn31qme1ukrys"

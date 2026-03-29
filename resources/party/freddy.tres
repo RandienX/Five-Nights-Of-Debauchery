@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="Party" load_steps=9 format=3 uid="uid://bkn4m1cb3yt3h"]
+
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="1_qob36"]
+[ext_resource type="Script" uid="uid://bs1ldyhqd8o1t" path="res://code/player/party.gd" id="1_ylupb"]
+[ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="2_e3el0"]
+[ext_resource type="Texture2D" uid="uid://b0ggm1lu70ah7" path="res://assets/party/freddy_overlay.jpeg" id="2_qob36"]
+[ext_resource type="Resource" uid="uid://dn2gyrpdrrwdk" path="res://resources/attacks/freddy/mic_toss.tres" id="3_aucps"]
+[ext_resource type="Resource" uid="uid://cq600ldyq2j8g" path="res://resources/attacks/check.tres" id="3_e3el0"]
+[ext_resource type="Resource" uid="uid://dglgbjt53w88p" path="res://resources/attacks/freddy/party_favors.tres" id="7_7yxmh"]
+[ext_resource type="Resource" uid="uid://ccoqwn1j6sjps" path="res://resources/attacks/freddy/torreadors_march.tres" id="7_ara7a"]
+
+[resource]
+script = ExtResource("1_ylupb")
+name = "Freddy"
+face_path = "res://assets/battlesprites/Classics+Swag.png"
+face_part_rect = Rect2(0, 0, 96, 96)
+base_stats = Dictionary[String, int]({
+"ai": 3,
+"atk": 5,
+"cool": 0,
+"def": 5,
+"hp": 100,
+"mp": 20
+})
+max_stats = Dictionary[String, int]({
+"ai": 3,
+"atk": 5,
+"cool": 0,
+"def": 5,
+"hp": 100,
+"mp": 20
+})
+hp = 100
+mp = 20
+level_up = Dictionary[String, int]({
+"ai": 1,
+"atk": 1,
+"cool": 0,
+"def": 2,
+"hp": 15,
+"mp": 5
+})
+level_up_xp_multilpier = 1.45
+path_to = "res://resources/party/freddy.tres"
+overview = "Freddy is a debaucherous mothafucka, friends are family type of guy. If dude gets bored he will do anything to stop that. Founder of nights of debauchery. Y'all know who it is, cmon."
+overview_model = ExtResource("2_qob36")
+skills = Dictionary[int, ExtResource("2_e3el0")]({
+0: ExtResource("3_e3el0"),
+1: ExtResource("3_aucps"),
+3: ExtResource("7_7yxmh"),
+5: ExtResource("7_ara7a")
+})
+metadata/_custom_type_script = "uid://bs1ldyhqd8o1t"

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Item" load_steps=3 format=3 uid="uid://blq4np0unbgga"]
+
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="1_d63x7"]
+[ext_resource type="Texture2D" uid="uid://0c31mrug1r2w" path="res://assets/item_textures/EndoChestA.webp" id="2_bayty"]
+
+[resource]
+script = ExtResource("1_d63x7")
+type = 1
+item_name = "Endo Armor a"
+desc = "Shit armor for "
+texture = ExtResource("2_bayty")
+item_bonuses = Dictionary[String, int]({
+"ai": 0,
+"atk": 0,
+"cool": 0,
+"def": 1,
+"hp": 0,
+"mp": 0
+})
+weapon_type = null
+armor_type = 1
+metadata/_custom_type_script = "uid://dn31qme1ukrys"

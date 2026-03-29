@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="Battle" load_steps=3 format=3 uid="uid://w5pvbq2h36v2"]
+
+[ext_resource type="Resource" uid="uid://db8jxonnacfbc" path="res://resources/enemies/alpha_party_hat.tres" id="1_r5m3i"]
+[ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="2_iqu30"]
+
+[resource]
+script = ExtResource("2_iqu30")
+enemy_pos2 = ExtResource("1_r5m3i")
+enemy_pos4 = ExtResource("1_r5m3i")
+metadata/_custom_type_script = "uid://s2os42vdwf6y"

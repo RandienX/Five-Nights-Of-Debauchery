@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="Item" load_steps=2 format=3 uid="uid://ckt7kwce5bnkx"]
+
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="1_xassu"]
+
+[resource]
+script = ExtResource("1_xassu")
+type = 2
+item_name = "Degreaser"
+desc = "Used for dispatching of annoying grease. Perfect lube and detox suplement. Wasn't intended from manufacturers for sure."
+weapon_type = null
+armor_type = null
+heals_effects = Array[int]([3])
+metadata/_custom_type_script = "uid://dn31qme1ukrys"

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="Attack" load_steps=3 format=3 uid="uid://bm2swlibbpbh4"]
+
+[ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_1kbci"]
+[ext_resource type="AudioStream" uid="uid://cevij21muvjw1" path="res://assets/sound/battle/scream_sfx.mp3" id="2_d4a2r"]
+
+[resource]
+script = ExtResource("1_1kbci")
+attack_type = 0
+target_type = 0
+name = "Attack"
+attack_multiplier = 1.0
+sfx = ExtResource("2_d4a2r")
+metadata/_custom_type_script = "uid://o74imedfcjis"
