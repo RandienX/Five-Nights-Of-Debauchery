@@ -342,6 +342,13 @@ func move_enemy_input(input: int):
 		selected_enemy = wrapi(selected_enemy + input - 1, 0, 5) + 1
 		if battle.get('enemy_pos'+str(selected_enemy)) in initiative: break
 
+func get_party_members_from_initiative() -> Array:
+	var party_members: Array = []
+	for actor in initiative:
+		if actor is Party:
+			party_members.append(actor)
+	return party_members
+
 func update_flash():
 	for c in $Control/enemy_ui/enemies.get_children():
 		if c.material:
