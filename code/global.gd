@@ -1,7 +1,7 @@
 extends Node
 
 #--Battle Variables--
-enum effect {Heal, Mana_Heal, Blind, Poison, Bleed, Power, Tough, Speed, Focus, Defend, Kill, Absorption, Revive, Sick, Weak, Slow, Sleep, Burn, Freeze, Paralyzed}
+enum effect {Heal, Mana_Heal, Blind, Poison, Bleed, Power, Tough, Speed, Focus, Defend, Kill, Absorb, Revive, Sick, Weak, Slow, Sleep, Burn, Freeze, Paralyzed, Shock, Confuse}
 enum AI {Dumb, Casual, Violent, Defensive, Intelligent}
 var battle_ref: Node = null
 
