@@ -166,7 +166,7 @@ func execute_single_target_attack(attacker: Object, targets: Array, atk: Skill) 
 		return
 	
 	var miss = randi_range(1, 100) > atk.accuracy
-	var dmg = 0 if miss else int(base) - (target.defense if target.has_key("defense") else 0)
+	var dmg = 0 if miss else int(base) - (target.defense if target.get("defense") else 0)
 	dmg = max(0, dmg)
 	
 	battle_engine.print_outcome(attacker, targets, atk, dmg, crit, miss, 0, [])
@@ -185,7 +185,7 @@ func calculate_hit_damage(attacker: Object, target: Object, base: float, crit: b
 	if miss:
 		return [0, false, true, "\n[color=#F44336]Hit missed![/color]"]
 	
-	var dmg = int(base) - (target.defense if target.has_key("defense") else 0)
+	var dmg = int(base) - (target.defense if target.get("defense") else 0)
 	dmg = max(1, dmg)
 	
 	var result_str = "\n[color=#4CAF50]Hit!"

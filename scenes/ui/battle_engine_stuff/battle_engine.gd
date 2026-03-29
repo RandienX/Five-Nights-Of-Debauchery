@@ -260,7 +260,7 @@ func _input(event: InputEvent) -> void:
 				if item_target_type == 0:
 					move_enemy_input(-1)
 				else:
-					var party_in_initiative = get_party_members_from_initiative()
+					var party_in_initiative = initiative_manager.get_party_members_from_initiative()
 					selected_party_member = wrapi(selected_party_member - 1, 0, party_in_initiative.size())
 					print("DEBUG Input Left: selected_party_member = ", selected_party_member, " target = ", party_in_initiative[selected_party_member].name)
 					move_who_moves(selected_party_member)
@@ -269,7 +269,7 @@ func _input(event: InputEvent) -> void:
 				if item_target_type == 0:
 					move_enemy_input(1)
 				else:
-					var party_in_initiative = get_party_members_from_initiative()
+					var party_in_initiative = initiative_manager.get_party_members_from_initiative()
 					selected_party_member = wrapi(selected_party_member + 1, 0, party_in_initiative.size())
 					print("DEBUG Input Right: selected_party_member = ", selected_party_member, " target = ", party_in_initiative[selected_party_member].name)
 					move_who_moves(selected_party_member)

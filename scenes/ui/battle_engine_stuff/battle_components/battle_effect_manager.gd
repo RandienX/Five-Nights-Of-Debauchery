@@ -7,14 +7,14 @@ const EFFECT_TILE_SIZE = 64
 const EFFECT_COLS = 4
 
 func get_effect_level(target: Object, effect: Global.effect) -> int:
-	if not target or not target.has_key("effects"):
+	if not target or not target.get("effects"):
 		return 0
 	if effect in target.effects:
 		return target.effects[effect]
 	return 0
 
 func get_effect_duration(target: Object, effect: Global.effect) -> int:
-	if not target or not target.has_key("effect_durations"):
+	if not target or not target.get("effect_durations"):
 		return 0
 	if effect in target.effect_durations:
 		return target.effect_durations[effect]
@@ -42,9 +42,9 @@ func apply_effect(target: Object, effect: Global.effect, level: int, duration: i
 	if not target:
 		return
 	
-	if not target.has_key("effects"):
+	if not target.get("effects"):
 		target.effects = {}
-	if not target.has_key("effect_durations"):
+	if not target.get("effect_durations"):
 		target.effect_durations = {}
 	
 	target.effects[effect] = level
@@ -55,12 +55,12 @@ func apply_effect(target: Object, effect: Global.effect, level: int, duration: i
 		apply_absorption_bonus(target, level)
 
 func remove_effect(target: Object, effect: Global.effect) -> void:
-	if not target or not target.has_key("effects"):
+	if not target or not target.get("effects"):
 		return
 	
 	if effect in target.effects:
 		target.effects.erase(effect)
-	if target.has_key("effect_durations") and effect in target.effect_durations:
+	if target.get("effect_durations") and effect in target.effect_durations:
 		target.effect_durations.erase(effect)
 	
 	# Remove special effect bonuses
@@ -73,7 +73,7 @@ func apply_absorption_bonus(target: Object, level: int) -> void:
 		target.base_stats["mdf"] += int(target.level_up["mdf"] * level)
 
 func remove_absorption_bonus(target: Object) -> void:
-	if target is Party and target.has_key("effects"):
+	if target is Party and target.get("effects"):
 		var old_level = target.effects.get(Global.effect.Absorption, 0)
 		if old_level > 0:
 			target.base_stats["def"] -= int(target.level_up["def"] * old_level)
@@ -101,7 +101,7 @@ func get_effect_name_with_level(effect: Global.effect, level: int) -> String:
 
 func update_effects_on_all(initiative: Array[Object]) -> void:
 	for actor in initiative:
-		if not actor or not actor.has_key("effect_durations"):
+		if not actor or not actor.get("effect_durations"):
 			continue
 		
 		var to_remove: Array[Global.effect] = []
