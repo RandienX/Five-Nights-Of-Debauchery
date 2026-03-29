@@ -730,23 +730,26 @@ func execute_single_attack(attacker: Object) -> void:
 			death(t)
 	await get_tree().create_timer(0.5).timeout
 
-func battle_logger.add_to_battle_log(text: String) -> void:
-	log_timer = 0.0
-	battle_logger.battle_log.append(text)
-	if battle_logger.battle_log.size() > max_log_entries:
-		battle_logger.battle_log.remove_at(0)
-	battle_logger.update_battle_log_display()
 
-func battle_logger.remove_oldest_log_entry() -> void:
-	if not battle_logger.battle_log.is_empty():
-		battle_logger.battle_log.remove_at(0)
+
+	func add_to_battle_log(text: String) -> void:
+		log_timer = 0.0
+		battle_logger.battle_log.append(text)
+		if battle_logger.battle_log.size() > max_log_entries:
+			battle_logger.battle_log.remove_at(0)
 		battle_logger.update_battle_log_display()
 
-func battle_logger.update_battle_log_display() -> void:
-	if battle_logger.battle_log.is_empty():
-		$Control/enemy_ui/CenterContainer/output.text = ""
-	else:
-		$Control/enemy_ui/CenterContainer/output.text = "\n".join(battle_log)
+	func remove_oldest_log_entry() -> void:
+		if not battle_logger.battle_log.is_empty():
+			battle_logger.battle_log.remove_at(0)
+			battle_logger.update_battle_log_display()
+
+	func update_battle_log_display() -> void:
+		if battle_logger.battle_log.is_empty():
+			$Control/enemy_ui/CenterContainer/output.text = ""
+		else:
+			$Control/enemy_ui/CenterContainer/output.text = "\n".join(battle_logger.battle_log)
+
 
 func print_outcome(atk: Object, targets: Array, attack: Skill, dmg: int, crit: bool, miss: bool, mp_cost: int = 0, effects_applied: Array = []):
 	var t = ""

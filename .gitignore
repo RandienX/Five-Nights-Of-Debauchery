@@ -1,22 +1,14 @@
-```
-# Godot-specific ignores
-*.import
-*.remap
-export_presets.cfg
-.autoloads/
-.editor/
-.godot/
-
 # Compiled and build artifacts
 *.pyc
 __pycache__/
 *.o
 *.obj
-*.out
+*.class
 *.exe
 *.dll
 *.so
 *.a
+*.out
 
 # Dependencies
 node_modules/
@@ -24,7 +16,17 @@ venv/
 .venv/
 .env
 .env.local
-.env.*
+*.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Editors
+.vscode/
+.idea/
 
 # Build directories
 dist/
@@ -35,18 +37,11 @@ target/
 .pytest_cache/
 coverage/
 htmlcov/
-*.tmp
-
-# Editors
-.vscode/
-.idea/
-*.swp
-*.swo
+.coverage
 
 # System files
 .DS_Store
 Thumbs.db
-*.log
 
 # Compressed files
 *.zip
@@ -71,4 +66,3 @@ Thumbs.db
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-```
