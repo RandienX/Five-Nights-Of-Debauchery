@@ -1,0 +1,398 @@
+[gd_scene load_steps=21 format=3 uid="uid://dnsq0e6j3twp0"]
+
+[ext_resource type="AudioStream" uid="uid://1kog2vg13n1n" path="res://assets/sound/menu_sound.mp3" id="1_k48pe"]
+[ext_resource type="Texture2D" uid="uid://diis85slboe5b" path="res://assets/menu/anod.png" id="2_kaijy"]
+[ext_resource type="Shader" uid="uid://cv7hfm5duhalc" path="res://addons/crt/crt.gdshader" id="3_kaijy"]
+[ext_resource type="PackedScene" uid="uid://dqvdrmmktddl6" path="res://scenes/menu/controls.tscn" id="4_y4i35"]
+[ext_resource type="FontFile" uid="uid://bbkqbneky7jdt" path="res://assets/courbd.ttf" id="5_rcuxh"]
+[ext_resource type="Script" uid="uid://bssbgpa2i8wjg" path="res://scenes/menu/settings.gd" id="6_64m6r"]
+[ext_resource type="Script" uid="uid://cyv5blus7dvuu" path="res://scenes/menu/fullscreen.gd" id="7_pjdsv"]
+[ext_resource type="Script" uid="uid://ccav5810mtopa" path="res://scenes/menu/controlButton.gd" id="8_2j8sj"]
+[ext_resource type="Script" uid="uid://b1gsmstrhffyi" path="res://scenes/menu/start.gd" id="9_55a8x"]
+[ext_resource type="Script" uid="uid://7r2uwumm2oxx" path="res://scenes/menu/load.gd" id="9_kaijy"]
+[ext_resource type="Shader" uid="uid://j85rvnnl2su7" path="res://scenes/objects/static.gdshader" id="10_f2fum"]
+[ext_resource type="Script" uid="uid://68w7xjmx7ukr" path="res://scenes/menu/exit.gd" id="10_rrod7"]
+
+[sub_resource type="Animation" id="Animation_v86rl"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("settings:modulate:a")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [1.0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("buttons:modulate:a")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [1.0]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Control:modulate:a")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [1.0]
+}
+
+[sub_resource type="Animation" id="Animation_g3eks"]
+resource_name = "fade_in_button"
+length = 2.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("settings:modulate:a")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(3.0314324, 1),
+"update": 0,
+"values": [1.0, 0.0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("buttons:modulate:a")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(1, 2),
+"transitions": PackedFloat32Array(3.031435, 1),
+"update": 0,
+"values": [0.0, 1.0]
+}
+
+[sub_resource type="Animation" id="Animation_k48pe"]
+resource_name = "fade_in_control"
+length = 2.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("settings:modulate:a")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(3.0314324, 1),
+"update": 0,
+"values": [1.0, 0.0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Control:modulate:a")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(1, 2),
+"transitions": PackedFloat32Array(3.0314324, 1),
+"update": 0,
+"values": [0.0, 1.0]
+}
+
+[sub_resource type="Animation" id="Animation_13sgg"]
+resource_name = "fade_in"
+length = 2.0
+step = 0.033
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("buttons:modulate:a")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(3.0314333, 1),
+"update": 0,
+"values": [1.0, 0.0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("settings:modulate:a")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(1, 2),
+"transitions": PackedFloat32Array(3.0314324, 1),
+"update": 0,
+"values": [0.0, 1.0]
+}
+
+[sub_resource type="Animation" id="Animation_f2fum"]
+resource_name = "fade_in_settings_from_control"
+length = 2.0
+step = 0.033
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("settings:modulate:a")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(1, 2),
+"transitions": PackedFloat32Array(3.0314324, 1),
+"update": 0,
+"values": [0.0, 1.0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Control:modulate:a")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(3.0314333, 1),
+"update": 0,
+"values": [1.0, 0.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_i6lef"]
+_data = {
+&"RESET": SubResource("Animation_v86rl"),
+&"fade_in_button": SubResource("Animation_g3eks"),
+&"fade_in_control": SubResource("Animation_k48pe"),
+&"fade_in_settings": SubResource("Animation_13sgg"),
+&"fade_in_settings_from_control": SubResource("Animation_f2fum")
+}
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_kaijy"]
+shader = ExtResource("10_f2fum")
+shader_parameter/noise_amount = 0.400000019
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_g3eks"]
+shader = ExtResource("3_kaijy")
+shader_parameter/resolution = Vector2(1280, 720)
+shader_parameter/scan_line_amount = 0.058000002755
+shader_parameter/scan_line_strength = -1.0
+shader_parameter/warp_amount = 0.0430000020425
+shader_parameter/noise_amount = 0.26000001235
+shader_parameter/interference_amount = 1.0
+shader_parameter/grille_amount = 0.022000001045
+shader_parameter/grille_size = 5.0
+shader_parameter/vignette_amount = 0.6
+shader_parameter/vignette_intensity = 0.710000033725
+shader_parameter/aberation_amount = 1.0
+shader_parameter/roll_line_amount = 0.2000000095
+shader_parameter/roll_speed = 0.4700004023250006
+shader_parameter/pixel_strength = -1.9599999031
+
+[node name="menu" type="Node2D"]
+
+[node name="MenuSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("1_k48pe")
+autoplay = true
+parameters/looping = true
+
+[node name="bg" type="Sprite2D" parent="."]
+position = Vector2(431.45, 319.9)
+scale = Vector2(1.589, 1.59)
+texture = ExtResource("2_kaijy")
+
+[node name="button_anim" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_i6lef")
+}
+
+[node name="settings_anim" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_i6lef")
+}
+
+[node name="control_anim" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_i6lef")
+}
+
+[node name="Control" parent="." instance=ExtResource("4_y4i35")]
+visible = false
+anchors_preset = 4
+anchor_top = 0.5
+anchor_right = 0.0
+anchor_bottom = 0.5
+offset_left = 39.0
+offset_top = 628.0
+offset_right = 39.0
+offset_bottom = 628.0
+grow_horizontal = 1
+
+[node name="Back" type="Button" parent="Control"]
+modulate = Color(0.78352344, 0.7835234, 0.7835234, 1)
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -45.0
+offset_right = 277.0
+grow_vertical = 0
+theme_override_fonts/font = ExtResource("5_rcuxh")
+theme_override_font_sizes/font_size = 32
+toggle_mode = true
+text = "Fullscreen OFF"
+flat = true
+alignment = 0
+script = ExtResource("8_2j8sj")
+
+[node name="settings" type="Node2D" parent="."]
+visible = false
+
+[node name="Back" type="Button" parent="settings"]
+modulate = Color(0.78352344, 0.7835234, 0.7835234, 1)
+offset_left = 9.0
+offset_top = 555.0
+offset_right = 173.0
+offset_bottom = 600.0
+theme_override_fonts/font = ExtResource("5_rcuxh")
+theme_override_font_sizes/font_size = 32
+text = "Settings"
+flat = true
+alignment = 0
+script = ExtResource("6_64m6r")
+
+[node name="Fullscreen" type="Button" parent="settings"]
+modulate = Color(0.78352344, 0.7835234, 0.7835234, 1)
+offset_left = 11.0
+offset_top = 372.0
+offset_right = 175.0
+offset_bottom = 417.0
+theme_override_fonts/font = ExtResource("5_rcuxh")
+theme_override_font_sizes/font_size = 32
+toggle_mode = true
+text = "Fullscreen OFF"
+flat = true
+alignment = 0
+script = ExtResource("7_pjdsv")
+
+[node name="Controls" type="Button" parent="settings"]
+modulate = Color(0.78352344, 0.7835234, 0.7835234, 1)
+offset_left = 11.0
+offset_top = 416.0
+offset_right = 288.0
+offset_bottom = 461.0
+theme_override_fonts/font = ExtResource("5_rcuxh")
+theme_override_font_sizes/font_size = 32
+toggle_mode = true
+text = "Fullscreen OFF"
+flat = true
+alignment = 0
+script = ExtResource("8_2j8sj")
+
+[node name="buttons" type="Node2D" parent="."]
+
+[node name="Start" type="Button" parent="buttons"]
+modulate = Color(0.78352344, 0.7835234, 0.7835234, 1)
+offset_left = 12.0
+offset_top = 373.0
+offset_right = 222.0
+offset_bottom = 418.0
+theme_override_fonts/font = ExtResource("5_rcuxh")
+theme_override_font_sizes/font_size = 32
+text = "Start Game"
+flat = true
+alignment = 0
+script = ExtResource("9_55a8x")
+
+[node name="Load" type="Button" parent="buttons"]
+offset_left = 12.0
+offset_top = 416.0
+offset_right = 232.0
+offset_bottom = 461.0
+theme_override_colors/font_color = Color(0.65882355, 0.6666667, 0.6784314, 1)
+theme_override_fonts/font = ExtResource("5_rcuxh")
+theme_override_font_sizes/font_size = 32
+text = "Load Game"
+flat = true
+alignment = 0
+script = ExtResource("9_kaijy")
+
+[node name="Settings" type="Button" parent="buttons"]
+modulate = Color(0.78352344, 0.7835234, 0.7835234, 1)
+offset_left = 11.0
+offset_top = 458.0
+offset_right = 175.0
+offset_bottom = 503.0
+theme_override_fonts/font = ExtResource("5_rcuxh")
+theme_override_font_sizes/font_size = 32
+text = "Settings"
+flat = true
+alignment = 0
+script = ExtResource("6_64m6r")
+
+[node name="Exit" type="Button" parent="buttons"]
+modulate = Color(0.78352344, 0.7835234, 0.7835234, 1)
+offset_left = 10.0
+offset_top = 506.0
+offset_right = 103.0
+offset_bottom = 551.0
+theme_override_fonts/font = ExtResource("5_rcuxh")
+theme_override_font_sizes/font_size = 32
+text = "Exit"
+flat = true
+alignment = 0
+script = ExtResource("10_rrod7")
+
+[node name="save_box" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ColorRect2" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_kaijy")
+offset_left = 1.0
+offset_top = 12.0
+offset_right = 865.0
+offset_bottom = 660.0
+mouse_filter = 2
+
+[node name="ColorRect" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_g3eks")
+offset_left = 1.0
+offset_top = 12.0
+offset_right = 865.0
+offset_bottom = 660.0
+mouse_filter = 2
+
+[connection signal="mouse_entered" from="Control/Back" to="Control/Back" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="Control/Back" to="Control/Back" method="_on_mouse_exited"]
+[connection signal="pressed" from="Control/Back" to="Control/Back" method="_on_pressed"]
+[connection signal="mouse_entered" from="settings/Back" to="settings/Back" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="settings/Back" to="settings/Back" method="_on_mouse_exited"]
+[connection signal="pressed" from="settings/Back" to="settings/Back" method="_on_pressed"]
+[connection signal="mouse_entered" from="settings/Fullscreen" to="settings/Fullscreen" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="settings/Fullscreen" to="settings/Fullscreen" method="_on_mouse_exited"]
+[connection signal="toggled" from="settings/Fullscreen" to="settings/Fullscreen" method="_on_toggled"]
+[connection signal="mouse_entered" from="settings/Controls" to="settings/Controls" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="settings/Controls" to="settings/Controls" method="_on_mouse_exited"]
+[connection signal="pressed" from="settings/Controls" to="settings/Controls" method="_on_pressed"]
+[connection signal="mouse_entered" from="buttons/Start" to="buttons/Start" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="buttons/Start" to="buttons/Start" method="_on_mouse_exited"]
+[connection signal="pressed" from="buttons/Start" to="buttons/Start" method="_on_pressed"]
+[connection signal="mouse_entered" from="buttons/Load" to="buttons/Load" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="buttons/Load" to="buttons/Load" method="_on_mouse_exited"]
+[connection signal="pressed" from="buttons/Load" to="buttons/Load" method="_on_pressed"]
+[connection signal="mouse_entered" from="buttons/Settings" to="buttons/Settings" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="buttons/Settings" to="buttons/Settings" method="_on_mouse_exited"]
+[connection signal="pressed" from="buttons/Settings" to="buttons/Settings" method="_on_pressed"]
+[connection signal="mouse_entered" from="buttons/Exit" to="buttons/Exit" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="buttons/Exit" to="buttons/Exit" method="_on_mouse_exited"]
+[connection signal="pressed" from="buttons/Exit" to="buttons/Exit" method="_on_pressed"]

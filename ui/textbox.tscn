@@ -1,0 +1,148 @@
+[gd_scene load_steps=7 format=3 uid="uid://buhtuaqxey512"]
+
+[ext_resource type="Script" uid="uid://cjesqud0gnfy5" path="res://code/textbox/textbox.gd" id="1_gc5d4"]
+[ext_resource type="Texture2D" uid="uid://ok0s30ywbc5e" path="res://assets/party/Classics+Swag.png" id="2_hyn88"]
+[ext_resource type="Texture2D" uid="uid://c6t3yqacgcfe1" path="res://assets/menu/Window.png" id="3_fto3e"]
+[ext_resource type="FontFile" uid="uid://bbkqbneky7jdt" path="res://assets/courbd.ttf" id="4_seire"]
+[ext_resource type="FontFile" uid="uid://bomifdi2dvjgd" path="res://assets/cour.ttf" id="5_hdjaa"]
+[ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="6_hyn88"]
+
+[node name="textbox" type="Control"]
+z_index = 2
+custom_minimum_size = Vector2(864, 162)
+layout_mode = 3
+anchor_top = 0.75000006
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -2.0000305
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 0
+script = ExtResource("1_gc5d4")
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
+volume_db = 8.0
+
+[node name="Container" type="Container" parent="."]
+layout_mode = 0
+offset_top = -1.0
+offset_right = 40.0
+offset_bottom = 39.0
+
+[node name="ColorRect" type="ColorRect" parent="Container"]
+custom_minimum_size = Vector2(864, 164)
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Container"]
+custom_minimum_size = Vector2(864, 162)
+layout_mode = 2
+
+[node name="face" type="MarginContainer" parent="Container/HBoxContainer"]
+custom_minimum_size = Vector2(162, 162)
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="Sprite2D" type="Sprite2D" parent="Container/HBoxContainer/face"]
+position = Vector2(81, 81.00001)
+scale = Vector2(1.583, 1.583)
+texture = ExtResource("2_hyn88")
+region_enabled = true
+region_rect = Rect2(0, 0, 96, 96)
+
+[node name="textbox" type="MarginContainer" parent="Container/HBoxContainer"]
+custom_minimum_size = Vector2(0, 162)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="Sprite2D3" type="Sprite2D" parent="Container/HBoxContainer/textbox"]
+z_index = 1
+texture_repeat = 2
+position = Vector2(379, 81)
+scale = Vector2(2.375, 2.3750007)
+texture = ExtResource("3_fto3e")
+region_enabled = true
+region_rect = Rect2(0.22401404, 64, 63.265587, 64)
+
+[node name="Sprite2D4" type="Sprite2D" parent="Container/HBoxContainer/textbox"]
+z_index = 1
+texture_repeat = 2
+position = Vector2(229, 81)
+scale = Vector2(2.375, 2.3750007)
+texture = ExtResource("3_fto3e")
+region_enabled = true
+region_rect = Rect2(0.22401404, 64, 63.265587, 64)
+
+[node name="Sprite2D5" type="Sprite2D" parent="Container/HBoxContainer/textbox"]
+z_index = 1
+texture_repeat = 2
+position = Vector2(75.25398, 81)
+scale = Vector2(2.492064, 2.3750007)
+texture = ExtResource("3_fto3e")
+region_enabled = true
+region_rect = Rect2(0.22401404, 64, 63.265587, 64)
+
+[node name="Sprite2D6" type="Sprite2D" parent="Container/HBoxContainer/textbox"]
+z_index = 1
+texture_repeat = 2
+position = Vector2(532.00006, 81)
+scale = Vector2(2.492064, 2.3750007)
+texture = ExtResource("3_fto3e")
+region_enabled = true
+region_rect = Rect2(0.22401404, 64, 63.265587, 64)
+
+[node name="Sprite2D7" type="Sprite2D" parent="Container/HBoxContainer/textbox"]
+z_index = 1
+texture_repeat = 2
+position = Vector2(650.99695, 81)
+scale = Vector2(2.6251915, 2.3750007)
+texture = ExtResource("3_fto3e")
+region_enabled = true
+region_rect = Rect2(0.224, 64, 31.633, 64)
+
+[node name="MarginContainer" type="MarginContainer" parent="Container/HBoxContainer/textbox"]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Container/HBoxContainer/textbox/MarginContainer"]
+z_index = 2
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("4_seire")
+theme_override_fonts/bold_font = ExtResource("4_seire")
+theme_override_fonts/bold_italics_font = ExtResource("4_seire")
+theme_override_fonts/italics_font = ExtResource("5_hdjaa")
+theme_override_fonts/mono_font = ExtResource("4_seire")
+theme_override_font_sizes/normal_font_size = 32
+theme_override_font_sizes/bold_font_size = 32
+theme_override_font_sizes/bold_italics_font_size = 32
+theme_override_font_sizes/italics_font_size = 32
+theme_override_font_sizes/mono_font_size = 32
+text = "shit"
+
+[node name="NinePatchRect" type="NinePatchRect" parent="."]
+custom_minimum_size = Vector2(200, 150)
+layout_mode = 0
+offset_left = 664.0
+offset_top = -151.0
+offset_right = 864.0
+offset_bottom = -1.0
+texture = ExtResource("6_hyn88")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[node name="ChoiceContainer" type="VBoxContainer" parent="NinePatchRect"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 0
+offset_right = 200.0
+offset_bottom = 40.0
+size_flags_horizontal = 8
+alignment = 2

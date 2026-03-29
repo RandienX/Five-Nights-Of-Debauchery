@@ -1,0 +1,89 @@
+[gd_scene load_steps=7 format=3 uid="uid://gbf3ndunkpjn"]
+
+[ext_resource type="Script" uid="uid://bebr6equ375un" path="res://scenes/ui/battle_engine_stuff/skill_box.gd" id="1_3ugnv"]
+[ext_resource type="FontFile" uid="uid://bbkqbneky7jdt" path="res://assets/courbd.ttf" id="1_gl615"]
+[ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="3_0f0kn"]
+
+[sub_resource type="Theme" id="Theme_0f0kn"]
+default_font = ExtResource("1_gl615")
+default_font_size = 48
+
+[sub_resource type="LabelSettings" id="LabelSettings_3ugnv"]
+font_size = 48
+font_color = Color(0, 0.49019608, 1, 1)
+outline_size = 8
+outline_color = Color(0.641934, 0.641934, 0.641934, 1)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3surh"]
+size = Vector2(639, 73)
+
+[node name="skill_box" type="MarginContainer"]
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+script = ExtResource("1_3ugnv")
+
+[node name="HSplitContainer" type="HSplitContainer" parent="."]
+custom_minimum_size = Vector2(632, 65)
+layout_mode = 2
+split_offset = 10
+drag_area_margin_begin = 12
+drag_area_margin_end = 12
+drag_area_offset = 12
+
+[node name="name" type="Label" parent="HSplitContainer"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+theme = SubResource("Theme_0f0kn")
+text = "avocado"
+
+[node name="mana_cost" type="Label" parent="HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_fonts/font = ExtResource("1_gl615")
+text = "30"
+label_settings = SubResource("LabelSettings_3ugnv")
+
+[node name="skill_hitbox" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="skill_hitbox"]
+position = Vector2(319.5, 36.5)
+shape = SubResource("RectangleShape2D_3surh")
+
+[node name="NinePatchRect" type="NinePatchRect" parent="skill_hitbox"]
+custom_minimum_size = Vector2(120, 0)
+offset_left = 320.0
+offset_right = 440.0
+offset_bottom = 25.0
+scale = Vector2(3, 3)
+texture = ExtResource("3_0f0kn")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[node name="Desc" type="Label" parent="skill_hitbox/NinePatchRect"]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = 161.00002
+offset_bottom = 69.0
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 2
+
+[node name="Button" type="Button" parent="skill_hitbox"]
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 636.0
+offset_bottom = 69.0
+flat = true
+
+[connection signal="mouse_entered" from="skill_hitbox" to="." method="_on_skill_hitbox_mouse_entered"]
+[connection signal="mouse_exited" from="skill_hitbox" to="." method="_on_skill_hitbox_mouse_exited"]
+[connection signal="mouse_entered" from="skill_hitbox/Button" to="." method="_on_button_mouse_entered"]
+[connection signal="mouse_exited" from="skill_hitbox/Button" to="." method="_on_button_mouse_exited"]
+[connection signal="pressed" from="skill_hitbox/Button" to="." method="_on_button_pressed"]
