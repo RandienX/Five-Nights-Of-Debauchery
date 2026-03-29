@@ -34,7 +34,7 @@ func get_effect_multiplier(target: Object, effect: Global.effect) -> float:
 			return 1.0 + (level * 0.25)
 		Global.effect.Slow:
 			return 1.0 / (1.0 + (level * 0.25))
-		Global.effect.Absorb:
+		Global.effect.Absorption:
 			return 1.0 + (level * 0.15)
 	return 1.0
 
@@ -51,7 +51,7 @@ func apply_effect(target: Object, effect: Global.effect, level: int, duration: i
 	target.effect_durations[effect] = duration
 	
 	# Apply special effect bonuses
-	if effect == Global.effect.Absorb:
+	if effect == Global.effect.Absorption:
 		apply_absorption_bonus(target, level)
 
 func remove_effect(target: Object, effect: Global.effect) -> void:
@@ -64,7 +64,7 @@ func remove_effect(target: Object, effect: Global.effect) -> void:
 		target.effect_durations.erase(effect)
 	
 	# Remove special effect bonuses
-	if effect == Global.effect.Absorb:
+	if effect == Global.effect.Absorption:
 		remove_absorption_bonus(target)
 
 func apply_absorption_bonus(target: Object, level: int) -> void:
@@ -74,7 +74,7 @@ func apply_absorption_bonus(target: Object, level: int) -> void:
 
 func remove_absorption_bonus(target: Object) -> void:
 	if target is Party and target.has_key("effects"):
-		var old_level = target.effects.get(Global.effect.Absorb, 0)
+		var old_level = target.effects.get(Global.effect.Absorption, 0)
 		if old_level > 0:
 			target.base_stats["def"] -= int(target.level_up["def"] * old_level)
 			target.base_stats["mdf"] -= int(target.level_up["mdf"] * old_level)
@@ -83,15 +83,15 @@ func get_effect_name_with_level(effect: Global.effect, level: int) -> String:
 	var base_names = {
 		Global.effect.Burn: "Burn",
 		Global.effect.Freeze: "Freeze",
-		Global.effect.Shock: "Shock",
+		Global.effect.Sick: "Shock",
 		Global.effect.Sleep: "Sleep",
 		Global.effect.Poison: "Poison",
-		Global.effect.Confuse: "Confuse",
-		Global.effect.Power: "Power Up",
+		Global.effect.Blind: "Blind",
+		Global.effect.Power: "Power",
 		Global.effect.Weak: "Weak",
 		Global.effect.Speed: "Haste",
 		Global.effect.Slow: "Slow",
-		Global.effect.Absorb: "Absorb"
+		Global.effect.Absorption: "Absorption"
 	}
 	
 	var name = base_names.get(effect, "Unknown")

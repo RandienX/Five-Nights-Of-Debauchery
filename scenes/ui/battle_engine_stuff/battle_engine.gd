@@ -35,10 +35,6 @@ const EFFECT_COLS = 4
 # === SETUP ===
 func _ready() -> void:
 	battle_start_position = Global.player_position
-	await get_tree().create_timer(0.02).timeout
-	battle = Global.battle_current.duplicate(true)
-	Global.battle_ref = self
-	
 	# Initialize component managers
 	initiative_manager = BattleInitiativeManager.new(party)
 	action_planner = BattleActionPlanner.new()
@@ -47,7 +43,11 @@ func _ready() -> void:
 	attack_executor = BattleAttackExecutor.new(self)
 	end_condition_checker = BattleEndConditionChecker.new()
 	
-	await get_tree().create_timer(0.05).timeout
+	await get_tree().create_timer(0.02).timeout
+	battle = Global.battle_current.duplicate(true)
+	Global.battle_ref = self
+	
+	await get_tree().create_timer(0.01).timeout
 	setup_enemies()
 	initiative = initiative_manager.setup_initiative(battle)
 	setup_party()
