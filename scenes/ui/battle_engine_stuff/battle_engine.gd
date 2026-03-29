@@ -165,9 +165,9 @@ func _process(delta: float) -> void:
 		check_item_overlap()
 	
 	if not battle_logger.battle_log.is_empty():
-		log_timer += delta
-		if log_timer >= log_display_time:
-			log_timer = 0.0
+		battle_logger.log_timer += delta
+		if battle_logger.log_timer >= battle_logger.log_display_time:
+			battle_logger.log_timer = 0.0
 			battle_logger.remove_oldest_log_entry()
 
 func _input(event: InputEvent) -> void:
@@ -719,7 +719,12 @@ func execute_single_attack(attacker: Object) -> void:
 				for effect in atk.effects.keys():
 					var level = atk.effects[effect][0]
 					var duration = atk.effects[effect][1]
-					if not effects_applied.any(func(e): return e[0] == effect):
+					var found = false
+					for e in effects_applied:
+						if e[0] == effect:
+							found = true
+							break
+					if not found:
 						effects_applied.append([effect, level])
 					buff_log += " [color=#E91E63]" + get_effect_name_with_level(effect, level) + " (" + str(duration) + "t)[/color]"
 			if atk.mana_cost > 0: buff_log += " [color=#9C27B0](" + str(atk.mana_cost) + " MP)[/color]"
@@ -731,24 +736,23 @@ func execute_single_attack(attacker: Object) -> void:
 	await get_tree().create_timer(0.5).timeout
 
 
+func add_to_battle_log(text: String) -> void:
+	battle_logger.log_timer = 0.0
+	battle_logger.battle_log.append(text)
+	if battle_logger.battle_log.size() > battle_logger.max_log_entries:
+		battle_logger.battle_log.remove_at(0)
+	battle_logger.update_battle_log_display()
 
-	func add_to_battle_log(text: String) -> void:
-		log_timer = 0.0
-		battle_logger.battle_log.append(text)
-		if battle_logger.battle_log.size() > max_log_entries:
-			battle_logger.battle_log.remove_at(0)
+func remove_oldest_log_entry() -> void:
+	if not battle_logger.battle_log.is_empty():
+		battle_logger.battle_log.remove_at(0)
 		battle_logger.update_battle_log_display()
 
-	func remove_oldest_log_entry() -> void:
-		if not battle_logger.battle_log.is_empty():
-			battle_logger.battle_log.remove_at(0)
-			battle_logger.update_battle_log_display()
-
-	func update_battle_log_display() -> void:
-		if battle_logger.battle_log.is_empty():
-			$Control/enemy_ui/CenterContainer/output.text = ""
-		else:
-			$Control/enemy_ui/CenterContainer/output.text = "\n".join(battle_logger.battle_log)
+func update_battle_log_display() -> void:
+	if battle_logger.battle_log.is_empty():
+		$Control/enemy_ui/CenterContainer/output.text = ""
+	else:
+		$Control/enemy_ui/CenterContainer/output.text = "\n".join(battle_logger.battle_log)
 
 
 func print_outcome(atk: Object, targets: Array, attack: Skill, dmg: int, crit: bool, miss: bool, mp_cost: int = 0, effects_applied: Array = []):
