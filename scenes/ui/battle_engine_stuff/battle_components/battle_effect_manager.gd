@@ -7,7 +7,7 @@ const EFFECT_TILE_SIZE = 64
 const EFFECT_COLS = 4
 
 func get_effect_level(target: Object, effect: Global.effect) -> int:
-	if not target or not target.has_key("effects"):
+	if not target or not target.get("effects"):
 		return 0
 	if effect in target.effects and target.effects[effect] is Array and target.effects[effect].size() >= 1:
 		return target.effects[effect][0]
@@ -48,7 +48,7 @@ func apply_effect(target: Object, effect: Global.effect, level: int, duration: i
 	if not target:
 		return
 	
-	if not target.has_key("effects"):
+	if not target.get("effects"):
 		target.effects = {}
 	
 	if effect not in target.effects or not target.effects[effect] is Array:
@@ -58,7 +58,7 @@ func apply_effect(target: Object, effect: Global.effect, level: int, duration: i
 	target.effects[effect][1] = max(target.effects[effect][1], duration)
 
 func remove_effect(target: Object, effect: Global.effect) -> void:
-	if not target or not target.has_key("effects"):
+	if not target or not target.get("effects"):
 		return
 	
 	if effect in target.effects:
@@ -78,11 +78,11 @@ func get_effect_name_with_level(effect: Global.effect, level: int) -> String:
 	var base_names = {
 		Global.effect.Burn: "Burn",
 		Global.effect.Freeze: "Freeze",
-		Global.effect.Shock: "Shock",
+		Global.effect.Sick: "Shock",
 		Global.effect.Sleep: "Sleep",
 		Global.effect.Poison: "Poison",
-		Global.effect.Confuse: "Confuse",
-		Global.effect.Power: "Power Up",
+		Global.effect.Blind: "Blind",
+		Global.effect.Power: "Power",
 		Global.effect.Weak: "Weak",
 		Global.effect.Speed: "Haste",
 		Global.effect.Slow: "Slow",

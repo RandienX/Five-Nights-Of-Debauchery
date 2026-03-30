@@ -35,10 +35,6 @@ const EFFECT_COLS = 4
 # === SETUP ===
 func _ready() -> void:
 	battle_start_position = Global.player_position
-	await get_tree().create_timer(0.02).timeout
-	battle = Global.battle_current.duplicate(true)
-	Global.battle_ref = self
-	
 	# Initialize component managers
 	initiative_manager = BattleInitiativeManager.new(party)
 	action_planner = BattleActionPlanner.new()
@@ -47,7 +43,11 @@ func _ready() -> void:
 	attack_executor = BattleAttackExecutor.new(self)
 	end_condition_checker = BattleEndConditionChecker.new()
 	
-	await get_tree().create_timer(0.05).timeout
+	await get_tree().create_timer(0.02).timeout
+	battle = Global.battle_current.duplicate(true)
+	Global.battle_ref = self
+	
+	await get_tree().create_timer(0.01).timeout
 	setup_enemies()
 	initiative = initiative_manager.setup_initiative(battle)
 	setup_party()
@@ -258,7 +258,7 @@ func _input(event: InputEvent) -> void:
 				if item_target_type == 0:
 					move_enemy_input(-1)
 				else:
-					var party_in_initiative = get_party_members_from_initiative()
+					var party_in_initiative = initiative_manager.get_party_members_from_initiative()
 					selected_party_member = wrapi(selected_party_member - 1, 0, party_in_initiative.size())
 					print("DEBUG Input Left: selected_party_member = ", selected_party_member, " target = ", party_in_initiative[selected_party_member].name)
 					move_who_moves(selected_party_member)
@@ -267,7 +267,7 @@ func _input(event: InputEvent) -> void:
 				if item_target_type == 0:
 					move_enemy_input(1)
 				else:
-					var party_in_initiative = get_party_members_from_initiative()
+					var party_in_initiative = initiative_manager.get_party_members_from_initiative()
 					selected_party_member = wrapi(selected_party_member + 1, 0, party_in_initiative.size())
 					print("DEBUG Input Right: selected_party_member = ", selected_party_member, " target = ", party_in_initiative[selected_party_member].name)
 					move_who_moves(selected_party_member)

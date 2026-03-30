@@ -71,7 +71,7 @@ func remove_from_initiative(obj: Object) -> void:
 			break
 
 func get_effect_multiplier(target: Object, effect: Global.effect) -> float:
-	if not target or not target.has_key("effects"):
+	if not target or target.get("effects") == null:
 		return 1.0
 	
 	if effect in target.effects:
