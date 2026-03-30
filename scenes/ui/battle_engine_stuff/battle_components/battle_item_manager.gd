@@ -157,21 +157,21 @@ func select_item():
 		battle_engine.get_node("Control/enemy_ui/CenterContainer/output").text = "No items left!"
 		await battle_engine.get_tree().create_timer(0.5).timeout
 		return
-
-		var item = available_items[current_item_index]
-
-		if item.type == 2:
-			if item.is_item_attack and item.item_attack:
-				item_target_type = 0
-				battle_engine.state = state_enum.OnItemSelect
-				items_container.visible = false
-				battle_engine.selected_enemy = battle_engine.previous_enemy if battle_engine.previous_enemy != 0 else 1
-				battle_engine.get_node("Control/enemy_ui/CenterContainer/output").text = "Select enemy..."
-				return
-			else:
-				item_target_type = 1
-				battle_engine.state = state_enum.OnItemSelect
-
+	
+	var item = available_items[current_item_index]
+	
+	if item.type == 2:
+		if item.is_item_attack and item.item_attack:
+			item_target_type = 0
+			battle_engine.state = state_enum.OnItemSelect
+			items_container.visible = false
+			battle_engine.selected_enemy = battle_engine.previous_enemy if battle_engine.previous_enemy != 0 else 1
+			battle_engine.get_node("Control/enemy_ui/CenterContainer/output").text = "Select enemy..."
+			return
+		else:
+			item_target_type = 1
+			battle_engine.state = state_enum.OnItemSelect
+			
 			var party_in_initiative = battle_engine.initiative_manager.get_party_members_from_initiative()
 			selected_party_member = 0
 			for i in range(party_in_initiative.size()):

@@ -12,7 +12,6 @@ var effect_manager: BattleEffectManager
 var battle_logger: BattleLogger
 var attack_executor: BattleAttackExecutor
 var end_condition_checker: BattleEndConditionChecker
-var item_manager: BattleItemManager
 
 enum states { OnAction, OnEnemy, OnSkills, OnSkillSelect, OnItems, OnItemSelect, Waiting, OnRun}
 var state: states = states.OnAction
@@ -43,7 +42,6 @@ func _ready() -> void:
 	battle_logger = BattleLogger.new()
 	attack_executor = BattleAttackExecutor.new(self)
 	end_condition_checker = BattleEndConditionChecker.new()
-	item_manager = BattleItemManager.new(self)
 	
 	await get_tree().create_timer(0.02).timeout
 	battle = Global.battle_current.duplicate(true)
@@ -167,9 +165,9 @@ func _process(delta: float) -> void:
 		check_item_overlap()
 	
 	if not battle_logger.battle_log.is_empty():
-		battle_logger.log_timer += delta
-		if battle_logger.log_timer >= battle_logger.log_display_time:
-			battle_logger.log_timer = 0.0
+		log_timer += delta
+		if log_timer >= log_display_time:
+			log_timer = 0.0
 			battle_logger.remove_oldest_log_entry()
 
 func _input(event: InputEvent) -> void:
@@ -344,13 +342,6 @@ func move_enemy_input(input: int):
 		selected_enemy = wrapi(selected_enemy + input - 1, 0, 5) + 1
 		if battle.get('enemy_pos'+str(selected_enemy)) in initiative: break
 
-func get_party_members_from_initiative() -> Array:
-	var party_members: Array = []
-	for actor in initiative:
-		if actor is Party:
-			party_members.append(actor)
-	return party_members
-
 func update_flash():
 	for c in $Control/enemy_ui/enemies.get_children():
 		if c.material:
@@ -418,17 +409,14 @@ func advance_initiative():
 			action_planner.attack_array.erase(current)
 		$Control/enemy_ui/CenterContainer/output.text = current.name + " is asleep!"
 		await get_tree().create_timer(0.5).timeout
-		initiative_manager.advance_initiative_step()
-		call_deferred("advance_initiative")
+		advance_initiative()
 		return
 	if not action_planner.has_planned_action(current):
-		initiative_manager.advance_initiative_step()
-		call_deferred("advance_initiative")
+		advance_initiative()
 		return
 	if current is Party:
 		current_attacker = current
-	initiative_manager.advance_initiative_step()
-	call_deferred("advance_initiative")
+	advance_initiative()
 
 func add_enemy_attack(e: Enemy):
 	if e.attacks.is_empty(): return
@@ -731,12 +719,7 @@ func execute_single_attack(attacker: Object) -> void:
 				for effect in atk.effects.keys():
 					var level = atk.effects[effect][0]
 					var duration = atk.effects[effect][1]
-					var found = false
-					for e in effects_applied:
-						if e[0] == effect:
-							found = true
-							break
-					if not found:
+					if not effects_applied.any(func(e): return e[0] == effect):
 						effects_applied.append([effect, level])
 					buff_log += " [color=#E91E63]" + get_effect_name_with_level(effect, level) + " (" + str(duration) + "t)[/color]"
 			if atk.mana_cost > 0: buff_log += " [color=#9C27B0](" + str(atk.mana_cost) + " MP)[/color]"
@@ -747,25 +730,23 @@ func execute_single_attack(attacker: Object) -> void:
 			death(t)
 	await get_tree().create_timer(0.5).timeout
 
-
-func add_to_battle_log(text: String) -> void:
-	battle_logger.log_timer = 0.0
+func battle_logger.add_to_battle_log(text: String) -> void:
+	log_timer = 0.0
 	battle_logger.battle_log.append(text)
-	if battle_logger.battle_log.size() > battle_logger.max_log_entries:
+	if battle_logger.battle_log.size() > max_log_entries:
 		battle_logger.battle_log.remove_at(0)
 	battle_logger.update_battle_log_display()
 
-func remove_oldest_log_entry() -> void:
+func battle_logger.remove_oldest_log_entry() -> void:
 	if not battle_logger.battle_log.is_empty():
 		battle_logger.battle_log.remove_at(0)
 		battle_logger.update_battle_log_display()
 
-func update_battle_log_display() -> void:
+func battle_logger.update_battle_log_display() -> void:
 	if battle_logger.battle_log.is_empty():
 		$Control/enemy_ui/CenterContainer/output.text = ""
 	else:
-		$Control/enemy_ui/CenterContainer/output.text = "\n".join(battle_logger.battle_log)
-
+		$Control/enemy_ui/CenterContainer/output.text = "\n".join(battle_log)
 
 func print_outcome(atk: Object, targets: Array, attack: Skill, dmg: int, crit: bool, miss: bool, mp_cost: int = 0, effects_applied: Array = []):
 	var t = ""
@@ -791,6 +772,10 @@ func print_outcome(atk: Object, targets: Array, attack: Skill, dmg: int, crit: b
 				t += "}[/color]"
 	battle_logger.add_to_battle_log(t)
 # === DEATH & VICTORY LOGIC ===
+
+func gain_xp(actor: Object, target: Enemy, dmg: int) -> void:
+	if actor is Party and target is Enemy:
+		actor.xp += int(dmg * 0.1)
 
 func check_enemy_death_and_xp():
 	var all_dead = true
@@ -1359,65 +1344,229 @@ func close_skills_menu():
 	$Control/gui/HBoxContainer2/party.visible = true
 	$WhoMoves.visible = true
 	state = states.OnAction
+# === ITEMS SYSTEM ===
+var items_container: Control
+var item_boxes: Array[ItemBox] = []
+var current_item_index: int = 0
+var item_scroll_offset: int = 0
+var max_visible_items: int = 8
+var available_items: Array[Resource] = []
+var item_amounts: Array[int] = []
+var item_box_scene: PackedScene
 
-# === ITEMS SYSTEM (delegated to BattleItemManager) ===
-# Item variables and functions moved to BattleItemManager component
-# Variables: items_container, item_boxes, current_item_index, item_scroll_offset, etc.
-# Functions: setup_items_ui, open_items_menu, create_item_boxes, update_item_selection, 
-#            navigate_items, check_item_overlap, select_item, confirm_item_target, close_items_menu
+var item_target_type: int = 0  # 0 = enemy, 1 = party
+var saved_party_plan_index: int = 0
+var selected_party_member: int = 0
 
 func setup_items_ui():
-	item_manager.setup_items_ui()
+	item_box_scene = preload("res://scenes/ui/battle_engine_stuff/item_box.tscn")
+	
+	if not has_node("Control/gui/HBoxContainer2/items_container"):
+		items_container = Control.new()
+		items_container.name = "items_container"
+		items_container.set_anchors_preset(Control.PRESET_FULL_RECT)
+		items_container.visible = false
+		
+		var scroll = ScrollContainer.new()
+		scroll.name = "ScrollContainer"
+		scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		items_container.add_child(scroll)
+		
+		var grid = GridContainer.new()
+		grid.name = "ItemGrid"
+		grid.columns = 2  # MATCH SKILLS: 2 columns
+		grid.add_theme_constant_override("h_separation", 10)
+		grid.add_theme_constant_override("v_separation", 10)
+		grid.custom_minimum_size = Vector2(1296, 0)  # MATCH SKILLS: 1296px width
+		scroll.add_child(grid)
+		
+		$Control/gui/HBoxContainer2.add_child(items_container)
+	
+	items_container = $Control/gui/HBoxContainer2/items_container
 
 func open_items_menu():
-	item_manager.open_items_menu()
+	state = states.OnItems
+	items_container.visible = true
+	$Control/gui/HBoxContainer2/party.visible = false
+	$WhoMoves.visible = false
+	
+	available_items.clear()
+	item_amounts.clear()
+
+	# Get items from Global inventory
+	for item in Global.inventory.keys():
+		if item and item.type == 2:
+			var amount = Global.inventory[item]
+			if amount > 0:
+				available_items.append(item)
+				item_amounts.append(amount)
+
+	if available_items.is_empty():
+		$Control/enemy_ui/CenterContainer/output.text = "No items!"
+		await get_tree().create_timer(0.5).timeout
+		close_items_menu()
+		return
+
+	create_item_boxes()
+
+	current_item_index = 0
+	item_scroll_offset = 0
+	update_item_selection()
 
 func create_item_boxes():
-	item_manager.create_item_boxes()
+	var grid = items_container.get_node("ScrollContainer/ItemGrid")
+	for child in grid.get_children():
+		child.queue_free()
+	item_boxes.clear()
+	
+	for i in range(available_items.size()):
+		var item = available_items[i]
+		var amount = item_amounts[i]
+		var box = item_box_scene.instantiate()
+		grid.add_child(box)
+		box.setup(item, i, amount)
+		item_boxes.append(box)
+	
+	update_item_selection()
 
 func update_item_selection():
-	item_manager.update_item_selection()
+	for i in range(item_boxes.size()):
+		var box = item_boxes[i]
+		var has_items = item_amounts[i] > 0
+		
+		if i == current_item_index and has_items:
+			box.modulate = Color(1, 1, 0.5)
+			box.set_collisions(true)
+		else:
+			box.modulate = Color(1, 1, 1) if has_items else Color(0.5, 0.5, 0.5)
+			box.set_collisions(false)
+	
+	if current_item_index >= item_scroll_offset + max_visible_items:
+		item_scroll_offset = current_item_index - max_visible_items + 1
+	elif current_item_index < item_scroll_offset:
+		item_scroll_offset = current_item_index
+	
+	var scroll = items_container.get_node("ScrollContainer")
+	scroll.scroll_vertical = item_scroll_offset * 70
 
 func navigate_items(direction: int):
-	item_manager.navigate_items(direction)
+	var columns = 2  
+	var new_index = current_item_index + direction
+	
+	if new_index < 0:
+		new_index = item_boxes.size() - 1
+	elif new_index >= item_boxes.size():
+		new_index = 0
+	
+	var attempts = 0
+	while attempts < item_boxes.size():
+		if item_amounts[new_index] > 0:
+			break
+		new_index += direction
+		if new_index < 0:
+			new_index = item_boxes.size() - 1
+		elif new_index >= item_boxes.size():
+			new_index = 0
+		attempts += 1
+	
+	if item_amounts[new_index] > 0:
+		current_item_index = new_index
+		update_item_selection()
 
 func check_item_overlap():
-	item_manager.check_item_overlap()
+	var overlapping = $TheMove/Area2D.get_overlapping_areas()
+	for area in overlapping:
+		var parent = area.get_parent()
+		if parent is ItemBox:
+			var new_index = parent.item_index
+			if item_amounts[new_index] > 0 and new_index != current_item_index:
+				current_item_index = new_index
+				update_item_selection()
+			return
 
 func select_item():
-	item_manager.select_item()
+	if current_item_index < 0 or current_item_index >= available_items.size():
+		return
+	
+	if item_amounts[current_item_index] <= 0:
+		$Control/enemy_ui/CenterContainer/output.text = "No items left!"
+		await get_tree().create_timer(0.5).timeout
+		return
+	
+	var item = available_items[current_item_index]
+	
+	if item.type == 2:
+		if item.is_item_attack and item.item_attack:
+			item_target_type = 0
+			state = states.OnItemSelect
+			items_container.visible = false
+			selected_enemy = previous_enemy if previous_enemy != 0 else 1
+			$Control/enemy_ui/CenterContainer/output.text = "Select enemy..."
+			return
+		else:
+			item_target_type = 1
+			state = states.OnItemSelect
+			
+			var party_in_initiative = get_party_members_from_initiative()
+			selected_party_member = 0
+			for i in range(party_in_initiative.size()):
+				if party_in_initiative[i] == current_attacker:
+					selected_party_member = i
+					break
+			
+			saved_party_plan_index = action_planner.current_party_plan_index
+			items_container.visible = false
+			$Control/gui/HBoxContainer2/party.visible = true
+			$WhoMoves.visible = true
+			move_who_moves(selected_party_member)
+			$Control/enemy_ui/CenterContainer/output.text = "Select party member..."
+			return
 
 func confirm_item_target():
-	item_manager.confirm_item_target()
+	var item = available_items[current_item_index]
+	
+	if item_target_type == 0:
+		if item.is_item_attack and item.item_attack:
+			var target = battle.get('enemy_pos'+str(selected_enemy))
+			if target and target.hp > 0:
+				var item_attack = item.item_attack.duplicate()
+				item_attack.item_reference = item
+				item_attack.name = item.item_name
+				
+				add_attack(current_attacker, [target], item_attack)
+				action_planner.action_history.append(current_attacker)
+				close_items_menu()
+				advance_planning()
+	else:
+		var party_in_initiative = get_party_members_from_initiative()
+		selected_party_member = clamp(selected_party_member, 0, party_in_initiative.size() - 1)
+		var target = party_in_initiative[selected_party_member]
+		
+		if target and target.hp > 0:
+			var item_attack = Skill.new()
+			item_attack.name = item.item_name
+			item_attack.attack_type = 3
+			item_attack.target_type = 1
+			item_attack.mana_cost = 0
+			item_attack.item_reference = item
+			
+			add_attack(current_attacker, [target], item_attack)
+			
+			$WhoMoves.visible = true
+			move_who_moves(saved_party_plan_index)
+			
+			action_planner.action_history.append(current_attacker)
+			close_items_menu()
+			advance_planning()
 
 func close_items_menu():
-	item_manager.close_items_menu()
-
-# Keep these variables for backward compatibility with external references
-var items_container: Control:
-	get: return item_manager.items_container if item_manager else null
-var item_boxes: Array:
-	get: return item_manager.item_boxes if item_manager else []
-var current_item_index: int:
-	get: return item_manager.current_item_index if item_manager else 0
-	set(v): if item_manager: item_manager.current_item_index = v
-var item_scroll_offset: int:
-	get: return item_manager.item_scroll_offset if item_manager else 0
-	set(v): if item_manager: item_manager.item_scroll_offset = v
-var max_visible_items: int = 8
-var available_items: Array:
-	get: return item_manager.available_items if item_manager else []
-var item_amounts: Array:
-	get: return item_manager.item_amounts if item_manager else []
-var item_target_type: int:
-	get: return item_manager.item_target_type if item_manager else 0
-	set(v): if item_manager: item_manager.item_target_type = v
-var saved_party_plan_index: int:
-	get: return item_manager.saved_party_plan_index if item_manager else 0
-	set(v): if item_manager: item_manager.saved_party_plan_index = v
-var selected_party_member: int:
-	get: return item_manager.selected_party_member if item_manager else 0
-	set(v): if item_manager: item_manager.selected_party_member = v
+	items_container.visible = false
+	$Control/gui/HBoxContainer2/party.visible = true
+	$WhoMoves.visible = true
+	move_who_moves(saved_party_plan_index)
+	state = states.OnAction
 
 # === BATTLE BUTTON LOGIC ===
 
