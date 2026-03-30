@@ -172,7 +172,7 @@ func select_item():
 			item_target_type = 1
 			battle_engine.state = state_enum.OnItemSelect
 			
-			var party_in_initiative = battle_engine.get_party_members_from_initiative()
+			var party_in_initiative = battle_engine.initiative_manager.get_party_members_from_initiative()
 			selected_party_member = 0
 			for i in range(party_in_initiative.size()):
 				if party_in_initiative[i] == battle_engine.current_attacker:
@@ -203,7 +203,7 @@ func confirm_item_target():
 				close_items_menu()
 				battle_engine.advance_planning()
 	else:
-		var party_in_initiative = battle_engine.get_party_members_from_initiative()
+		var party_in_initiative = battle_engine.initiative_manager.get_party_members_from_initiative()
 		selected_party_member = clamp(selected_party_member, 0, party_in_initiative.size() - 1)
 		var target = party_in_initiative[selected_party_member]
 		
