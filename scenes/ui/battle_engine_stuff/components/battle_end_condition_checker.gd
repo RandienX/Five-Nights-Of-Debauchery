@@ -14,9 +14,9 @@ var custom_conditions: Dictionary = {} # condition_name -> Callable
 func _ready():
 	pass
 
-func init_manager(root: Node2D, log: BattleLogger):
+func init_manager(root: Node2D):
 	battle_root = root
-	logger = log
+	logger = root.logger
 
 ## Checks if all enemies are defeated
 func check_victory(enemies: Array) -> bool:

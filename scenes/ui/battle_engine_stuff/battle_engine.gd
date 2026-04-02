@@ -45,6 +45,7 @@ var escape_chance: float = 0.7
 const PARTY_BATTLE_FACE_SCENE: PackedScene = preload("res://scenes/ui/battle_engine_stuff/partyBattleFace.tscn")
 
 func _ready():
+	battle = Global.battle_current
 	_initialize_components()
 	_connect_signals()
 	_start_battle_from_resource()
@@ -122,8 +123,8 @@ func _start_battle_from_resource():
 		party.append(p.duplicate(true))
 	
 	# Collect enemies from battle resource
+	print(battle.enemy_pos3)
 	var enemies: Array[Resource] = []
-	if battle.enemy_pos0: enemies.append(battle.enemy_pos0)
 	if battle.enemy_pos1: enemies.append(battle.enemy_pos1)
 	if battle.enemy_pos2: enemies.append(battle.enemy_pos2)
 	if battle.enemy_pos3: enemies.append(battle.enemy_pos3)
