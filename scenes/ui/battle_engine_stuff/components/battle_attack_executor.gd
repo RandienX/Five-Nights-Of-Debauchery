@@ -1,10 +1,10 @@
 class_name BattleAttackExecutor
 extends Node
 
-## Handles attack execution, damage calculation, and animations
+## Handles attack execution, damage calculation for BattleActor objects
 
-signal attack_started(attacker: Node2D, target: Node2D)
-signal damage_dealt(target: Node2D, damage: int, is_critical: bool)
+signal attack_started(attacker: BattleTypes.BattleActor, target: BattleTypes.BattleActor)
+signal damage_dealt(target: BattleTypes.BattleActor, damage: int, is_critical: bool)
 signal attack_completed()
 
 var battle_root: Node2D = null
@@ -12,136 +12,110 @@ var effect_manager: BattleEffectManager = null
 var logger: BattleLogger = null
 
 func _ready():
-	pass
+pass
 
-func init_manager(root: Node2D, effects: BattleEffectManager, log: BattleLogger):
-	battle_root = root
-	effect_manager = effects
-	logger = log
+func init_manager(root: Node2D):
+battle_root = root
+# Get references from parent
+effect_manager = root.effect_manager if root.has_node("BattleEffectManager") else null
+logger = root.logger if root.has_node("BattleLogger") else null
 
 ## Executes a basic attack
-func execute_attack(attacker: Node2D, target: Node2D, is_multi: bool = false) -> Dictionary:
-	attack_started.emit(attacker, target)
-	
-	var result = calculate_damage(attacker, target)
-	
-	# Apply damage
-	if is_instance_valid(target) and not target.is_dead():
-		target.take_damage(result.damage)
-		damage_dealt.emit(target, result.damage, result.is_critical)
-		
-		# Log the attack
-		if logger:
-			var attacker_name = attacker.get_character_name() if attacker.has_method("get_character_name") else "Unknown"
-			var target_name = target.get_character_name() if target.has_method("get_character_name") else "Unknown"
-			logger.add_damage_message(attacker_name, target_name, result.damage, result.is_critical)
-	
-	# Handle instakill (non-boss only)
-	if result.is_instakill and not target.is_boss():
-		target.take_damage(99999) # Massive damage to ensure death
-	
-	attack_completed.emit()
-	return result
+func execute_attack(attacker: BattleTypes.BattleActor, target: BattleTypes.BattleActor, is_multi: bool = false) -> Dictionary:
+attack_started.emit(attacker, target)
+
+var result = calculate_damage(attacker, target)
+
+# Apply damage to target's resource
+if target and not target.is_dead:
+target.take_damage(result.damage)
+damage_dealt.emit(target, result.damage, result.is_critical)
+
+# Log the attack
+if logger:
+logger.add_damage_message(attacker.name, target.name, result.damage, result.is_critical)
+
+# Handle instakill (non-boss only - check via resource if Enemy)
+if result.is_instakill:
+var enemy_res = target.resource as Enemy
+if not enemy_res or not enemy_res.has_meta("is_boss"): # Simple boss check
+target.take_damage(99999) # Massive damage to ensure death
+
+attack_completed.emit()
+return result
 
 ## Executes a skill attack
-func execute_skill(attacker: Node2D, target: Node2D, skill_data: Dictionary) -> Dictionary:
-	attack_started.emit(attacker, target)
-	
-	var result = calculate_skill_damage(attacker, target, skill_data)
-	
-	# Apply damage
-	if is_instance_valid(target) and not target.is_dead():
-		target.take_damage(result.damage)
-		damage_dealt.emit(target, result.damage, result.is_critical)
-		
-		# Log the attack
-		if logger:
-			var attacker_name = attacker.get_character_name() if attacker.has_method("get_character_name") else "Unknown"
-			var target_name = target.get_character_name() if target.has_method("get_character_name") else "Unknown"
-			logger.add_message("%s uses %s on %s for [color=#FF6B6B]%d[/color] damage" % [attacker_name, skill_data.name, target_name, result.damage])
-	
-	# Apply additional effects from skill
-	if skill_data.has("effects") and result.success:
-		for effect_data in skill_data.effects:
-			apply_skill_effect(target, effect_data)
-	
-	attack_completed.emit()
-	return result
+func execute_skill(attacker: BattleTypes.BattleActor, target: BattleTypes.BattleActor, skill: Resource) -> Dictionary:
+attack_started.emit(attacker, target)
+
+var result = calculate_skill_damage(attacker, target, skill)
+
+# Apply damage
+if target and not target.is_dead:
+target.take_damage(result.damage)
+damage_dealt.emit(target, result.damage, result.is_critical)
+
+# Log the attack
+if logger:
+logger.add_damage_message(attacker.name, target.name, result.damage, result.is_critical, skill.skill_name if skill else "Skill")
+
+attack_completed.emit()
+return result
 
 ## Calculates basic attack damage
-func calculate_damage(attacker: Node2D, defender: Node2D) -> Dictionary:
-	var atk = attacker.get_stat("atk") if attacker.has_method("get_stat") else 10
-	var def = defender.get_stat("def") if defender.has_method("get_stat") else 5
-	
-	# Basic damage formula
-	var base_damage = max(1, atk - (def * 0.5))
-	
-	# Critical hit check (10% base chance)
-	var crit_chance = attacker.get_stat("crit") if attacker.has_method("get_stat") else 0.1
-	var is_critical = randf() < crit_chance
-	
-	if is_critical:
-		base_damage *= 1.5
-	
-	# Random variance (±10%)
-	var variance = randf_range(0.9, 1.1)
-	var final_damage = int(base_damage * variance)
-	
-	# Check for instakill proc (rare chance)
-	var is_instakill = randf() < 0.05 # 5% chance
-	
-	return {
-		"damage": final_damage,
-		"is_critical": is_critical,
-		"is_instakill": is_instakill,
-		"success": true
-	}
+func calculate_damage(attacker: BattleTypes.BattleActor, defender: BattleTypes.BattleActor) -> Dictionary:
+var base_damage = attacker.attack
+var defense = defender.defense
+
+# Apply status effect modifiers
+if effect_manager:
+base_damage = effect_manager.apply_stat_modifiers(attacker, base_damage, Global.effect.Power)
+defense = effect_manager.apply_stat_modifiers(defender, defense, Global.effect.Tough)
+
+# Calculate final damage (minimum 1)
+var actual_damage = max(1, base_damage - defense)
+
+# Critical hit chance (simple 10% for now)
+var is_critical = randf() < 0.1
+if is_critical:
+actual_damage = int(actual_damage * 1.5)
+
+# Instakill check (very rare)
+var is_instakill = randf() < 0.01
+
+return {
+"damage": actual_damage,
+"is_critical": is_critical,
+"is_instakill": is_instakill
+}
 
 ## Calculates skill damage
-func calculate_skill_damage(attacker: Node2D, defender: Node2D, skill_data: Dictionary) -> Dictionary:
-	var atk = attacker.get_stat("atk") if attacker.has_method("get_stat") else 10
-	var def = defender.get_stat("def") if defender.has_method("get_stat") else 5
-	var power = skill_data.get("power", 1.0)
-	
-	# Skill damage formula
-	var base_damage = max(1, (atk * power) - (def * 0.3))
-	
-	# Critical hit check
-	var crit_chance = attacker.get_stat("crit") if attacker.has_method("get_stat") else 0.1
-	var is_critical = randf() < crit_chance
-	
-	if is_critical:
-		base_damage *= 1.5
-	
-	# Random variance
-	var variance = randf_range(0.9, 1.1)
-	var final_damage = int(base_damage * variance)
-	
-	# Skills don't instakill by default
-	var is_instakill = false
-	
-	return {
-		"damage": final_damage,
-		"is_critical": is_critical,
-		"is_instakill": is_instakill,
-		"success": true
-	}
+func calculate_skill_damage(attacker: BattleTypes.BattleActor, defender: BattleTypes.BattleActor, skill: Resource) -> Dictionary:
+if not skill:
+return calculate_damage(attacker, defender)
 
-## Applies a skill effect to a target
-func apply_skill_effect(target: Node2D, effect_data: Dictionary):
-	if not effect_manager:
-		return
-	
-	var effect = BattleTypes.StatusEffect.new(
-		effect_data.id,
-		effect_data.name,
-		effect_data.duration
-	)
-	
-	if effect_data.has("stat_modifiers"):
-		effect.stat_modifiers = effect_data.stat_modifiers
-	
-	if effect_data.has("flags"):
-		effect.flags = effect_data.flags
-	
-	effect_manager.apply_effect(target, effect)
+var base_damage = skill.damage if skill.has_method("get_damage") or "damage" in skill else attacker.attack
+var defense = defender.defense
+
+# Apply skill multiplier if exists
+var multiplier = skill.damage_multiplier if "damage_multiplier" in skill else 1.0
+base_damage = int(base_damage * multiplier)
+
+# Apply status effects
+if effect_manager:
+base_damage = effect_manager.apply_stat_modifiers(attacker, base_damage, Global.effect.Power)
+defense = effect_manager.apply_stat_modifiers(defender, defense, Global.effect.Tough)
+
+var actual_damage = max(1, base_damage - defense)
+
+# Skills can crit too
+var is_critical = randf() < (skill.crit_rate if "crit_rate" in skill else 0.1)
+if is_critical:
+actual_damage = int(actual_damage * 1.5)
+
+return {
+"damage": actual_damage,
+"is_critical": is_critical,
+"is_instakill": false,
+"skill_effects": skill.effects if "effects" in skill else []
+}
