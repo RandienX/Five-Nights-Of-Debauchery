@@ -6,7 +6,7 @@ enum BattleState { STARTING, PLANNING, EXECUTING, VICTORY, DEFEAT, ESCAPED }
 enum ActionMenuState { ROOT, SKILL, ITEM, TARGET_SELECT, CONFIRM }
 enum ActionType { ATTACK, SKILL, ITEM, DEFEND, ESCAPE, NONE }
 enum TargetType { SINGLE_ENEMY, ALL_ENEMIES, SINGLE_ALLY, ALL_ALLIES, SELF, NONE }
-enum AIPersonality { PASSIVE, NORMAL, AGGRESSIVE }
+enum AIPersonality { DUMB, CASUAL, VIOLENT, DEFENSIVE, INTELLIGENT, FLEXIBLE }
 
 # Data Containers (Pure Data, no Node references)
 class BattleActor:

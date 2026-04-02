@@ -22,45 +22,50 @@ logger = root.logger if root.has_node("BattleLogger") else null
 
 ## Executes a basic attack
 func execute_attack(attacker: BattleTypes.BattleActor, target: BattleTypes.BattleActor, is_multi: bool = false) -> Dictionary:
-attack_started.emit(attacker, target)
-
-var result = calculate_damage(attacker, target)
-
-# Apply damage to target's resource
-if target and not target.is_dead:
-target.take_damage(result.damage)
-damage_dealt.emit(target, result.damage, result.is_critical)
-
-# Log the attack
-if logger:
-logger.add_damage_message(attacker.name, target.name, result.damage, result.is_critical)
-
-# Handle instakill (non-boss only - check via resource if Enemy)
-if result.is_instakill:
-var enemy_res = target.resource as Enemy
-if not enemy_res or not enemy_res.has_meta("is_boss"): # Simple boss check
-target.take_damage(99999) # Massive damage to ensure death
-
-attack_completed.emit()
-return result
+	attack_started.emit(attacker, target)
+	
+	var result = calculate_damage(attacker, target)
+	
+	# Apply damage to target's resource
+	if target and not target.is_dead:
+		target.take_damage(result.damage)
+		damage_dealt.emit(target, result.damage, result.is_critical)
+		
+		# Log the attack
+		if logger:
+			logger.add_damage_message(attacker.name, target.name, result.damage, result.is_critical)
+	
+	# Handle instakill (non-boss only - check via resource if Enemy)
+	if result.is_instakill:
+		var enemy_res = target.resource as Enemy
+		if not enemy_res or not enemy_res.has_meta("is_boss"): # Simple boss check
+			target.take_damage(99999) # Massive damage to ensure death
+	
+	attack_completed.emit()
+	return result
 
 ## Executes a skill attack
 func execute_skill(attacker: BattleTypes.BattleActor, target: BattleTypes.BattleActor, skill: Resource) -> Dictionary:
-attack_started.emit(attacker, target)
-
-var result = calculate_skill_damage(attacker, target, skill)
-
-# Apply damage
-if target and not target.is_dead:
-target.take_damage(result.damage)
-damage_dealt.emit(target, result.damage, result.is_critical)
-
-# Log the attack
-if logger:
-logger.add_damage_message(attacker.name, target.name, result.damage, result.is_critical, skill.skill_name if skill else "Skill")
-
-attack_completed.emit()
-return result
+	attack_started.emit(attacker, target)
+	
+	var result = calculate_skill_damage(attacker, target, skill)
+	
+	# Apply damage
+	if target and not target.is_dead:
+		target.take_damage(result.damage)
+		damage_dealt.emit(target, result.damage, result.is_critical)
+		
+		# Log the attack
+		if logger:
+			var skill_name = "Skill"
+			if skill and skill.has_method("get_skill_name"):
+				skill_name = skill.call("get_skill_name")
+			elif skill and "skill_name" in skill:
+				skill_name = skill.skill_name
+			logger.add_damage_message(attacker.name, target.name, result.damage, result.is_critical, skill_name)
+	
+	attack_completed.emit()
+	return result
 
 ## Calculates basic attack damage
 func calculate_damage(attacker: BattleTypes.BattleActor, defender: BattleTypes.BattleActor) -> Dictionary:

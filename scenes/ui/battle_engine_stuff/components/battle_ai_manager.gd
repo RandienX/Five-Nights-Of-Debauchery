@@ -1,7 +1,7 @@
 class_name BattleAIManager
 extends Node
 
-## Manages enemy AI decision making
+## Manages enemy AI decision making with 6 personality types
 ## Works with BattleTypes.BattleActor objects and Enemy resources
 
 signal ai_decision_made(enemy: BattleTypes.BattleActor, action: Dictionary)
@@ -10,20 +10,25 @@ var battle_root: Node2D = null
 var logger: BattleLogger = null
 var effect_manager: BattleEffectManager = null
 
-# AI Personalities (mapped from Global.AI enum)
-const AI_PASSIVE = 0.3
-const AI_NORMAL = 0.6
-const AI_AGGRESSIVE = 1.0
+# AI Personality thresholds
+const AI_DUMB = 0.2
+const AI_CASUAL = 0.4
+const AI_VIOLENT = 0.9
+const AI_DEFENSIVE = 0.3
+const AI_INTELLIGENT = 0.7
+const AI_FLEXIBLE = 1.0
 
 func _ready():
 	pass
 
 func init_manager(root: Node2D):
 	battle_root = root
+	logger = root.get_node_or_null("BattleLogger")
+	effect_manager = root.get_node_or_null("BattleEffectManager")
 
-## Determines AI action for an enemy actor
+## Determines AI action for an enemy actor based on personality
 func decide_action(enemy: BattleTypes.BattleActor, party: Array[BattleTypes.BattleActor], 
-				   enemies: Array[BattleTypes.BattleActor], personality: float = AI_NORMAL) -> Dictionary:
+				   enemies: Array[BattleTypes.BattleActor], personality: int = BattleTypes.AIPersonality.CASUAL) -> Dictionary:
 	if not enemy or enemy.is_dead:
 		return {}
 	
@@ -40,9 +45,9 @@ func decide_action(enemy: BattleTypes.BattleActor, party: Array[BattleTypes.Batt
 	var target = select_target(enemy, valid_targets, personality)
 	
 	# Decide action type (attack, skill, defend, etc.)
-	var action_type = decide_action_type(enemy, target, personality)
+	var action_type = decide_action_type(enemy, target, personality, party, enemies)
 	
-	# Build action dictionary using BattleTypes.PlannedAction
+	# Build action dictionary
 	var action = {
 		"actor": enemy,
 		"type": action_type.type,
@@ -54,42 +59,43 @@ func decide_action(enemy: BattleTypes.BattleActor, party: Array[BattleTypes.Batt
 	return action
 
 ## Selects a target based on AI personality
-func select_target(enemy: BattleTypes.BattleActor, targets: Array[BattleTypes.BattleActor], personality: float) -> BattleTypes.BattleActor:
+func select_target(enemy: BattleTypes.BattleActor, targets: Array[BattleTypes.BattleActor], personality: int) -> BattleTypes.BattleActor:
 	if targets.is_empty():
 		return null
 	
 	if targets.size() == 1:
 		return targets[0]
 	
-	# Aggressive AI: target lowest HP (focus fire)
-	if personality >= AI_AGGRESSIVE:
-		return get_lowest_hp_target(targets)
+	match personality:
+		BattleTypes.AIPersonality.DUMB:
+			# Random target, no strategy
+			return targets[randi() % targets.size()]
+		
+		BattleTypes.AIPersonality.CASUAL:
+			# Slight preference for low HP
+			return select_weighted_by_hp(targets, 0.3)
+		
+		BattleTypes.AIPersonality.VIOLENT:
+			# Always focus lowest HP (kill order)
+			return get_lowest_hp_target(targets)
+		
+		BattleTypes.AIPersonality.DEFENSIVE:
+			# Target highest HP (threat removal) or random
+			if randf() < 0.6:
+				return get_highest_hp_target(targets)
+			else:
+				return targets[randi() % targets.size()]
+		
+		BattleTypes.AIPersonality.INTELLIGENT:
+			# Smart targeting: low HP + status effects + class priority
+			return select_smart_target(enemy, targets)
+		
+		BattleTypes.AIPersonality.FLEXIBLE:
+			# Adapts based on battle state
+			return select_adaptive_target(enemy, targets)
 	
-	# Passive AI: random target
-	if personality <= AI_PASSIVE:
-		return targets[randi() % targets.size()]
-	
-	# Normal AI: weighted random (slight preference for low HP)
-	var weights: Array[float] = []
-	var total_weight = 0.0
-	
-	for target in targets:
-		var hp_percent = float(target.current_hp) / float(target.max_hp) if target.max_hp > 0 else 1.0
-		# Higher weight for lower HP
-		var weight = 2.0 - hp_percent
-		weights.append(weight)
-		total_weight += weight
-	
-	# Weighted random selection
-	var roll = randf() * total_weight
-	var cumulative = 0.0
-	
-	for i in range(weights.size()):
-		cumulative += weights[i]
-		if roll <= cumulative:
-			return targets[i]
-	
-	return targets[targets.size() - 1]
+	# Default: casual
+	return select_weighted_by_hp(targets, 0.3)
 
 ## Gets target with lowest HP percentage
 func get_lowest_hp_target(targets: Array[BattleTypes.BattleActor]) -> BattleTypes.BattleActor:
@@ -104,75 +110,30 @@ func get_lowest_hp_target(targets: Array[BattleTypes.BattleActor]) -> BattleType
 	
 	return lowest
 
-## Decides what action to take
-func decide_action_type(enemy: BattleTypes.BattleActor, target: BattleTypes.BattleActor, personality: float) -> Dictionary:
-	# Check if enemy has skills/attacks available
-	var enemy_resource = enemy.resource as Enemy
-	var has_skills = enemy_resource and enemy_resource.attacks and enemy_resource.attacks.size() > 0
+## Gets target with highest HP percentage
+func get_highest_hp_target(targets: Array[BattleTypes.BattleActor]) -> BattleTypes.BattleActor:
+	var highest = targets[0]
+	var highest_percent = float(highest.current_hp) / float(highest.max_hp) if highest.max_hp > 0 else 0.0
 	
-	# Aggressive AI: always attack or use offensive skills
-	if personality >= AI_AGGRESSIVE:
-		if has_skills and should_use_skill(enemy, personality):
-			var skill = select_offensive_skill(enemy_resource)
-			if skill:
-				return {"type": BattleTypes.ActionType.SKILL, "data": {"skill": skill}}
-		return {"type": BattleTypes.ActionType.ATTACK, "data": {}}
+	for target in targets:
+		var percent = float(target.current_hp) / float(target.max_hp) if target.max_hp > 0 else 0.0
+		if percent > highest_percent:
+			highest = target
+			highest_percent = percent
 	
-	# Passive AI: more likely to defend when low HP
-	if personality <= AI_PASSIVE:
-		if enemy.current_hp < enemy.max_hp * 0.3:
-			return {"type": BattleTypes.ActionType.DEFEND, "data": {}}
-		return {"type": BattleTypes.ActionType.ATTACK, "data": {}}
-	
-	# Normal AI: balanced approach
-	if has_skills and randf() < 0.4:
-		var skill = select_skill(enemy_resource)
-		if skill:
-			return {"type": BattleTypes.ActionType.SKILL, "data": {"skill": skill}}
-	
-	# Default to attack
-	return {"type": BattleTypes.ActionType.ATTACK, "data": {}}
+	return highest
 
-## Checks if enemy should use a skill
-func should_use_skill(enemy: BattleTypes.BattleActor, personality: float) -> bool:
-	# Aggressive AI uses skills more often
-	var chance = 0.5 if personality >= AI_AGGRESSIVE else 0.3
-	return randf() < chance
-
-## Selects an offensive skill
-func select_offensive_skill(enemy_res: Enemy) -> Resource:
-	if not enemy_res or not enemy_res.attacks:
-		return null
+## Weighted selection by HP (higher weight = lower HP)
+func select_weighted_by_hp(targets: Array[BattleTypes.BattleActor], intensity: float) -> BattleTypes.BattleActor:
+	var weights: Array[float] = []
+	var total_weight = 0.0
 	
-	# Prefer damaging skills
-	for attack in enemy_res.attacks:
-		if attack and attack.damage > 0:
-			return attack
-	
-	# Fallback to any skill
-	return enemy_res.attacks[randi() % enemy_res.attacks.size()] if enemy_res.attacks else null
-
-## Selects any available skill
-func select_skill(enemy_res: Enemy) -> Resource:
-	if not enemy_res or not enemy_res.attacks:
-		return null
-	return enemy_res.attacks[randi() % enemy_res.attacks.size()]
-
-## Converts Global.AI enum to personality float
-func get_personality_from_global(global_ai: int) -> float:
-	match global_ai:
-		Global.AI.Dumb, Global.AI.Defensive:
-			return AI_PASSIVE
-		Global.AI.Casual, Global.AI.Intelligent:
-			return AI_NORMAL
-		Global.AI.Violent:
-			return AI_AGGRESSIVE
-		_:
-			return AI_NORMAL
+	for target in targets:
+		var hp_percent = float(target.current_hp) / float(target.max_hp) if target.max_hp > 0 else 1.0
+		var weight = 1.0 + ((1.0 - hp_percent) * intensity * 5.0)
 		weights.append(weight)
 		total_weight += weight
 	
-	# Weighted random selection
 	var roll = randf() * total_weight
 	var cumulative = 0.0
 	
@@ -183,109 +144,233 @@ func get_personality_from_global(global_ai: int) -> float:
 	
 	return targets[targets.size() - 1]
 
-## Decides what action type to use
-func decide_action_type(enemy: Node2D, target: Node2D, personality: float) -> Dictionary:
-	# Check if enemy has skills
-	var skills = enemy.get_skills() if enemy.has_method("get_skills") else []
+## Smart targeting (Intelligent AI)
+func select_smart_target(enemy: BattleTypes.BattleActor, targets: Array[BattleTypes.BattleActor]) -> BattleTypes.BattleActor:
+	var best_target = targets[0]
+	var best_score = 0.0
 	
-	# Aggressive AI: always attack or use offensive skills
-	if personality >= AI_AGGRESSIVE:
-		if not skills.is_empty() and should_use_skill(enemy, skills, true):
-			var skill = select_skill(skills, true)
-			return {"type": BattleTypes.ActionType.SKILL, "data": skill}
+	for target in targets:
+		var score = 0.0
+		
+		# HP factor (lower HP = higher priority)
+		var hp_percent = float(target.current_hp) / float(target.max_hp) if target.max_hp > 0 else 1.0
+		score += (1.0 - hp_percent) * 40.0
+		
+		# Status effect factor (more debuffs = easier kill)
+		var debuff_count = 0
+		for effect in target.status_effects:
+			if not effect.is_positive:
+				debuff_count += 1
+		score += debuff_count * 10.0
+		
+		# Speed factor (faster targets = threat)
+		score += target.speed * 0.1
+		
+		if score > best_score:
+			best_score = score
+			best_target = target
+	
+	return best_target
+
+## Adaptive targeting (Flexible AI - adapts to battle state)
+func select_adaptive_target(enemy: BattleTypes.BattleActor, targets: Array[BattleTypes.BattleActor]) -> BattleTypes.BattleActor:
+	var enemy_res = enemy.resource as Enemy
+	if not enemy_res:
+		return targets[randi() % targets.size()]
+	
+	# Adapt based on enemy's current HP
+	var enemy_hp_percent = float(enemy.current_hp) / float(enemy.max_hp) if enemy.max_hp > 0 else 1.0
+	
+	if enemy_hp_percent < 0.3:
+		# Desperate: go for kill on weakest
+		return get_lowest_hp_target(targets)
+	elif enemy_hp_percent > 0.7:
+		# Confident: target strongest
+		return get_highest_hp_target(targets)
+	else:
+		# Normal: smart targeting
+		return select_smart_target(enemy, targets)
+
+## Decides what action to take based on personality and ALL stats
+func decide_action_type(enemy: BattleTypes.BattleActor, target: BattleTypes.BattleActor, 
+						personality: int, party: Array[BattleTypes.BattleActor], 
+						enemies: Array[BattleTypes.BattleActor]) -> Dictionary:
+	var enemy_res = enemy.resource as Enemy
+	if not enemy_res:
 		return {"type": BattleTypes.ActionType.ATTACK, "data": {}}
 	
-	# Passive AI: might defend or use healing skills
-	if personality <= AI_PASSIVE:
-		if enemy.get_hp_percent() < 0.3 and has_healing_skill(skills):
-			var heal_skill = select_skill(skills, false)
+	var has_skills = enemy_res.attacks and enemy_res.attacks.size() > 0
+	var hp_percent = float(enemy.current_hp) / float(enemy.max_hp) if enemy.max_hp > 0 else 1.0
+	var mp_percent = float(enemy.current_mp) / float(enemy.max_mp) if enemy.max_mp > 0 else 0.0
+	
+	match personality:
+		BattleTypes.AIPersonality.DUMB:
+			# Always attack, rarely uses skills
+			if has_skills and randf() < 0.1 and mp_percent > 0.5:
+				var skill = select_random_skill(enemy_res)
+				if skill:
+					return {"type": BattleTypes.ActionType.SKILL, "data": skill}
+			return {"type": BattleTypes.ActionType.ATTACK, "data": {}}
+		
+		BattleTypes.AIPersonality.CASUAL:
+			# Balanced but conservative
+			if hp_percent < 0.3:
+				return {"type": BattleTypes.ActionType.DEFEND, "data": {}}
+			if has_skills and randf() < 0.3 and mp_percent > 0.4:
+				var skill = select_random_skill(enemy_res)
+				if skill:
+					return {"type": BattleTypes.ActionType.SKILL, "data": skill}
+			return {"type": BattleTypes.ActionType.ATTACK, "data": {}}
+		
+		BattleTypes.AIPersonality.VIOLENT:
+			# Always aggressive, use strongest skills
+			if has_skills and mp_percent > 0.2:
+				var skill = select_best_offensive_skill(enemy_res)
+				if skill:
+					return {"type": BattleTypes.ActionType.SKILL, "data": skill}
+			return {"type": BattleTypes.ActionType.ATTACK, "data": {}}
+		
+		BattleTypes.AIPersonality.DEFENSIVE:
+			# Defend when low HP, use healing/support skills
+			if hp_percent < 0.4:
+				return {"type": BattleTypes.ActionType.DEFEND, "data": {}}
+			if has_skills:
+				var heal_skill = select_healing_skill(enemy_res)
+				if heal_skill and hp_percent < 0.6:
+					return {"type": BattleTypes.ActionType.SKILL, "data": heal_skill}
+			return {"type": BattleTypes.ActionType.ATTACK, "data": {}}
+		
+		BattleTypes.AIPersonality.INTELLIGENT:
+			# Smart decision making based on full stat analysis
+			return make_intelligent_decision(enemy, enemy_res, target, party, hp_percent, mp_percent)
+		
+		BattleTypes.AIPersonality.FLEXIBLE:
+			# Adapts strategy based on entire battle state
+			return make_flexible_decision(enemy, enemy_res, target, party, enemies, hp_percent, mp_percent)
+	
+	# Default
+	return {"type": BattleTypes.ActionType.ATTACK, "data": {}}
+
+## Intelligent decision making
+func make_intelligent_decision(enemy: BattleTypes.BattleActor, enemy_res: Enemy, 
+							   target: BattleTypes.BattleActor, party: Array[BattleTypes.BattleActor],
+							   hp_percent: float, mp_percent: float) -> Dictionary:
+	var has_skills = enemy_res.attacks and enemy_res.attacks.size() > 0
+	
+	# Check if we should heal
+	if hp_percent < 0.5 and has_skills:
+		var heal_skill = select_healing_skill(enemy_res)
+		if heal_skill and mp_percent > 0.3:
 			return {"type": BattleTypes.ActionType.SKILL, "data": heal_skill}
-		
-		if randf() < 0.3:
-			return {"type": BattleTypes.ActionType.DEFEND, "data": {}}
-		
-		return {"type": BattleTypes.ActionType.ATTACK, "data": {}}
 	
-	# Normal AI: balanced approach
-	if not skills.is_empty():
-		if should_use_skill(enemy, skills, false):
-			var skill = select_skill(skills, false)
+	# Check if target is vulnerable (finish off)
+	var target_hp_percent = float(target.current_hp) / float(target.max_hp) if target.max_hp > 0 else 1.0
+	if target_hp_percent < 0.3 and has_skills and mp_percent > 0.2:
+		var skill = select_best_offensive_skill(enemy_res)
+		if skill:
+			return {"type": BattleTypes.ActionType.SKILL, "data": skill}
+	
+	# Use offensive skills strategically
+	if has_skills and mp_percent > 0.4 and randf() < 0.5:
+		var skill = select_best_offensive_skill(enemy_res)
+		if skill:
 			return {"type": BattleTypes.ActionType.SKILL, "data": skill}
 	
 	return {"type": BattleTypes.ActionType.ATTACK, "data": {}}
 
-## Gets the target with lowest HP percentage
-func get_lowest_hp_target(targets: Array) -> Node2D:
-	var lowest_hp = 1.0
-	var lowest_target = null
+## Flexible decision making (adapts to full battle state)
+func make_flexible_decision(enemy: BattleTypes.BattleActor, enemy_res: Enemy,
+							target: BattleTypes.BattleActor, party: Array[BattleTypes.BattleActor],
+							enemies: Array[BattleTypes.BattleActor], hp_percent: float, mp_percent: float) -> Dictionary:
+	var has_skills = enemy_res.attacks and enemy_res.attacks.size() > 0
 	
-	for target in targets:
-		var hp_percent = target.get_hp_percent() if target.has_method("get_hp_percent") else 1.0
-		if hp_percent < lowest_hp:
-			lowest_hp = hp_percent
-			lowest_target = target
+	# Count alive allies
+	var alive_allies = 0
+	for ally in enemies:
+		if ally and not ally.is_dead:
+			alive_allies += 1
 	
-	return lowest_target
+	# Count alive enemies (party)
+	var alive_enemies = 0
+	for p in party:
+		if p and not p.is_dead:
+			alive_enemies += 1
+	
+	# Outnumbered: play defensively
+	if alive_allies < alive_enemies:
+		if hp_percent < 0.5:
+			return {"type": BattleTypes.ActionType.DEFEND, "data": {}}
+		if has_skills:
+			var heal_skill = select_healing_skill(enemy_res)
+			if heal_skill and mp_percent > 0.4:
+				return {"type": BattleTypes.ActionType.SKILL, "data": heal_skill}
+	
+	# Outnumbering: be aggressive
+	if alive_allies > alive_enemies:
+		if has_skills and mp_percent > 0.3:
+			var skill = select_best_offensive_skill(enemy_res)
+			if skill:
+				return {"type": BattleTypes.ActionType.SKILL, "data": skill}
+		return {"type": BattleTypes.ActionType.ATTACK, "data": {}}
+	
+	# Even match: smart play
+	return make_intelligent_decision(enemy, enemy_res, target, party, hp_percent, mp_percent)
 
-## Checks if enemy should use a skill
-func should_use_skill(enemy: Node2D, skills: Array, aggressive: bool) -> bool:
-	var mp = enemy.get_mp() if enemy.has_method("get_mp") else 0
-	var mp_percent = enemy.get_mp_percent() if enemy.has_method("get_mp_percent") else 1.0
-	
-	# Not enough MP
-	if mp <= 0:
-		return false
-	
-	# Aggressive: use skills more often
-	if aggressive:
-		return mp_percent > 0.2
-	
-	# Conservative: save MP for emergencies
-	return mp_percent > 0.5 or enemy.get_hp_percent() < 0.4
+## Selects random skill
+func select_random_skill(enemy_res: Enemy) -> Resource:
+	if not enemy_res or not enemy_res.attacks or enemy_res.attacks.is_empty():
+		return null
+	return enemy_res.attacks[randi() % enemy_res.attacks.size()]
 
-## Checks if enemy has any healing skills
-func has_healing_skill(skills: Array) -> bool:
-	for skill in skills:
-		if skill.get("type") == "heal" or skill.get("target") == "self":
-			return true
-	return false
+## Selects best offensive skill
+func select_best_offensive_skill(enemy_res: Enemy) -> Resource:
+	if not enemy_res or not enemy_res.attacks or enemy_res.attacks.is_empty():
+		return null
+	
+	var best_skill = null
+	var best_power = 0
+	
+	for attack in enemy_res.attacks:
+		if attack and attack.damage > best_power:
+			best_power = attack.damage
+			best_skill = attack
+	
+	return best_skill if best_skill else enemy_res.attacks[0]
 
-## Selects a skill to use
-func select_skill(skills: Array, aggressive: bool) -> Dictionary:
-	if skills.is_empty():
-		return {}
+## Selects healing skill
+func select_healing_skill(enemy_res: Enemy) -> Resource:
+	if not enemy_res or not enemy_res.attacks or enemy_res.attacks.is_empty():
+		return null
 	
-	# Filter usable skills (enough MP)
-	var usable_skills: Array = []
-	for skill in skills:
-		if skill.get("cost", 0) <= 999: # Assume we checked MP already
-			usable_skills.append(skill)
+	for attack in enemy_res.attacks:
+		# Check if skill has healing properties
+		if attack and attack.has_method("get_type"):
+			if attack.call("get_type") == "heal":
+				return attack
+		# Alternative: check property
+		if attack and attack.get("type") == "heal":
+			return attack
+		# Check by name
+		if attack and "heal" in str(attack).to_lower():
+			return attack
 	
-	if usable_skills.is_empty():
-		return {}
-	
-	# Aggressive: pick highest damage skill
-	if aggressive:
-		var max_power = 0
-		var best_skill = usable_skills[0]
-		
-		for skill in usable_skills:
-			var power = skill.get("power", 1.0)
-			if power > max_power:
-				max_power = power
-				best_skill = skill
-		
-		return best_skill
-	
-	# Conservative: pick random usable skill
-	return usable_skills[randi() % usable_skills.size()]
+	return null
 
-## Gets AI personality from string name
-func get_personality_from_name(name: String) -> float:
-	match name.to_lower():
-		"passive":
-			return AI_PASSIVE
-		"aggressive":
-			return AI_AGGRESSIVE
+## Converts Global.AI enum to BattleTypes.AIPersonality
+func get_personality_from_global(global_ai: int) -> int:
+	match global_ai:
+		Global.AI.Dumb:
+			return BattleTypes.AIPersonality.DUMB
+		Global.AI.Casual:
+			return BattleTypes.AIPersonality.CASUAL
+		Global.AI.Violent:
+			return BattleTypes.AIPersonality.VIOLENT
+		Global.AI.Defensive:
+			return BattleTypes.AIPersonality.DEFENSIVE
+		Global.AI.Intelligent:
+			return BattleTypes.AIPersonality.INTELLIGENT
+		Global.AI.Flexible:
+			return BattleTypes.AIPersonality.FLEXIBLE
 		_:
-			return AI_NORMAL
+			return BattleTypes.AIPersonality.CASUAL
+
