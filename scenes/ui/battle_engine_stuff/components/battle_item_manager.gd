@@ -15,10 +15,10 @@ var effect_manager: BattleEffectManager = null
 func _ready():
 	pass
 
-func init_manager(root: Node2D, log: BattleLogger, effects: BattleEffectManager):
+func init_manager(root: Node2D):
 	battle_root = root
-	logger = log
-	effect_manager = effects
+	logger = root.logger
+	effect_manager = root.effect_manager
 
 ## Uses an item
 func use_item(user: Node2D, item: Dictionary, target: Node2D = null) -> bool:

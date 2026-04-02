@@ -373,4 +373,3 @@ func get_personality_from_global(global_ai: int) -> int:
 			return BattleTypes.AIPersonality.FLEXIBLE
 		_:
 			return BattleTypes.AIPersonality.CASUAL
-

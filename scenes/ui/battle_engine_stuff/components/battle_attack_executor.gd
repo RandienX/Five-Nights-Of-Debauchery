@@ -12,13 +12,13 @@ var effect_manager: BattleEffectManager = null
 var logger: BattleLogger = null
 
 func _ready():
-pass
+	pass
 
 func init_manager(root: Node2D):
-battle_root = root
-# Get references from parent
-effect_manager = root.effect_manager if root.has_node("BattleEffectManager") else null
-logger = root.logger if root.has_node("BattleLogger") else null
+	battle_root = root
+	# Get references from parent
+	effect_manager = root.effect_manager if root.has_node("BattleEffectManager") else null
+	logger = root.logger if root.has_node("BattleLogger") else null
 
 ## Executes a basic attack
 func execute_attack(attacker: BattleTypes.BattleActor, target: BattleTypes.BattleActor, is_multi: bool = false) -> Dictionary:
