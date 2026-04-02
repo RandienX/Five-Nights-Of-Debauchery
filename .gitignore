@@ -1,28 +1,34 @@
 ```
 # Godot-specific ignores
 *.import
-*.pid
-*.lock
-export_presets.cfg
-.autoload_register
-.editor
-.godot/
+*.uid
+*.tres
+*.tscn
+*.gdns
+*.gdnlib
+*.import
+*.remap
 
 # Build artifacts
-*.exe
-*.dll
-*.so
-*.dylib
+export_presets.cfg
 
-# Dependencies
-addons/
-res://addons/
-
-# Logs
-*.log
+# Temporary files
 *.tmp
+*.temp
+*.log
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # System files
 .DS_Store
 Thumbs.db
+
+# Environment
+.env
+.env.local
+*.env.*
 ```
