@@ -271,7 +271,8 @@ func player_select_action(action_type: BattleTypes.ActionType, target: BattleTyp
 
 ## Executes a planned action
 func _execute_action(action: BattleTypes.PlannedAction):
-	if not is_instance_valid(action.actor):
+	var actor = _get_actor_by_id(action.source_id)
+	if not actor or actor.is_dead:
 		return
 	
 	state = BattleTypes.BattleState.ANIMATING
@@ -282,21 +283,21 @@ func _execute_action(action: BattleTypes.PlannedAction):
 		BattleTypes.ActionType.ATTACK:
 			var target = _get_target_by_id(action.target_ids)
 			if target:
-				result = attack_executor.execute_attack(action.actor, target)
+				result = attack_executor.execute_attack(actor, target)
 		
 		BattleTypes.ActionType.SKILL:
 			var target = _get_target_by_id(action.target_ids)
-			var skill_data = _get_skill_data(action.actor, action.skill_id)
+			var skill_data = _get_skill_data(actor, action.skill_id)
 			if target and not skill_data.is_empty():
-				result = attack_executor.execute_skill(action.actor, target, skill_data)
+				result = attack_executor.execute_skill(actor, target, skill_data)
 		
 		BattleTypes.ActionType.ITEM:
 			var target = _get_target_by_id(action.target_ids)
 			var item_data = _get_item_data(action.item_id)
-			item_manager.use_item(action.actor, item_data, target)
+			item_manager.use_item(actor, item_data, target)
 		
 		BattleTypes.ActionType.DEFEND:
-			_apply_defend(action.actor)
+			_apply_defend(actor)
 		
 		BattleTypes.ActionType.RUN:
 			_attempt_escape()
@@ -339,9 +340,7 @@ func _execute_action_from_dict(action_dict: Dictionary):
 func _execute_player_action(actor: BattleTypes.BattleActor):
 	# Default to attack for now
 	var target = _get_random_enemy_target()
-	var action = BattleTypes.PlannedAction.new()
-	action.type = BattleTypes.ActionType.ATTACK
-	action.source_id = actor.id
+	var action = BattleTypes.PlannedAction.new(actor.id, BattleTypes.ActionType.ATTACK)
 	if target:
 		action.target_ids = [target.id]
 	
@@ -358,8 +357,11 @@ func _get_skill_data(actor: BattleTypes.BattleActor, skill_id: String) -> Dictio
 	if actor.resource is Party:
 		var p: Party = actor.resource as Party
 		for skill in p.skills:
-			if skill and (skill.skill_id == skill_id or skill.has_method("get_skill_id") and skill.call("get_skill_id") == skill_id):
-				return skill
+			if skill and skill is Resource:
+				if skill.has_property("skill_id") and skill.get("skill_id") == skill_id:
+					return skill
+				elif skill.has_method("get_skill_id") and skill.call("get_skill_id") == skill_id:
+					return skill
 	return {}
 
 ## Gets item data
@@ -399,7 +401,8 @@ func _execute_planned_actions():
 	
 	var action = action_planner.get_next_action()
 	while action:
-		if action.actor and not action.actor.is_dead:
+		var actor = _get_actor_by_id(action.source_id)
+		if actor and not actor.is_dead:
 			await _execute_action(action)
 			
 			# Check end conditions after each action
@@ -493,6 +496,13 @@ func _get_target_by_id(target_ids: Array[String]) -> BattleTypes.BattleActor:
 		return null
 	for actor in battle_actors:
 		if actor.id == target_ids[0]:
+			return actor
+	return null
+
+## Helper to get actor by ID
+func _get_actor_by_id(actor_id: String) -> BattleTypes.BattleActor:
+	for actor in battle_actors:
+		if actor.id == actor_id:
 			return actor
 	return null
 

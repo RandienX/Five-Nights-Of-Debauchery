@@ -24,16 +24,12 @@ func start_planning(party: Array[BattleTypes.BattleActor]):
 	# Pre-create placeholder actions for each party member
 	for member in party:
 		if member and not member.is_dead:
-			var action = BattleTypes.PlannedAction.new()
-			action.type = BattleTypes.ActionType.ATTACK
-			action.source_id = member.id
+			var action = BattleTypes.PlannedAction.new(member.id, BattleTypes.ActionType.ATTACK)
 			planned_actions.append(action)
 
 ## Plans an action for the current party member being planned
 func plan_action(actor: BattleTypes.BattleActor, type: BattleTypes.ActionType, target: BattleTypes.BattleActor = null, skill_id: String = "", item_id: String = ""):
-	var action = BattleTypes.PlannedAction.new()
-	action.type = type
-	action.source_id = actor.id
+	var action = BattleTypes.PlannedAction.new(actor.id, type)
 	if target:
 		action.target_ids = [target.id]
 	action.skill_id = skill_id
