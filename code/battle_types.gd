@@ -2,9 +2,9 @@ class_name BattleTypes
 extends RefCounted
 
 # Enums
-enum BattleState { STARTING, PLANNING, EXECUTING, VICTORY, DEFEAT, ESCAPED }
+enum BattleState { STARTING, PLANNING, EXECUTING, ANIMATING, VICTORY, DEFEAT, ESCAPED }
 enum ActionMenuState { ROOT, SKILL, ITEM, TARGET_SELECT, CONFIRM }
-enum ActionType { ATTACK, SKILL, ITEM, DEFEND, ESCAPE, NONE }
+enum ActionType { ATTACK, SKILL, ITEM, DEFEND, RUN, NONE }
 enum TargetType { SINGLE_ENEMY, ALL_ENEMIES, SINGLE_ALLY, ALL_ALLIES, SELF, NONE }
 enum AIPersonality { DUMB, CASUAL, VIOLENT, DEFENSIVE, INTELLIGENT, FLEXIBLE }
 
@@ -39,29 +39,31 @@ class BattleActor:
 		
 		# Extract data based on resource type
 		if res is Party:
-			id = res.character_id
-			name = res.character_name
-			max_hp = res.max_hp
-			current_hp = res.current_hp
-			max_mp = res.max_mp
-			current_mp = res.current_mp
-			speed = res.speed
-			attack = res.attack
-			defense = res.defense
-			magic = res.magic
-			spirit = res.spirit
+			var p: Party = res as Party
+			id = p.name if p.name != "" else "party_" + str(p.get_instance_id())
+			name = p.name
+			max_hp = p.max_stats.get("hp", 100)
+			current_hp = p.hp
+			max_mp = p.max_stats.get("mp", 50)
+			current_mp = p.mp
+			speed = p.base_stats.get("ai", 10)  # Using 'ai' stat as speed
+			attack = p.base_stats.get("atk", 10)
+			defense = p.base_stats.get("def", 5)
+			magic = p.base_stats.get("atk", 10)  # Fallback
+			spirit = p.base_stats.get("def", 5)  # Fallback
 		elif res is Enemy:
-			id = res.enemy_id
-			name = res.enemy_name
-			max_hp = res.max_hp
-			current_hp = res.current_hp
-			max_mp = res.max_mp # Enemies might have MP
-			current_mp = res.current_mp
-			speed = res.speed
-			attack = res.attack
-			defense = res.defense
-			magic = res.magic
-			spirit = res.spirit
+			var e: Enemy = res as Enemy
+			id = e.name if e.name != "" else "enemy_" + str(e.get_instance_id())
+			name = e.name
+			max_hp = e.max_hp
+			current_hp = e.hp
+			max_mp = e.max_mp
+			current_mp = e.mp
+			speed = e.ai if e.has_method("get_ai") or e.has_property("ai") else 10
+			attack = e.damage
+			defense = e.defense
+			magic = e.damage  # Fallback
+			spirit = e.defense  # Fallback
 			
 	func take_damage(amount: int):
 		current_hp = max(0, current_hp - amount)
