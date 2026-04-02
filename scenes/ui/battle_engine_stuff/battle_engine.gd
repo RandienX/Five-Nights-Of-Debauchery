@@ -203,7 +203,7 @@ func _start_next_turn():
 	
 	if not current_actor:
 		# Round complete, recalculate initiative
-		initiative_manager.reset_round(party_members, enemy_members)
+		initiative_manager.reset_round(battle_actors)
 		current_actor = initiative_manager.get_next_actor()
 	
 	if not current_actor:
@@ -223,25 +223,27 @@ func _start_next_turn():
 ## Handles player turn
 func _handle_player_turn():
 	if enable_planning_phase:
-		state = BattleTypes.BattleState.PLAYER_TURN
-		action_planner.start_planning(party_members)
+		state = BattleTypes.BattleState.PLANNING
+		action_planner.start_planning(battle_actors.filter(func(a): return not a.is_enemy))
 		# UI should show action menu here
 	else:
 		_execute_player_action(current_actor)
 
 ## Handles enemy turn
 func _handle_enemy_turn():
-	state = BattleTypes.BattleState.ENEMY_TURN
+	state = BattleTypes.BattleState.EXECUTING
 	
-	# Get enemy AI personality (default to normal)
-	var personality = BattleAIManager.AI_NORMAL
-	if current_actor.has_method("get_ai_personality"):
-		personality = current_actor.get_ai_personality()
-	elif current_actor.has("ai_personality"):
-		personality = ai_manager.get_personality_from_name(current_actor.ai_personality)
+	# Get enemy AI personality from Global.AI enum
+	var global_ai = Global.AI.Casual  # Default
+	if current_actor.resource is Enemy:
+		var enemy_res = current_actor.resource as Enemy
+		if enemy_res.has_property("ai_type") or enemy_res.has_method("get_ai_type"):
+			global_ai = enemy_res.get("ai_type") if enemy_res.has_property("ai_type") else enemy_res.call("get_ai_type")
+	
+	var personality = ai_manager.get_personality_from_global(global_ai)
 	
 	# Decide action
-	var action = ai_manager.decide_action(current_actor, party_members, enemy_members, personality)
+	var action = ai_manager.decide_action(current_actor, battle_actors.filter(func(a): return not a.is_enemy), battle_actors.filter(func(a): return a.is_enemy), personality)
 	
 	if not action.is_empty():
 		await _execute_action(action)
@@ -295,16 +297,19 @@ func _execute_action(action: BattleTypes.PlannedAction):
 			_attempt_escape()
 	
 	action_executed.emit(action)
-	state = BattleTypes.BattleState.PLAYER_TURN if is_player_phase else BattleTypes.BattleState.ENEMY_TURN
+	state = BattleTypes.BattleState.PLANNING if is_player_phase else BattleTypes.BattleState.EXECUTING
 
 ## Executes a player action directly (no planning phase)
-func _execute_player_action(actor: Node2D):
+func _execute_player_action(actor: BattleTypes.BattleActor):
 	# Default to attack for now
 	var target = _get_random_enemy_target()
-	var action = BattleTypes.PlannedAction.new(actor, BattleTypes.ActionType.ATTACK)
-	action.target = target
+	var action = BattleTypes.PlannedAction.new()
+	action.type = BattleTypes.ActionType.ATTACK
+	action.source_id = actor.id
+	if target:
+		action.target_ids = [target.id]
 	
-	await _execute_action(action)
+	await _execute_action({"actor": actor, "type": BattleTypes.ActionType.ATTACK, "target": target, "data": {}})
 
 ## Gets skill data from actor
 func _get_skill_data(actor: Node2D, skill_id: String) -> Dictionary:

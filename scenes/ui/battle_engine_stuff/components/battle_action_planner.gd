@@ -16,28 +16,33 @@ func _ready():
 	pass
 
 ## Starts the planning phase
-func start_planning(party: Array):
+func start_planning(party: Array[BattleTypes.BattleActor]):
 	planned_actions.clear()
 	current_plan_index = 0
 	is_planning = true
 	
 	# Pre-create placeholder actions for each party member
 	for member in party:
-		if is_instance_valid(member) and not member.is_dead():
-			var action = BattleTypes.PlannedAction.new(member, BattleTypes.ActionType.ATTACK)
+		if member and not member.is_dead:
+			var action = BattleTypes.PlannedAction.new()
+			action.type = BattleTypes.ActionType.ATTACK
+			action.source_id = member.id
 			planned_actions.append(action)
 
 ## Plans an action for the current party member being planned
-func plan_action(actor: Node2D, type: BattleTypes.ActionType, target: Node2D = null, skill_id: String = "", item_id: String = ""):
-	var action = BattleTypes.PlannedAction.new(actor, type)
-	action.target = target
+func plan_action(actor: BattleTypes.BattleActor, type: BattleTypes.ActionType, target: BattleTypes.BattleActor = null, skill_id: String = "", item_id: String = ""):
+	var action = BattleTypes.PlannedAction.new()
+	action.type = type
+	action.source_id = actor.id
+	if target:
+		action.target_ids = [target.id]
 	action.skill_id = skill_id
 	action.item_id = item_id
 	
 	# Find existing action for this actor or add new
 	var found_index = -1
 	for i in range(planned_actions.size()):
-		if planned_actions[i].actor == actor:
+		if planned_actions[i].source_id == actor.id:
 			found_index = i
 			break
 	
@@ -79,7 +84,7 @@ func is_planning_complete() -> bool:
 	# Count valid party members
 	var valid_members = 0
 	for action in planned_actions:
-		if is_instance_valid(action.actor) and not action.actor.is_dead():
+		if action.source_id != "" and not _is_actor_dead(action.source_id):
 			valid_members += 1
 	
 	return planned_actions.size() >= valid_members and valid_members > 0

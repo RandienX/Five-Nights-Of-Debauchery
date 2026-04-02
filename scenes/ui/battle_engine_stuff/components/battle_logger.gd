@@ -33,9 +33,10 @@ func add_message(text: String, color: String = "#FFFFFF"):
 	return formatted
 
 ## Adds a damage message
-func add_damage_message(attacker: String, defender: String, damage: int, is_critical: bool = false):
+func add_damage_message(attacker: String, defender: String, damage: int, is_critical: bool = false, skill_name: String = ""):
 	var crit_text = " [color=#FFD700](CRITICAL!)[/color]" if is_critical else ""
-	var msg = "%s attacks %s for [color=#FF6B6B]%d[/color] damage%s" % [attacker, defender, damage, crit_text]
+	var attack_text = skill_name if skill_name != "" else "attacks"
+	var msg = "%s %s %s for [color=#FF6B6B]%d[/color] damage%s" % [attacker, attack_text, defender, damage, crit_text]
 	return add_message(msg)
 
 ## Adds a heal message
