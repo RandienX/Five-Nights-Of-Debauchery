@@ -47,6 +47,7 @@ const PARTY_BATTLE_FACE_SCENE: PackedScene = preload("res://scenes/ui/battle_eng
 func _ready():
 	_initialize_components()
 	_connect_signals()
+	_setup_enemy_ui()
 	_start_battle_from_resource()
 
 ## Initializes all components
@@ -197,6 +198,55 @@ func _setup_party_ui():
 	current_party_plan_index = 0
 	_update_who_moves_indicator()
 
+## Sets up the enemy UI with sprites and HP bars
+func _setup_enemy_ui():
+	const MAX_ENEMIES = 5
+	for e in range(MAX_ENEMIES):
+		var path = "Control/enemy_ui/enemies/enemy" + str(e + 1)
+		var enemy_key = 'enemy_pos' + str(e) if e > 0 else 'enemy_pos0'
+		
+		var enemy_data = null
+		if battle:
+			if battle.has_property(enemy_key) or battle.has_method("get_" + enemy_key):
+				enemy_data = battle.get(enemy_key)
+		
+		var node = get_node_or_null(path)
+		if node and enemy_data:
+			# Set enemy sprite texture
+			if enemy_data.has_property("battleSprite") or enemy_data.has_method("get_battleSprite"):
+				node.texture = enemy_data.battleSprite
+			
+			# Setup HP bar
+			var prog = node.get_node_or_null("ProgressBar")
+			if prog:
+				prog.max_value = enemy_data.max_hp
+				prog.value = enemy_data.hp
+				prog.visible = true
+			
+			# Store reference to enemy node for updates
+			node.set_meta("enemy_resource", enemy_data)
+			
+			# Ensure effect container exists
+			_ensure_effect_container(node)
+		elif node:
+			# Hide enemy if no data
+			node.visible = false
+			var prog = node.get_node_or_null("ProgressBar")
+			if prog:
+				prog.visible = false
+
+func _ensure_effect_container(parent: Node) -> void:
+	var effect_cont = parent.get_node_or_null("EffectContainer")
+	if not effect_cont:
+		effect_cont = GridContainer.new()
+		effect_cont.name = "EffectContainer"
+		effect_cont.columns = 4
+		effect_cont.add_theme_constant_override("h_separation", 4)
+		effect_cont.add_theme_constant_override("v_separation", 4)
+		effect_cont.custom_minimum_size = Vector2(128, 64)
+		effect_cont.position = Vector2(0, 64)
+		parent.add_child(effect_cont)
+
 ## Starts the next turn
 func _start_next_turn():
 	current_actor = initiative_manager.get_next_actor()
@@ -272,7 +322,7 @@ func player_select_action(action_type: BattleTypes.ActionType, target: BattleTyp
 ## Executes a planned action
 func _execute_action(action: BattleTypes.PlannedAction):
 	var actor = _get_actor_by_id(action.source_id)
-	if not actor or actor.is_dead:
+	if not actor or _is_actor_dead(actor):
 		return
 	
 	state = BattleTypes.BattleState.ANIMATING
@@ -284,17 +334,23 @@ func _execute_action(action: BattleTypes.PlannedAction):
 			var target = _get_target_by_id(action.target_ids)
 			if target:
 				result = attack_executor.execute_attack(actor, target)
+				# Update HP display after attack
+				_update_enemy_hp_display()
 		
 		BattleTypes.ActionType.SKILL:
 			var target = _get_target_by_id(action.target_ids)
 			var skill_data = _get_skill_data(actor, action.skill_id)
 			if target and not skill_data.is_empty():
 				result = attack_executor.execute_skill(actor, target, skill_data)
+				# Update HP display after skill
+				_update_enemy_hp_display()
 		
 		BattleTypes.ActionType.ITEM:
 			var target = _get_target_by_id(action.target_ids)
 			var item_data = _get_item_data(action.item_id)
 			item_manager.use_item(actor, item_data, target)
+			# Update HP display after item use
+			_update_enemy_hp_display()
 		
 		BattleTypes.ActionType.DEFEND:
 			_apply_defend(actor)
@@ -384,11 +440,65 @@ func _get_item_data(item_id: String) -> Dictionary:
 ## Applies defend action
 func _apply_defend(actor: BattleTypes.BattleActor):
 	# Add defend status effect via effect_manager
-	if effect_manager and actor.sprite:
-		effect_manager.apply_defend(actor.sprite)
+	if effect_manager:
+		# Find the enemy node if this is an enemy
+		var sprite_node = null
+		if actor.is_enemy:
+			# Find enemy node by name pattern
+			for i in range(5):
+				var path = "Control/enemy_ui/enemies/enemy" + str(i + 1)
+				var node = get_node_or_null(path)
+				if node and node.has_meta("enemy_resource") and node.get_meta("enemy_resource") == actor.resource:
+					sprite_node = node
+					break
+		else:
+			# For party members, use their battle face if available
+			if party_battle_faces.size() > 0 and actor.id in [a.id for a in battle_actors if not a.is_enemy]:
+				var idx = 0
+				for a in battle_actors:
+					if not a.is_enemy and a.id == actor.id:
+						if idx < party_battle_faces.size():
+							sprite_node = party_battle_faces[idx]
+						break
+					elif not a.is_enemy:
+						idx += 1
+		
+		if sprite_node:
+			effect_manager.apply_defend(sprite_node)
 	
 	if logger:
 		logger.add_message("%s is defending!" % [actor.name], "#90EE90")
+
+## Updates enemy HP bars after damage/healing
+func _update_enemy_hp_display():
+	const MAX_ENEMIES = 5
+	for e in range(MAX_ENEMIES):
+		var path = "Control/enemy_ui/enemies/enemy" + str(e + 1)
+		var enemy_key = 'enemy_pos' + str(e) if e > 0 else 'enemy_pos0'
+		
+		var node = get_node_or_null(path)
+		if node and battle and battle.has_property(enemy_key):
+			var enemy_data = battle.get(enemy_key)
+			if enemy_data:
+				var prog = node.get_node_or_null("ProgressBar")
+				if prog:
+					prog.max_value = enemy_data.max_hp
+					prog.value = max(0, enemy_data.hp)
+				
+				# Update effect container
+				_update_effect_container(node, enemy_data)
+
+## Updates status effect icons on enemy
+func _update_effect_container(parent: Node, enemy_data: Resource):
+	var effect_cont = parent.get_node_or_null("EffectContainer")
+	if not effect_cont:
+		return
+	
+	# Clear existing effects
+	for child in effect_cont.get_children():
+		child.queue_free()
+	
+	# TODO: Add status effect icons from enemy_data.effects if available
 
 ## Attempts to escape from battle
 func _attempt_escape():
@@ -455,6 +565,17 @@ func _execute_enemy_actions():
 
 ## Checks for battle end conditions
 func _check_end_conditions() -> bool:
+	# Update actor death states from resources
+	for actor in battle_actors:
+		if actor.resource is Enemy:
+			var enemy_data = actor.resource as Enemy
+			actor.current_hp = enemy_data.hp
+			actor.is_dead = enemy_data.hp <= 0
+		elif actor.resource is Party:
+			var party_data = actor.resource as Party
+			actor.current_hp = party_data.hp
+			actor.is_dead = party_data.hp <= 0
+	
 	if end_checker.check_victory(enemy_members):
 		return true
 	
@@ -482,6 +603,8 @@ func _on_defeat():
 ## Called when a turn starts
 func _on_turn_started(actor: BattleTypes.BattleActor):
 	current_actor = actor
+	# Update enemy HP display when turn starts
+	_update_enemy_hp_display()
 
 ## Gets party members
 func get_party_members() -> Array[Resource]:
@@ -517,6 +640,10 @@ func _get_actor_by_id(actor_id: String) -> BattleTypes.BattleActor:
 		if actor.id == actor_id:
 			return actor
 	return null
+
+## Helper to check if actor is dead
+func _is_actor_dead(actor: BattleTypes.BattleActor) -> bool:
+	return actor.is_dead or actor.current_hp <= 0
 
 ## Updates the "who moves" indicator shader effect on the current party member
 func _update_who_moves_indicator():
@@ -572,3 +699,22 @@ func get_current_planning_party() -> Resource:
 			return actor.resource
 	
 	return party_members[current_party_plan_index] if current_party_plan_index < party_members.size() else null
+
+## Process function for continuous updates
+func _process(delta: float) -> void:
+	_update_enemy_hp_display()
+
+## Input handler for battle controls
+func _input(event: InputEvent) -> void:
+	if state != BattleTypes.BattleState.PLANNING:
+		return
+	
+	if not is_player_phase:
+		return
+	
+	if event.is_action_pressed("ui_up"):
+		previous_planning_index()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("ui_down"):
+		advance_planning_index()
+		get_viewport().set_input_as_handled()
