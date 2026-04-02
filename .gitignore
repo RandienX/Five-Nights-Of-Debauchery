@@ -4,13 +4,11 @@
 __pycache__/
 *.o
 *.obj
-*.so
-*.dll
 *.exe
+*.dll
+*.so
 *.class
 *.out
-*.a
-*.lib
 
 # Dependencies
 node_modules/
@@ -26,24 +24,32 @@ build/
 target/
 .gradle/
 
-# Caches
-.mypy_cache/
-.pytest_cache/
-coverage/
-htmlcov/
+# Python specific
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
 .coverage
+htmlcov/
+.coverage.*
+.pytest_cache/
+.mypy_cache/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
 
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
-
-# System files
-.DS_Store
-Thumbs.db
-*.log
-*.tmp
 
 # Compressed files
 *.zip

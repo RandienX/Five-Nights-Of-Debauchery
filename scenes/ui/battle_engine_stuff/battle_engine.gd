@@ -24,6 +24,7 @@ var attack_executor: BattleAttackExecutor
 var end_checker: BattleEndConditionChecker
 var ai_manager: BattleAIManager
 var item_manager: BattleItemManager
+var ui_manager: BattleUIManager
 
 # Battle state - Now uses Resource arrays, not Node2D
 var state: BattleTypes.BattleState = BattleTypes.BattleState.STARTING
@@ -94,9 +95,14 @@ func _initialize_components():
 		item_manager.name = "BattleItemManager"
 		add_child(item_manager)
 	
+	if not ui_manager:
+		ui_manager = BattleUIManager.new()
+		ui_manager.name = "BattleUIManager"
+		add_child(ui_manager)
+	
 	# Initialize components with references to main engine
 	for comp in [initiative_manager, action_planner, effect_manager, logger, 
-				 attack_executor, end_checker, ai_manager, item_manager]:
+				 attack_executor, end_checker, ai_manager, item_manager, ui_manager]:
 		if comp.has_method("init_manager"):
 			comp.init_manager(self)
 
@@ -111,6 +117,12 @@ func _connect_signals():
 	if end_checker:
 		end_checker.victory_achieved.connect(_on_victory)
 		end_checker.defeat_suffered.connect(_on_defeat)
+	
+	if ui_manager:
+		ui_manager.action_button_pressed.connect(_on_action_button_pressed)
+		ui_manager.skill_selected.connect(_on_skill_selected)
+		ui_manager.item_selected.connect(_on_item_selected)
+		ui_manager.cancel_pressed.connect(_on_cancel_pressed)
 
 ## Starts battle from the exported Battle resource
 func _start_battle_from_resource():
@@ -276,7 +288,9 @@ func _handle_player_turn():
 	if enable_planning_phase:
 		state = BattleTypes.BattleState.PLANNING
 		action_planner.start_planning(battle_actors.filter(func(a): return not a.is_enemy))
-		# UI should show action menu here
+		# Show action menu via UI manager
+		if ui_manager:
+			ui_manager.set_current_party_member(get_current_planning_party())
 	else:
 		_execute_player_action(current_actor)
 
