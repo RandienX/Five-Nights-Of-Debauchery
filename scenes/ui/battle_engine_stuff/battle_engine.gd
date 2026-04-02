@@ -2,37 +2,47 @@ class_name BattleEngine
 extends Node2D
 
 ## Main Battle Engine - Orchestrates all battle components
-## Simplified architecture with component-based design
+## Works directly with Party and Enemy resources (no Node2D wrappers)
+## Uses partyBattleFace.tscn for initiative display and "who moves" indicator
 
 # Signals
 signal battle_started()
 signal battle_ended(victory: bool)
-signal turn_changed(actor: Node2D, is_player: bool)
+signal turn_changed(actor_resource: Resource, is_player: bool)
 signal action_executed(action_data: Dictionary)
+signal planning_index_changed(index: int)
 
 # Exported battle configuration
 @export var battle: Battle
 
-# Component references
-@onready var initiative_manager: BattleInitiativeManager = $BattleInitiativeManager if has_node("BattleInitiativeManager") else null
-@onready var action_planner: BattleActionPlanner = $BattleActionPlanner if has_node("BattleActionPlanner") else null
-@onready var effect_manager: BattleEffectManager = $BattleEffectManager if has_node("BattleEffectManager") else null
-@onready var logger: BattleLogger = $BattleLogger if has_node("BattleLogger") else null
-@onready var attack_executor: BattleAttackExecutor = $BattleAttackExecutor if has_node("BattleAttackExecutor") else null
-@onready var end_checker: BattleEndConditionChecker = $BattleEndConditionChecker if has_node("BattleEndConditionChecker") else null
-@onready var ai_manager: BattleAIManager = $BattleAIManager if has_node("BattleAIManager") else null
-@onready var item_manager: BattleItemManager = $BattleItemManager if has_node("BattleItemManager") else null
+# Component references (auto-created if not in scene)
+var initiative_manager: BattleInitiativeManager
+var action_planner: BattleActionPlanner
+var effect_manager: BattleEffectManager
+var logger: BattleLogger
+var attack_executor: BattleAttackExecutor
+var end_checker: BattleEndConditionChecker
+var ai_manager: BattleAIManager
+var item_manager: BattleItemManager
 
-# Battle state
-var state: BattleTypes.State = BattleTypes.State.INIT
-var party_members: Array[Node2D] = []
-var enemy_members: Array[Node2D] = []
-var current_actor: Node2D = null
+# Battle state - Now uses Resource arrays, not Node2D
+var state: BattleTypes.BattleState = BattleTypes.BattleState.STARTING
+var party_members: Array[Resource] = []  # Array of Party resources
+var enemy_members: Array[Resource] = []  # Array of Enemy resources
+var battle_actors: Array[BattleTypes.BattleActor] = []  # Unified actor data
+var current_actor: BattleTypes.BattleActor = null
 var is_player_phase: bool = true
+
+# Planning phase state
+var current_party_plan_index: int = 0
+var party_battle_faces: Array[Control] = []  # References to partyBattleFace instances
 
 # Configuration
 var enable_planning_phase: bool = true
 var escape_chance: float = 0.7
+
+# Preloaded scenes
+const PARTY_BATTLE_FACE_SCENE: PackedScene = preload("res://scenes/ui/battle_engine_stuff/partyBattleFace.tscn")
 
 func _ready():
 	_initialize_components()
@@ -41,7 +51,7 @@ func _ready():
 
 ## Initializes all components
 func _initialize_components():
-	# Create components if they don't exist
+	# Create components if they don't exist as nodes
 	if not initiative_manager:
 		initiative_manager = BattleInitiativeManager.new()
 		initiative_manager.name = "BattleInitiativeManager"
@@ -82,13 +92,11 @@ func _initialize_components():
 		item_manager.name = "BattleItemManager"
 		add_child(item_manager)
 	
-	# Initialize components with references
-	logger.init_manager(self)
-	attack_executor.init_manager(self, effect_manager, logger)
-	end_checker.init_manager(self, logger)
-	ai_manager.init_manager(self, logger, effect_manager)
-	item_manager.init_manager(self, logger, effect_manager)
-	initiative_manager.init_manager(self)
+	# Initialize components with references to main engine
+	for comp in [initiative_manager, action_planner, effect_manager, logger, 
+				 attack_executor, end_checker, ai_manager, item_manager]:
+		if comp.has_method("init_manager"):
+			comp.init_manager(self)
 
 ## Connects component signals
 func _connect_signals():
@@ -108,10 +116,13 @@ func _start_battle_from_resource():
 		push_warning("BattleEngine: No battle resource assigned!")
 		return
 	
-	var party = Global.party.duplicate(true)
-	var enemies = []
+	# Get party from Global (deep copy to preserve original)
+	var party: Array[Resource] = []
+	for p in Global.party:
+		party.append(p.duplicate(true))
 	
 	# Collect enemies from battle resource
+	var enemies: Array[Resource] = []
 	if battle.enemy_pos0: enemies.append(battle.enemy_pos0)
 	if battle.enemy_pos1: enemies.append(battle.enemy_pos1)
 	if battle.enemy_pos2: enemies.append(battle.enemy_pos2)
@@ -123,141 +134,68 @@ func _start_battle_from_resource():
 		push_warning("BattleEngine: No enemies in battle resource!")
 		return
 	
-	# Convert enemy resources to Node2D wrappers for battle system
-	var enemy_instances = []
-	for i in range(enemies.size()):
-		if enemies[i]:
-			var enemy_node = _create_enemy_node(enemies[i], i)
-			if enemy_node:
-				enemy_instances.append(enemy_node)
-	
-	start_battle(party, enemy_instances)
+	# Start battle with resource arrays directly (no Node2D wrappers needed)
+	start_battle(party, enemies)
 
-## Creates a Node2D wrapper for an enemy resource
-func _create_enemy_node(enemy_res: Enemy, index: int) -> Node2D:
-	var node = Node2D.new()
-	node.name = "Enemy_%d_%s" % [index, enemy_res.name]
-	
-	# Copy all enemy resource properties to the node
-	node.set_meta("enemy_resource", enemy_res)
-	node.set_meta("hp", enemy_res.hp)
-	node.set_meta("max_hp", enemy_res.max_hp)
-	node.set_meta("mp", enemy_res.mp)
-	node.set_meta("max_mp", enemy_res.max_mp)
-	node.set_meta("damage", enemy_res.damage)
-	node.set_meta("defense", enemy_res.defense)
-	node.set_meta("ai_type", enemy_res.ai_type)
-	node.set_meta("enemy_name", enemy_res.name)
-	node.set_meta("xp_reward", enemy_res.xp_reward)
-	node.set_meta("battle_sprite", enemy_res.battleSprite)
-	node.set_meta("effects", enemy_res.effects.duplicate(true))
-	node.set_meta("attacks", enemy_res.attacks)
-	node.set_meta("items", enemy_res.items)
-	
-	# Add helper methods via script-like behavior
-	node.set_script(_create_enemy_wrapper_script())
-	
-	# Add to scene tree for visualization if needed
-	var enemies_container = $Control/enemy_ui/enemies if has_node("Control/enemy_ui/enemies") else null
-	if enemies_container and index < enemies_container.get_child_count():
-		var ui_slot = enemies_container.get_child(index)
-		if ui_slot.has_node("ProgressBar"):
-			var hp_bar = ui_slot.get_node("ProgressBar")
-			hp_bar.max_value = enemy_res.max_hp
-			hp_bar.value = enemy_res.hp
-			# Store reference for updates
-			node.set_meta("hp_bar", hp_bar)
-		
-		if ui_slot.has_node("Sprite2D") or ui_slot.has_node("TextureRect"):
-			var sprite = ui_slot.get_node("Sprite2D") if ui_slot.has_node("Sprite2D") else ui_slot
-			if enemy_res.battleSprite:
-				if sprite is TextureRect:
-					sprite.texture = enemy_res.battleSprite
-	
-	return node
-
-## Creates a script for enemy wrapper functionality
-func _create_enemy_wrapper_script() -> Script:
-	var script = GDScript.new()
-	script.source_code = """
-extends Node2D
-
-func get_character_name() -> String:
-	return get_meta("enemy_name") if has_meta("enemy_name") else "Enemy"
-
-func get_hp() -> int:
-	return get_meta("hp") if has_meta("hp") else 0
-
-func set_hp(value: int) -> void:
-	set_meta("hp", value)
-	if has_meta("hp_bar"):
-		var bar = get_meta("hp_bar")
-		if bar:
-			bar.value = value
-
-func get_max_hp() -> int:
-	return get_meta("max_hp") if has_meta("max_hp") else 0
-
-func get_mp() -> int:
-	return get_meta("mp") if has_meta("mp") else 0
-
-func set_mp(value: int) -> void:
-	set_meta("mp", value)
-
-func get_max_mp() -> int:
-	return get_meta("max_mp") if has_meta("max_mp") else 0
-
-func get_damage() -> int:
-	return get_meta("damage") if has_meta("damage") else 0
-
-func get_defense() -> int:
-	return get_meta("defense") if has_meta("defense") else 0
-
-func get_ai_personality() -> int:
-	return get_meta("ai_type") if has_meta("ai_type") else Global.AI.Casual
-
-func is_dead() -> bool:
-	return get_hp() <= 0
-
-func take_damage(amount: int) -> int:
-	var actual_damage = max(1, amount - get_defense())
-	var new_hp = max(0, get_hp() - actual_damage)
-	set_hp(new_hp)
-	return actual_damage
-
-func heal(amount: int) -> void:
-	var new_hp = min(get_max_hp(), get_hp() + amount)
-	set_hp(new_hp)
-
-func get_effects() -> Dictionary:
-	return get_meta("effects") if has_meta("effects") else {}
-
-func get_attacks() -> Array:
-	return get_meta("attacks") if has_meta("attacks") else []
-
-func get_xp_reward() -> int:
-	return get_meta("xp_reward") if has_meta("xp_reward") else 0
-"""
-	return script
-
-## Starts a new battle
-func start_battle(party: Array, enemies: Array):
+## Starts a new battle with Party and Enemy resources
+func start_battle(party: Array[Resource], enemies: Array[Resource]):
 	party_members = party
 	enemy_members = enemies
 	
-	state = BattleTypes.State.INIT
+	# Create unified battle actor data from resources
+	battle_actors.clear()
+	for p in party_members:
+		var actor = BattleTypes.BattleActor.new(p, false)
+		battle_actors.append(actor)
+	
+	for e in enemy_members:
+		var actor = BattleTypes.BattleActor.new(e, true)
+		battle_actors.append(actor)
+	
+	state = BattleTypes.BattleState.STARTING
 	
 	# Clear previous battle data
-	effect_manager.clear_all()
-	logger.clear_log()
+	if effect_manager:
+		effect_manager.clear_all()
+	if logger:
+		logger.clear_log()
 	
-	# Calculate initiative
-	initiative_manager.calculate_initiative(party_members, enemy_members)
+	# Calculate initiative order
+	if initiative_manager:
+		initiative_manager.calculate_initiative(battle_actors)
+	
+	# Setup party UI with battle faces
+	_setup_party_ui()
 	
 	battle_started.emit()
 	
 	# Start first turn
 	_start_next_turn()
+
+## Sets up the party UI using partyBattleFace.tscn instances
+func _setup_party_ui():
+	# Find the party container in the scene tree
+	var party_container = get_node_or_null("Control/gui/HBoxContainer2/party")
+	if not party_container:
+		return
+	
+	# Clear existing children
+	for child in party_container.get_children():
+		child.queue_free()
+	
+	party_battle_faces.clear()
+	
+	# Create a battle face for each party member in initiative order
+	for actor in battle_actors:
+		if not actor.is_enemy:
+			var ui = PARTY_BATTLE_FACE_SCENE.instantiate()
+			party_container.add_child(ui)
+			ui.setup_from_actor(actor)  # Use BattleActor setup method
+			party_battle_faces.append(ui)
+	
+	# Initialize planning index
+	current_party_plan_index = 0
+	_update_who_moves_indicator()
 
 ## Starts the next turn
 func _start_next_turn():
@@ -285,7 +223,7 @@ func _start_next_turn():
 ## Handles player turn
 func _handle_player_turn():
 	if enable_planning_phase:
-		state = BattleTypes.State.PLAYER_TURN
+		state = BattleTypes.BattleState.PLAYER_TURN
 		action_planner.start_planning(party_members)
 		# UI should show action menu here
 	else:
@@ -293,7 +231,7 @@ func _handle_player_turn():
 
 ## Handles enemy turn
 func _handle_enemy_turn():
-	state = BattleTypes.State.ENEMY_TURN
+	state = BattleTypes.BattleState.ENEMY_TURN
 	
 	# Get enemy AI personality (default to normal)
 	var personality = BattleAIManager.AI_NORMAL
@@ -312,7 +250,7 @@ func _handle_enemy_turn():
 	_check_end_conditions()
 	
 	# Next turn
-	if state != BattleTypes.State.VICTORY and state != BattleTypes.State.DEFEAT:
+	if state != BattleTypes.BattleState.VICTORY and state != BattleTypes.BattleState.DEFEAT:
 		_start_next_turn()
 
 ## Player selects an action
@@ -326,7 +264,7 @@ func player_select_action(action_type: BattleTypes.ActionType, target: Node2D = 
 		await _execute_action(action)
 		_check_end_conditions()
 		
-		if state != BattleTypes.State.VICTORY and state != BattleTypes.State.DEFEAT:
+		if state != BattleTypes.BattleState.VICTORY and state != BattleTypes.BattleState.DEFEAT:
 			_start_next_turn()
 
 ## Executes a planned action
@@ -334,7 +272,7 @@ func _execute_action(action: BattleTypes.PlannedAction):
 	if not is_instance_valid(action.actor):
 		return
 	
-	state = BattleTypes.State.ANIMATING
+	state = BattleTypes.BattleState.ANIMATING
 	
 	var result = {}
 	
@@ -357,7 +295,7 @@ func _execute_action(action: BattleTypes.PlannedAction):
 			_attempt_escape()
 	
 	action_executed.emit(action)
-	state = BattleTypes.State.PLAYER_TURN if is_player_phase else BattleTypes.State.ENEMY_TURN
+	state = BattleTypes.BattleState.PLAYER_TURN if is_player_phase else BattleTypes.BattleState.ENEMY_TURN
 
 ## Executes a player action directly (no planning phase)
 func _execute_player_action(actor: Node2D):
@@ -396,7 +334,7 @@ func _attempt_escape():
 		logger.add_escape_message(success)
 	
 	if success:
-		state = BattleTypes.State.ESCAPE
+		state = BattleTypes.BattleState.ESCAPE
 		battle_ended.emit(false) # False = didn't win, but escaped
 
 ## Called when planning phase is complete
@@ -421,7 +359,7 @@ func _execute_planned_actions():
 		action = action_planner.get_next_action()
 	
 	# All actions complete, start enemy turns
-	if state != BattleTypes.State.VICTORY and state != BattleTypes.State.DEFEAT:
+	if state != BattleTypes.BattleState.VICTORY and state != BattleTypes.BattleState.DEFEAT:
 		_execute_enemy_actions()
 
 ## Executes enemy actions after player phase
@@ -441,7 +379,7 @@ func _execute_enemy_actions():
 					return
 	
 	# Enemy phase complete, recalculate initiative
-	if state != BattleTypes.State.VICTORY and state != BattleTypes.State.DEFEAT:
+	if state != BattleTypes.BattleState.VICTORY and state != BattleTypes.BattleState.DEFEAT:
 		initiative_manager.reset_round(party_members, enemy_members)
 		_start_next_turn()
 
@@ -461,13 +399,13 @@ func _check_end_conditions() -> bool:
 
 ## Called on victory
 func _on_victory():
-	state = BattleTypes.State.VICTORY
+	state = BattleTypes.BattleState.VICTORY
 	end_checker.on_victory(party_members, enemy_members)
 	battle_ended.emit(true)
 
 ## Called on defeat
 func _on_defeat():
-	state = BattleTypes.State.DEFEAT
+	state = BattleTypes.BattleState.DEFEAT
 	end_checker.on_defeat()
 	battle_ended.emit(false)
 
@@ -485,7 +423,7 @@ func get_enemy_members() -> Array:
 
 ## Checks if battle is active
 func is_battle_active() -> bool:
-	return state != BattleTypes.State.VICTORY and state != BattleTypes.State.DEFEAT and state != BattleTypes.State.ESCAPE
+	return state != BattleTypes.BattleState.VICTORY and state != BattleTypes.BattleState.DEFEAT and state != BattleTypes.BattleState.ESCAPE
 
 ## Helper to get random enemy target
 func _get_random_enemy_target() -> Node2D:
@@ -493,3 +431,58 @@ func _get_random_enemy_target() -> Node2D:
 		if is_instance_valid(enemy) and not enemy.is_dead():
 			return enemy
 	return null
+
+## Updates the "who moves" indicator shader effect on the current party member
+func _update_who_moves_indicator():
+	var who_moves_node = get_node_or_null("WhoMoves")
+	if not who_moves_node:
+		return
+	
+	if party_battle_faces.is_empty() or current_party_plan_index >= party_battle_faces.size():
+		who_moves_node.visible = false
+		return
+	
+	# Get the position of the current party battle face
+	var current_face = party_battle_faces[current_party_plan_index]
+	if current_face and is_instance_valid(current_face):
+		who_moves_node.visible = true
+		# Position the indicator over the current party member
+		# The WhoMoves node is at the parent level, so we need global coordinates
+		var face_global_pos = current_face.global_position
+		who_moves_node.global_position = Vector2(face_global_pos.x - 55, face_global_pos.y)
+		
+		# Emit signal for UI updates
+		planning_index_changed.emit(current_party_plan_index)
+
+## Advances the planning index to the next party member
+func advance_planning_index():
+	if party_battle_faces.is_empty():
+		return
+	
+	current_party_plan_index = wrapi(current_party_plan_index + 1, 0, party_battle_faces.size())
+	_update_who_moves_indicator()
+
+## Goes back to the previous party member in planning
+func previous_planning_index():
+	if party_battle_faces.is_empty():
+		return
+	
+	current_party_plan_index = wrapi(current_party_plan_index - 1, 0, party_battle_faces.size())
+	_update_who_moves_indicator()
+
+## Resets planning index to start
+func reset_planning_index():
+	current_party_plan_index = 0
+	_update_who_moves_indicator()
+
+## Gets the current party member being planned for
+func get_current_planning_party() -> Resource:
+	if party_battle_faces.is_empty() or current_party_plan_index >= party_battle_faces.size():
+		return null
+	
+	# Get the party resource from the battle actor
+	for actor in battle_actors:
+		if not actor.is_enemy and actor.id == party_members[current_party_plan_index].character_id:
+			return actor.resource
+	
+	return party_members[current_party_plan_index] if current_party_plan_index < party_members.size() else null
