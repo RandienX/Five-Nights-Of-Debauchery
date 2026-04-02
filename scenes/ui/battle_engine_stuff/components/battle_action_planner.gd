@@ -11,9 +11,14 @@ signal planning_complete()
 var planned_actions: Array[BattleTypes.PlannedAction] = []
 var current_plan_index: int = 0
 var is_planning: bool = false
+var battle_engine: BattleEngine = null  # Reference to battle engine for actor lookup
 
 func _ready():
 	pass
+
+## Initialize with reference to battle engine
+func init_manager(engine: BattleEngine):
+	battle_engine = engine
 
 ## Starts the planning phase
 func start_planning(party: Array[BattleTypes.BattleActor]):
@@ -94,3 +99,11 @@ func end_planning():
 func clear_plans():
 	planned_actions.clear()
 	current_plan_index = 0
+
+## Helper to check if an actor is dead
+func _is_actor_dead(actor_id: String) -> bool:
+	if battle_engine:
+		var actor = battle_engine._get_actor_by_id(actor_id)
+		if actor:
+			return actor.is_dead
+	return false

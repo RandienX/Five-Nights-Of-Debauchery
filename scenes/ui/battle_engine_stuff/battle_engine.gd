@@ -356,12 +356,24 @@ func _execute_player_action(actor: BattleTypes.BattleActor):
 func _get_skill_data(actor: BattleTypes.BattleActor, skill_id: String) -> Dictionary:
 	if actor.resource is Party:
 		var p: Party = actor.resource as Party
-		for skill in p.skills:
-			if skill and skill is Resource:
-				if skill.has_property("skill_id") and skill.get("skill_id") == skill_id:
-					return skill
-				elif skill.has_method("get_skill_id") and skill.call("get_skill_id") == skill_id:
-					return skill
+		for key in p.skills.keys():
+			var skill: Skill = p.skills[key]
+			if skill and skill is Skill:
+				if skill.name == skill_id or str(key) == skill_id:
+					return {
+						"skill": skill,
+						"name": skill.name,
+						"attack_type": skill.attack_type,
+						"target_type": skill.target_type,
+						"mana_cost": skill.mana_cost,
+						"accuracy": skill.accuracy,
+						"effects": skill.effects,
+						"attack_multiplier": skill.attack_multiplier,
+						"attack_bonus": skill.attack_bonus,
+						"hit_count": skill.hit_count,
+						"hit_damage_multiplier": skill.hit_damage_multiplier,
+						"item_reference": skill.item_reference
+					}
 	return {}
 
 ## Gets item data
@@ -372,8 +384,8 @@ func _get_item_data(item_id: String) -> Dictionary:
 ## Applies defend action
 func _apply_defend(actor: BattleTypes.BattleActor):
 	# Add defend status effect via effect_manager
-	if effect_manager:
-		effect_manager.apply_defend(actor)
+	if effect_manager and actor.sprite:
+		effect_manager.apply_defend(actor.sprite)
 	
 	if logger:
 		logger.add_message("%s is defending!" % [actor.name], "#90EE90")

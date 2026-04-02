@@ -107,7 +107,7 @@ class BattleActor:
 			current_hp = e.hp
 			max_mp = e.max_mp
 			current_mp = e.mp
-			speed = e.ai if e.has_method("get_ai") or e.has_property("ai") else 10
+			speed = e.ai
 			attack = e.damage
 			defense = e.defense
 			magic = e.damage  # Fallback
