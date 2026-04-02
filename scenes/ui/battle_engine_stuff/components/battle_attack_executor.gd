@@ -57,70 +57,74 @@ func execute_skill(attacker: BattleTypes.BattleActor, target: BattleTypes.Battle
 		
 		# Log the attack
 		if logger:
-			var skill_name = "Skill"
+			var skill_name = ""
 			if skill and skill.has_method("get_skill_name"):
 				skill_name = skill.call("get_skill_name")
 			elif skill and "skill_name" in skill:
 				skill_name = skill.skill_name
-			logger.add_damage_message(attacker.name, target.name, result.damage, result.is_critical, skill_name)
+			
+			if skill_name != "":
+				logger.add_damage_message(attacker.name, target.name, result.damage, result.is_critical, skill_name)
+			else:
+				logger.add_damage_message(attacker.name, target.name, result.damage, result.is_critical)
 	
 	attack_completed.emit()
 	return result
 
 ## Calculates basic attack damage
 func calculate_damage(attacker: BattleTypes.BattleActor, defender: BattleTypes.BattleActor) -> Dictionary:
-var base_damage = attacker.attack
-var defense = defender.defense
-
-# Apply status effect modifiers
-if effect_manager:
-base_damage = effect_manager.apply_stat_modifiers(attacker, base_damage, Global.effect.Power)
-defense = effect_manager.apply_stat_modifiers(defender, defense, Global.effect.Tough)
-
-# Calculate final damage (minimum 1)
-var actual_damage = max(1, base_damage - defense)
-
-# Critical hit chance (simple 10% for now)
-var is_critical = randf() < 0.1
-if is_critical:
-actual_damage = int(actual_damage * 1.5)
-
-# Instakill check (very rare)
-var is_instakill = randf() < 0.01
-
-return {
-"damage": actual_damage,
-"is_critical": is_critical,
-"is_instakill": is_instakill
-}
+	var base_damage = attacker.attack
+	var defense = defender.defense
+	
+	# Apply status effect modifiers
+	if effect_manager:
+		base_damage = effect_manager.apply_stat_modifiers(attacker, base_damage, Global.effect.Power)
+		defense = effect_manager.apply_stat_modifiers(defender, defense, Global.effect.Tough)
+	
+	# Calculate final damage (minimum 1)
+	var actual_damage = max(1, base_damage - defense)
+	
+	# Critical hit chance (simple 10% for now)
+	var is_critical = randf() < 0.1
+	if is_critical:
+		actual_damage = int(actual_damage * 1.5)
+	
+	# Instakill check (very rare)
+	var is_instakill = randf() < 0.01
+	
+	return {
+		"damage": actual_damage,
+		"is_critical": is_critical,
+		"is_instakill": is_instakill
+	}
 
 ## Calculates skill damage
 func calculate_skill_damage(attacker: BattleTypes.BattleActor, defender: BattleTypes.BattleActor, skill: Resource) -> Dictionary:
-if not skill:
-return calculate_damage(attacker, defender)
-
-var base_damage = skill.damage if skill.has_method("get_damage") or "damage" in skill else attacker.attack
-var defense = defender.defense
-
-# Apply skill multiplier if exists
-var multiplier = skill.damage_multiplier if "damage_multiplier" in skill else 1.0
-base_damage = int(base_damage * multiplier)
-
-# Apply status effects
-if effect_manager:
-base_damage = effect_manager.apply_stat_modifiers(attacker, base_damage, Global.effect.Power)
-defense = effect_manager.apply_stat_modifiers(defender, defense, Global.effect.Tough)
-
-var actual_damage = max(1, base_damage - defense)
-
-# Skills can crit too
-var is_critical = randf() < (skill.crit_rate if "crit_rate" in skill else 0.1)
-if is_critical:
-actual_damage = int(actual_damage * 1.5)
-
-return {
-"damage": actual_damage,
-"is_critical": is_critical,
-"is_instakill": false,
-"skill_effects": skill.effects if "effects" in skill else []
-}
+	if not skill:
+		return calculate_damage(attacker, defender)
+	
+	var base_damage = skill.damage if skill.has_method("get_damage") or "damage" in skill else attacker.attack
+	var defense = defender.defense
+	
+	# Apply skill multiplier if exists
+	var multiplier = skill.damage_multiplier if "damage_multiplier" in skill else 1.0
+	base_damage = int(base_damage * multiplier)
+	
+	# Apply status effects
+	if effect_manager:
+		base_damage = effect_manager.apply_stat_modifiers(attacker, base_damage, Global.effect.Power)
+		defense = effect_manager.apply_stat_modifiers(defender, defense, Global.effect.Tough)
+	
+	var actual_damage = max(1, base_damage - defense)
+	
+	# Skills can crit too
+	var is_critical = randf() < (skill.crit_rate if "crit_rate" in skill else 0.1)
+	if is_critical:
+		actual_damage = int(actual_damage * 1.5)
+	
+	return {
+		"damage": actual_damage,
+		"is_critical": is_critical,
+		"is_instakill": false,
+		"skill_effects": skill.effects if "effects" in skill else []
+	}

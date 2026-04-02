@@ -145,11 +145,11 @@ func start_battle(party: Array[Resource], enemies: Array[Resource]):
 	# Create unified battle actor data from resources
 	battle_actors.clear()
 	for p in party_members:
-		var actor = BattleTypes.BattleActor.new(p, false)
+		var actor = BattleTypes.BattleActor.new(p, false, null)
 		battle_actors.append(actor)
 	
 	for e in enemy_members:
-		var actor = BattleTypes.BattleActor.new(e, true)
+		var actor = BattleTypes.BattleActor.new(e, true, null)
 		battle_actors.append(actor)
 	
 	state = BattleTypes.BattleState.STARTING
@@ -256,7 +256,7 @@ func _handle_enemy_turn():
 		_start_next_turn()
 
 ## Player selects an action
-func player_select_action(action_type: BattleTypes.ActionType, target: Node2D = null, skill_id: String = "", item_id: String = ""):
+func player_select_action(action_type: BattleTypes.ActionType, target: BattleTypes.BattleActor = null, skill_id: String = "", item_id: String = ""):
 	if not is_player_phase or not current_actor:
 		return
 	
@@ -280,15 +280,20 @@ func _execute_action(action: BattleTypes.PlannedAction):
 	
 	match action.type:
 		BattleTypes.ActionType.ATTACK:
-			result = attack_executor.execute_attack(action.actor, action.target)
+			var target = _get_target_by_id(action.target_ids)
+			if target:
+				result = attack_executor.execute_attack(action.actor, target)
 		
 		BattleTypes.ActionType.SKILL:
+			var target = _get_target_by_id(action.target_ids)
 			var skill_data = _get_skill_data(action.actor, action.skill_id)
-			result = attack_executor.execute_skill(action.actor, action.target, skill_data)
+			if target and not skill_data.is_empty():
+				result = attack_executor.execute_skill(action.actor, target, skill_data)
 		
 		BattleTypes.ActionType.ITEM:
+			var target = _get_target_by_id(action.target_ids)
 			var item_data = _get_item_data(action.item_id)
-			item_manager.use_item(action.actor, item_data, action.target)
+			item_manager.use_item(action.actor, item_data, target)
 		
 		BattleTypes.ActionType.DEFEND:
 			_apply_defend(action.actor)
@@ -297,6 +302,37 @@ func _execute_action(action: BattleTypes.PlannedAction):
 			_attempt_escape()
 	
 	action_executed.emit(action)
+	state = BattleTypes.BattleState.PLANNING if is_player_phase else BattleTypes.BattleState.EXECUTING
+
+## Executes an action from dictionary (for AI decisions)
+func _execute_action_from_dict(action_dict: Dictionary):
+	if action_dict.is_empty():
+		return
+	
+	state = BattleTypes.BattleState.ANIMATING
+	
+	var actor = action_dict.get("actor") as BattleTypes.BattleActor
+	var action_type = action_dict.get("type") as BattleTypes.ActionType
+	var target = action_dict.get("target") as BattleTypes.BattleActor
+	var data = action_dict.get("data", {})
+	
+	var result = {}
+	
+	match action_type:
+		BattleTypes.ActionType.ATTACK:
+			if target:
+				result = attack_executor.execute_attack(actor, target)
+		
+		BattleTypes.ActionType.SKILL:
+			if target and not data.is_empty():
+				result = attack_executor.execute_skill(actor, target, data)
+		
+		BattleTypes.ActionType.DEFEND:
+			_apply_defend(actor)
+		
+		BattleTypes.ActionType.RUN:
+			_attempt_escape()
+	
 	state = BattleTypes.BattleState.PLANNING if is_player_phase else BattleTypes.BattleState.EXECUTING
 
 ## Executes a player action directly (no planning phase)
@@ -309,12 +345,21 @@ func _execute_player_action(actor: BattleTypes.BattleActor):
 	if target:
 		action.target_ids = [target.id]
 	
-	await _execute_action({"actor": actor, "type": BattleTypes.ActionType.ATTACK, "target": target, "data": {}})
+	var action_dict = {
+		"actor": actor,
+		"type": BattleTypes.ActionType.ATTACK,
+		"target": target,
+		"data": {}
+	}
+	await _execute_action_from_dict(action_dict)
 
 ## Gets skill data from actor
-func _get_skill_data(actor: Node2D, skill_id: String) -> Dictionary:
-	if actor.has_method("get_skill"):
-		return actor.get_skill(skill_id)
+func _get_skill_data(actor: BattleTypes.BattleActor, skill_id: String) -> Dictionary:
+	if actor.resource is Party:
+		var p: Party = actor.resource as Party
+		for skill in p.skills:
+			if skill and (skill.skill_id == skill_id or skill.has_method("get_skill_id") and skill.call("get_skill_id") == skill_id):
+				return skill
 	return {}
 
 ## Gets item data
@@ -323,13 +368,13 @@ func _get_item_data(item_id: String) -> Dictionary:
 	return {"id": item_id, "name": "Unknown Item", "effect_type": "heal", "value": 50}
 
 ## Applies defend action
-func _apply_defend(actor: Node2D):
-	if actor.has_method("set_defending"):
-		actor.set_defending(true)
+func _apply_defend(actor: BattleTypes.BattleActor):
+	# Add defend status effect via effect_manager
+	if effect_manager:
+		effect_manager.apply_defend(actor)
 	
 	if logger:
-		var name = actor.get_character_name() if actor.has_method("get_character_name") else "Unknown"
-		logger.add_message("%s is defending!" % [name], "#90EE90")
+		logger.add_message("%s is defending!" % [actor.name], "#90EE90")
 
 ## Attempts to escape from battle
 func _attempt_escape():
@@ -339,7 +384,7 @@ func _attempt_escape():
 		logger.add_escape_message(success)
 	
 	if success:
-		state = BattleTypes.BattleState.ESCAPE
+		state = BattleTypes.BattleState.ESCAPED
 		battle_ended.emit(false) # False = didn't win, but escaped
 
 ## Called when planning phase is complete
@@ -354,7 +399,7 @@ func _execute_planned_actions():
 	
 	var action = action_planner.get_next_action()
 	while action:
-		if is_instance_valid(action.actor) and not action.actor.is_dead():
+		if action.actor and not action.actor.is_dead:
 			await _execute_action(action)
 			
 			# Check end conditions after each action
@@ -369,13 +414,18 @@ func _execute_planned_actions():
 
 ## Executes enemy actions after player phase
 func _execute_enemy_actions():
-	for enemy in enemy_members:
-		if is_instance_valid(enemy) and not enemy.is_dead():
-			var personality = BattleAIManager.AI_NORMAL
-			if enemy.has_method("get_ai_personality"):
-				personality = enemy.get_ai_personality()
+	for actor in battle_actors:
+		if actor.is_enemy and not actor.is_dead:
+			# Get enemy AI personality from Global.AI enum
+			var global_ai = Global.AI.Casual  # Default
+			if actor.resource is Enemy:
+				var enemy_res = actor.resource as Enemy
+				if "ai_type" in enemy_res:
+					global_ai = enemy_res.ai_type
 			
-			var action = ai_manager.decide_action(enemy, party_members, enemy_members, personality)
+			var personality = ai_manager.get_personality_from_global(global_ai)
+			
+			var action = ai_manager.decide_action(actor, battle_actors.filter(func(a): return not a.is_enemy), battle_actors.filter(func(a): return a.is_enemy), personality)
 			
 			if not action.is_empty():
 				await _execute_action(action)
@@ -385,7 +435,7 @@ func _execute_enemy_actions():
 	
 	# Enemy phase complete, recalculate initiative
 	if state != BattleTypes.BattleState.VICTORY and state != BattleTypes.BattleState.DEFEAT:
-		initiative_manager.reset_round(party_members, enemy_members)
+		initiative_manager.reset_round(battle_actors)
 		_start_next_turn()
 
 ## Checks for battle end conditions
@@ -415,26 +465,35 @@ func _on_defeat():
 	battle_ended.emit(false)
 
 ## Called when a turn starts
-func _on_turn_started(actor: Node2D):
+func _on_turn_started(actor: BattleTypes.BattleActor):
 	current_actor = actor
 
 ## Gets party members
-func get_party_members() -> Array:
+func get_party_members() -> Array[Resource]:
 	return party_members
 
 ## Gets enemy members
-func get_enemy_members() -> Array:
+func get_enemy_members() -> Array[Resource]:
 	return enemy_members
 
 ## Checks if battle is active
 func is_battle_active() -> bool:
-	return state != BattleTypes.BattleState.VICTORY and state != BattleTypes.BattleState.DEFEAT and state != BattleTypes.BattleState.ESCAPE
+	return state != BattleTypes.BattleState.VICTORY and state != BattleTypes.BattleState.DEFEAT and state != BattleTypes.BattleState.ESCAPED
 
 ## Helper to get random enemy target
-func _get_random_enemy_target() -> Node2D:
-	for enemy in enemy_members:
-		if is_instance_valid(enemy) and not enemy.is_dead():
-			return enemy
+func _get_random_enemy_target() -> BattleTypes.BattleActor:
+	for actor in battle_actors:
+		if actor.is_enemy and not actor.is_dead:
+			return actor
+	return null
+
+## Helper to get target by ID from target_ids array
+func _get_target_by_id(target_ids: Array[String]) -> BattleTypes.BattleActor:
+	if target_ids.is_empty():
+		return null
+	for actor in battle_actors:
+		if actor.id == target_ids[0]:
+			return actor
 	return null
 
 ## Updates the "who moves" indicator shader effect on the current party member
