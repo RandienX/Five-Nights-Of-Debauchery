@@ -10,6 +10,9 @@ signal battle_ended(victory: bool)
 signal turn_changed(actor: Node2D, is_player: bool)
 signal action_executed(action_data: Dictionary)
 
+# Exported battle configuration
+@export var battle: Battle
+
 # Component references
 @onready var initiative_manager: BattleInitiativeManager = $BattleInitiativeManager if has_node("BattleInitiativeManager") else null
 @onready var action_planner: BattleActionPlanner = $BattleActionPlanner if has_node("BattleActionPlanner") else null
@@ -34,6 +37,7 @@ var escape_chance: float = 0.7
 func _ready():
 	_initialize_components()
 	_connect_signals()
+	_start_battle_from_resource()
 
 ## Initializes all components
 func _initialize_components():
@@ -97,6 +101,144 @@ func _connect_signals():
 	if end_checker:
 		end_checker.victory_achieved.connect(_on_victory)
 		end_checker.defeat_suffered.connect(_on_defeat)
+
+## Starts battle from the exported Battle resource
+func _start_battle_from_resource():
+	if not battle:
+		push_warning("BattleEngine: No battle resource assigned!")
+		return
+	
+	var party = Global.party.duplicate(true)
+	var enemies = []
+	
+	# Collect enemies from battle resource
+	if battle.enemy_pos0: enemies.append(battle.enemy_pos0)
+	if battle.enemy_pos1: enemies.append(battle.enemy_pos1)
+	if battle.enemy_pos2: enemies.append(battle.enemy_pos2)
+	if battle.enemy_pos3: enemies.append(battle.enemy_pos3)
+	if battle.enemy_pos4: enemies.append(battle.enemy_pos4)
+	if battle.enemy_pos5: enemies.append(battle.enemy_pos5)
+	
+	if enemies.is_empty():
+		push_warning("BattleEngine: No enemies in battle resource!")
+		return
+	
+	# Convert enemy resources to Node2D wrappers for battle system
+	var enemy_instances = []
+	for i in range(enemies.size()):
+		if enemies[i]:
+			var enemy_node = _create_enemy_node(enemies[i], i)
+			if enemy_node:
+				enemy_instances.append(enemy_node)
+	
+	start_battle(party, enemy_instances)
+
+## Creates a Node2D wrapper for an enemy resource
+func _create_enemy_node(enemy_res: Enemy, index: int) -> Node2D:
+	var node = Node2D.new()
+	node.name = "Enemy_%d_%s" % [index, enemy_res.name]
+	
+	# Copy all enemy resource properties to the node
+	node.set_meta("enemy_resource", enemy_res)
+	node.set_meta("hp", enemy_res.hp)
+	node.set_meta("max_hp", enemy_res.max_hp)
+	node.set_meta("mp", enemy_res.mp)
+	node.set_meta("max_mp", enemy_res.max_mp)
+	node.set_meta("damage", enemy_res.damage)
+	node.set_meta("defense", enemy_res.defense)
+	node.set_meta("ai_type", enemy_res.ai_type)
+	node.set_meta("enemy_name", enemy_res.name)
+	node.set_meta("xp_reward", enemy_res.xp_reward)
+	node.set_meta("battle_sprite", enemy_res.battleSprite)
+	node.set_meta("effects", enemy_res.effects.duplicate(true))
+	node.set_meta("attacks", enemy_res.attacks)
+	node.set_meta("items", enemy_res.items)
+	
+	# Add helper methods via script-like behavior
+	node.set_script(_create_enemy_wrapper_script())
+	
+	# Add to scene tree for visualization if needed
+	var enemies_container = $Control/enemy_ui/enemies if has_node("Control/enemy_ui/enemies") else null
+	if enemies_container and index < enemies_container.get_child_count():
+		var ui_slot = enemies_container.get_child(index)
+		if ui_slot.has_node("ProgressBar"):
+			var hp_bar = ui_slot.get_node("ProgressBar")
+			hp_bar.max_value = enemy_res.max_hp
+			hp_bar.value = enemy_res.hp
+			# Store reference for updates
+			node.set_meta("hp_bar", hp_bar)
+		
+		if ui_slot.has_node("Sprite2D") or ui_slot.has_node("TextureRect"):
+			var sprite = ui_slot.get_node("Sprite2D") if ui_slot.has_node("Sprite2D") else ui_slot
+			if enemy_res.battleSprite:
+				if sprite is TextureRect:
+					sprite.texture = enemy_res.battleSprite
+	
+	return node
+
+## Creates a script for enemy wrapper functionality
+func _create_enemy_wrapper_script() -> Script:
+	var script = GDScript.new()
+	script.source_code = """
+extends Node2D
+
+func get_character_name() -> String:
+	return get_meta("enemy_name") if has_meta("enemy_name") else "Enemy"
+
+func get_hp() -> int:
+	return get_meta("hp") if has_meta("hp") else 0
+
+func set_hp(value: int) -> void:
+	set_meta("hp", value)
+	if has_meta("hp_bar"):
+		var bar = get_meta("hp_bar")
+		if bar:
+			bar.value = value
+
+func get_max_hp() -> int:
+	return get_meta("max_hp") if has_meta("max_hp") else 0
+
+func get_mp() -> int:
+	return get_meta("mp") if has_meta("mp") else 0
+
+func set_mp(value: int) -> void:
+	set_meta("mp", value)
+
+func get_max_mp() -> int:
+	return get_meta("max_mp") if has_meta("max_mp") else 0
+
+func get_damage() -> int:
+	return get_meta("damage") if has_meta("damage") else 0
+
+func get_defense() -> int:
+	return get_meta("defense") if has_meta("defense") else 0
+
+func get_ai_personality() -> int:
+	return get_meta("ai_type") if has_meta("ai_type") else Global.AI.Casual
+
+func is_dead() -> bool:
+	return get_hp() <= 0
+
+func take_damage(amount: int) -> int:
+	var actual_damage = max(1, amount - get_defense())
+	var new_hp = max(0, get_hp() - actual_damage)
+	set_hp(new_hp)
+	return actual_damage
+
+func heal(amount: int) -> void:
+	var new_hp = min(get_max_hp(), get_hp() + amount)
+	set_hp(new_hp)
+
+func get_effects() -> Dictionary:
+	return get_meta("effects") if has_meta("effects") else {}
+
+func get_attacks() -> Array:
+	return get_meta("attacks") if has_meta("attacks") else []
+
+func get_xp_reward() -> int:
+	return get_meta("xp_reward") if has_meta("xp_reward") else 0
+"""
+	return script
 
 ## Starts a new battle
 func start_battle(party: Array, enemies: Array):
