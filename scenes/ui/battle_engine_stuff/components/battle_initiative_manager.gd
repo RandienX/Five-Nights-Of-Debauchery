@@ -94,3 +94,4 @@ func reset_round(actors: Array[BattleTypes.BattleActor]):
 	# Filter out dead actors
 	var living_actors = actors.filter(func(a): return not a.is_dead)
 	calculate_initiative(living_actors)
+
