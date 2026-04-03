@@ -1,57 +1,44 @@
 ```
-# Compiled and build artifacts
-*.pyc
-__pycache__/
-*.o
-*.obj
-*.exe
-*.dll
-*.so
-*.class
-*.out
+# Godot-specific ignores
+*.import
+*.uid
+export_presets.cfg
+.unsegen/
 
-# Dependencies
+# Build artifacts
+*.so
+*.dll
+*.dylib
+*.exe
+*.bin
+
+# Dependencies and virtual environments
 node_modules/
 venv/
 .venv/
-.env
-.env.local
-.env.*
-
-# Build directories
-dist/
-build/
-target/
-.gradle/
-
-# Python specific
-*.pyc
 __pycache__/
-*.pyo
-*.pyd
-.Python
-*.so
-.coverage
-htmlcov/
-.coverage.*
-.pytest_cache/
-.mypy_cache/
+*.egg-info/
 
-# Logs and temp files
-*.log
-*.tmp
+# Editor/IDE files
+.vscode/
+.idea/
 *.swp
 *.swo
+*.tmp
 
-# OS generated files
+# System files
 .DS_Store
 Thumbs.db
 
-# Editors
-.vscode/
-.idea/
+# Logs
+*.log
 
-# Compressed files
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Compressed archives
 *.zip
 *.gz
 *.tar

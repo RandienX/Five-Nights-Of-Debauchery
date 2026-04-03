@@ -1,6 +1,8 @@
 extends MarginContainer
 class_name SkillBox
 
+signal skill_selected(skill: Skill, index: int)
+
 var name_label: Label
 var mana_label: Label
 var hitbox: Area2D
