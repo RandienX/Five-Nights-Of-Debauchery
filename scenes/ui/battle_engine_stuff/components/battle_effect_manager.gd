@@ -142,3 +142,54 @@ func _remove_stat_modifiers(unit: Node2D, effect: BattleTypes.StatusEffect):
 ## Clears all effects
 func clear_all():
 	active_effects.clear()
+
+## Gets effect level from a target (for compatibility with old engine)
+func get_effect_level(target: Object, effect: Global.effect) -> int:
+	if not is_instance_valid(target):
+		return 0
+	
+	var unit_id = target.get_instance_id()
+	if active_effects.has(unit_id):
+		for e in active_effects[unit_id]:
+			if e.id == str(effect):
+				return e.level if e.has_method("get_level") or "level" in e else 1
+	return 0
+
+## Gets effect duration from a target
+func get_effect_duration(target: Object, effect: Global.effect) -> int:
+	if not is_instance_valid(target):
+		return 0
+	
+	var unit_id = target.get_instance_id()
+	if active_effects.has(unit_id):
+		for e in active_effects[unit_id]:
+			if e.id == str(effect):
+				return e.duration
+	return 0
+
+## Gets effect multiplier for stat calculations (like old engine)
+func get_effect_multiplier(target: Object, effect: Global.effect) -> float:
+	var level = get_effect_level(target, effect)
+	if level <= 0:
+		return 1.0
+	
+	match effect:
+		Global.effect.Power:
+			return 1.0 + (level * 0.25)
+		Global.effect.Tough:
+			return 1.0 + (level * 0.25)
+		Global.effect.Focus:
+			return 1.0 + (level * 0.05)
+		Global.effect.Speed:
+			return 1.0 + (level * 0.1)
+		Global.effect.Blind:
+			return 1.0 - (level * 0.2)
+		Global.effect.Absorption:
+			return 1.0 + (level * 0.2)
+		Global.effect.Weak:
+			return 1.0 - (level * 0.2)
+		Global.effect.Sick:
+			return 1.0 - (level * 0.2)
+		Global.effect.Slow:
+			return 1.0 - (level * 0.1)
+	return 1.0

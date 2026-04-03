@@ -71,60 +71,159 @@ func execute_skill(attacker: BattleTypes.BattleActor, target: BattleTypes.Battle
 	attack_completed.emit()
 	return result
 
-## Calculates basic attack damage
+## Calculates basic attack damage (matches old engine logic)
 func calculate_damage(attacker: BattleTypes.BattleActor, defender: BattleTypes.BattleActor) -> Dictionary:
 	var base_damage = attacker.attack
-	var defense = defender.defense
 	
 	# Apply status effect modifiers
 	if effect_manager:
-		base_damage = effect_manager.apply_stat_modifiers(attacker, base_damage, Global.effect.Power)
-		defense = effect_manager.apply_stat_modifiers(defender, defense, Global.effect.Tough)
+		var power_mult = effect_manager.get_effect_multiplier(attacker, Global.effect.Power)
+		var weak_mult = effect_manager.get_effect_multiplier(attacker, Global.effect.Weak)
+		base_damage *= power_mult * weak_mult
+		
+		# Double damage if Power effect is active
+		if effect_manager.has_effect(attacker, str(Global.effect.Power)):
+			base_damage *= 2
 	
-	# Calculate final damage (minimum 1)
-	var actual_damage = max(1, base_damage - defense)
+	# Random variance (like old engine: 0.86-1.16 for enemies, 0.9-1.2 for party)
+	var variance_min = 0.86 if attacker.is_enemy else 0.9
+	var variance_max = 1.16 if attacker.is_enemy else 1.2
+	base_damage *= randf_range(variance_min, variance_max)
 	
-	# Critical hit chance (simple 10% for now)
-	var is_critical = randf() < 0.1
+	# Critical hit chance (1 in 10 for enemies, 1 in 8 for party)
+	var crit_chance = 10 if attacker.is_enemy else 8
+	var is_critical = randi_range(1, crit_chance) == 1
 	if is_critical:
-		actual_damage = int(actual_damage * 1.5)
+		base_damage *= 1.5
 	
-	# Instakill check (very rare)
-	var is_instakill = randf() < 0.01
+	# Instakill check (Kill effect)
+	var is_instakill = false
+	if effect_manager:
+		var kill_level = effect_manager.get_effect_level(attacker, Global.effect.Kill)
+		if kill_level > 0:
+			# Bosses immune to instakill
+			var enemy_res = defender.resource as Enemy
+			if not enemy_res or not ("is_boss" in enemy_res and enemy_res.is_boss):
+				var kill_chance = 0.01 * kill_level
+				if randf() < kill_chance:
+					is_instakill = true
+	
+	# Calculate defense reduction
+	var defense = defender.defense
+	if effect_manager:
+		var tough_mult = effect_manager.get_effect_multiplier(defender, Global.effect.Tough)
+		var sick_mult = effect_manager.get_effect_multiplier(defender, Global.effect.Sick)
+		defense *= tough_mult * sick_mult
+	
+	# Defend multiplier
+	var defend_mult = 1.5 if effect_manager.has_effect(defender, str(Global.effect.Defend)) else 1.0
+	
+	# Defense formula from old engine
+	var def_mult = clampf(1.0 - (float(defense) / (100.0)), 0.0, 1.0)
+	def_mult /= defend_mult
+	def_mult = clampf(def_mult, 0.0, 1.0)
+	
+	var actual_damage = max(0, floor(base_damage * def_mult))
+	
+	# Accuracy check
+	var accuracy = 1.0
+	if effect_manager:
+		var focus_mult = effect_manager.get_effect_multiplier(attacker, Global.effect.Focus)
+		var blind_mult = effect_manager.get_effect_multiplier(defender, Global.effect.Blind)
+		accuracy = focus_mult * blind_mult
+	
+	var hit = randf() <= accuracy
 	
 	return {
-		"damage": actual_damage,
+		"damage": actual_damage if hit else 0,
 		"is_critical": is_critical,
-		"is_instakill": is_instakill
+		"is_instakill": is_instakill,
+		"hit": hit
 	}
 
-## Calculates skill damage
+## Calculates skill damage (matches old engine logic)
 func calculate_skill_damage(attacker: BattleTypes.BattleActor, defender: BattleTypes.BattleActor, skill: Resource) -> Dictionary:
 	if not skill:
 		return calculate_damage(attacker, defender)
 	
-	var base_damage = skill.damage if skill.has_method("get_damage") or "damage" in skill else attacker.attack
-	var defense = defender.defense
+	var base_damage = attacker.attack
 	
-	# Apply skill multiplier if exists
-	var multiplier = skill.damage_multiplier if "damage_multiplier" in skill else 1.0
-	base_damage = int(base_damage * multiplier)
+	# Get skill properties
+	var attack_multiplier = skill.attack_multiplier if "attack_multiplier" in skill else 1.0
+	var attack_bonus = skill.attack_bonus if "attack_bonus" in skill else 0
+	var hit_count = skill.hit_count if "hit_count" in skill else 1
+	var hit_damage_multiplier = skill.hit_damage_multiplier if "hit_damage_multiplier" in skill else 1.0
+	var accuracy = skill.accuracy if "accuracy" in skill else 1.0
+	var mana_cost = skill.mana_cost if "mana_cost" in skill else 0
 	
-	# Apply status effects
+	base_damage *= attack_multiplier
+	
+	# Apply status effect modifiers
 	if effect_manager:
-		base_damage = effect_manager.apply_stat_modifiers(attacker, base_damage, Global.effect.Power)
-		defense = effect_manager.apply_stat_modifiers(defender, defense, Global.effect.Tough)
+		var power_mult = effect_manager.get_effect_multiplier(attacker, Global.effect.Power)
+		var weak_mult = effect_manager.get_effect_multiplier(attacker, Global.effect.Weak)
+		base_damage *= power_mult * weak_mult
+		
+		# Double damage if Power effect is active
+		if effect_manager.has_effect(attacker, str(Global.effect.Power)):
+			base_damage *= 2
 	
-	var actual_damage = max(1, base_damage - defense)
+	# Random variance
+	var variance_min = 0.86 if attacker.is_enemy else 0.9
+	var variance_max = 1.16 if attacker.is_enemy else 1.2
+	base_damage *= randf_range(variance_min, variance_max)
 	
-	# Skills can crit too
-	var is_critical = randf() < (skill.crit_rate if "crit_rate" in skill else 0.1)
+	# Critical hit chance
+	var crit_chance = 10 if attacker.is_enemy else 8
+	var is_critical = randi_range(1, crit_chance) == 1
 	if is_critical:
-		actual_damage = int(actual_damage * 1.5)
+		base_damage *= 1.5
+	
+	base_damage += attack_bonus
+	
+	# Instakill check
+	var is_instakill = false
+	if effect_manager:
+		var kill_level = effect_manager.get_effect_level(attacker, Global.effect.Kill)
+		if kill_level > 0:
+			var enemy_res = defender.resource as Enemy
+			if not enemy_res or not ("is_boss" in enemy_res and enemy_res.is_boss):
+				var kill_chance = 0.01 * kill_level
+				if randf() < kill_chance:
+					is_instakill = true
+	
+	# Calculate defense reduction
+	var defense = defender.defense
+	if effect_manager:
+		var tough_mult = effect_manager.get_effect_multiplier(defender, Global.effect.Tough)
+		var sick_mult = effect_manager.get_effect_multiplier(defender, Global.effect.Sick)
+		defense *= tough_mult * sick_mult
+	
+	# Defend multiplier
+	var defend_mult = 1.5 if effect_manager.has_effect(defender, str(Global.effect.Defend)) else 1.0
+	
+	# Defense formula from old engine
+	var def_mult = clampf(1.0 - (float(defense) / (100.0)), 0.0, 1.0)
+	def_mult /= defend_mult
+	def_mult = clampf(def_mult, 0.0, 1.0)
+	
+	var actual_damage = max(0, floor(base_damage * def_mult))
+	
+	# Accuracy check with Focus/Blind modifiers
+	var final_accuracy = accuracy
+	if effect_manager:
+		var focus_mult = effect_manager.get_effect_multiplier(attacker, Global.effect.Focus)
+		var blind_mult = effect_manager.get_effect_multiplier(defender, Global.effect.Blind)
+		final_accuracy *= focus_mult * blind_mult
+	
+	var hit = randf() <= final_accuracy
 	
 	return {
-		"damage": actual_damage,
+		"damage": actual_damage if hit else 0,
 		"is_critical": is_critical,
-		"is_instakill": false,
+		"is_instakill": is_instakill,
+		"hit": hit,
+		"hit_count": hit_count,
+		"hit_damage_multiplier": hit_damage_multiplier,
 		"skill_effects": skill.effects if "effects" in skill else []
 	}
