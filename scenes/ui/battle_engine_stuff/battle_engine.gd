@@ -318,13 +318,13 @@ func _setup_enemy_ui():
 		
 		var enemy_data = null
 		if battle:
-			if battle.has_property(enemy_key) or battle.has_method("get_" + enemy_key):
+			if battle.get(enemy_key):
 				enemy_data = battle.get(enemy_key)
 		
 		var node = get_node_or_null(path)
 		if node and enemy_data:
 			# Set enemy sprite texture
-			if enemy_data.has_property("battleSprite") or enemy_data.has_method("get_battleSprite"):
+			if enemy_data.battleSprite:
 				node.texture = enemy_data.battleSprite
 			
 			# Setup HP bar
@@ -566,7 +566,11 @@ func _apply_defend(actor: BattleTypes.BattleActor):
 					break
 		else:
 			# For party members, use their battle face if available
-			if party_battle_faces.size() > 0 and actor.id in [a.id for a in battle_actors if not a.is_enemy]:
+			var temp = []
+			for a in battle_actors:
+				if !a.is_enemy:
+					temp.append(a.id)
+			if party_battle_faces.size() > 0 and actor.id in temp:
 				var idx = 0
 				for a in battle_actors:
 					if not a.is_enemy and a.id == actor.id:
@@ -590,7 +594,7 @@ func _update_enemy_hp_display():
 		var enemy_key = 'enemy_pos' + str(e) if e > 0 else 'enemy_pos0'
 		
 		var node = get_node_or_null(path)
-		if node and battle and battle.has_property(enemy_key):
+		if node and battle and battle.get(enemy_key):
 			var enemy_data = battle.get(enemy_key)
 			if enemy_data:
 				var prog = node.get_node_or_null("ProgressBar")
@@ -817,7 +821,7 @@ func get_current_planning_party() -> Resource:
 	
 	# Get the party resource from the battle actor
 	for actor in battle_actors:
-		if not actor.is_enemy and actor.id == party_members[current_party_plan_index].character_id:
+		if not actor.is_enemy and actor.id == party_members[current_party_plan_index].name:
 			return actor.resource
 	
 	return party_members[current_party_plan_index] if current_party_plan_index < party_members.size() else null
