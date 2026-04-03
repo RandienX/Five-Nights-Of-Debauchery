@@ -17,6 +17,10 @@ var party_queue: Array[BattleTypes.BattleActor] = []
 var enemy_queue: Array[BattleTypes.BattleActor] = []
 var is_party_phase: bool = true
 
+# Speed-based initiative with randomness (like old engine)
+var initiative_order: Array[BattleTypes.BattleActor] = []
+var initiative_who: int = -1
+
 func _ready():
 	pass
 
@@ -24,30 +28,58 @@ func init_manager(root: Node2D):
 	battle_root = root
 
 ## Calculates initiative for all actors (RPG Maker style: party first, then enemies)
+## Uses speed with randomness like the old engine: randi_range(ceili(ai * 0.75 * total_mult), floori(ai * 1.25 * total_mult))
 func calculate_initiative(actors: Array[BattleTypes.BattleActor]):
 	initiative_queue.clear()
 	party_queue.clear()
 	enemy_queue.clear()
 	is_party_phase = true
+	initiative_order.clear()
+	initiative_who = -1
 	
-	# Separate party and enemies
+	# Calculate speed values with randomness for each actor
+	var speed_dict: Dictionary[int, BattleTypes.BattleActor] = {}
+	
 	for actor in actors:
-		if not actor.is_dead:
-			if actor.is_enemy:
-				enemy_queue.append(actor)
-			else:
-				party_queue.append(actor)
+		if actor.is_dead:
+			continue
+		
+		var base_speed = actor.speed
+		var speed_mult = 1.0
+		var slow_mult = 1.0
+		
+		# Apply status effect modifiers if available
+		if battle_root and battle_root.has_node("BattleEffectManager"):
+			var effect_mgr = battle_root.get_node("BattleEffectManager")
+			if effect_mgr.has_method("get_effect_multiplier"):
+				speed_mult = effect_mgr.get_effect_multiplier(actor, Global.effect.Speed)
+				slow_mult = effect_mgr.get_effect_multiplier(actor, Global.effect.Slow)
+		
+		var total_mult = speed_mult * slow_mult
+		var rng = randi_range(ceili(base_speed * 0.75 * total_mult), floori(base_speed * 1.25 * total_mult))
+		
+		# Ensure unique speed values
+		while rng in speed_dict:
+			rng += 1
+		
+		speed_dict[rng] = actor
 	
-	# Sort each group by speed (descending) - higher speed goes first
-	party_queue.sort_custom(func(a, b):
-		return a.speed > b.speed
-	)
+	# Sort by speed (descending - higher goes first)
+	var keys = speed_dict.keys()
+	keys.sort()
+	keys.reverse()
 	
-	enemy_queue.sort_custom(func(a, b):
-		return a.speed > b.speed
-	)
+	for k in keys:
+		initiative_order.append(speed_dict[k])
 	
-	# Combine into main queue: party first, then enemies
+	# Separate into party and enemy queues
+	for actor in initiative_order:
+		if actor.is_enemy:
+			enemy_queue.append(actor)
+		else:
+			party_queue.append(actor)
+	
+	# Combine: party first, then enemies (RPG Maker style)
 	initiative_queue = party_queue.duplicate()
 	initiative_queue.append_array(enemy_queue.duplicate())
 	
@@ -74,6 +106,8 @@ func remove_from_queue(actor: BattleTypes.BattleActor):
 	initiative_queue.erase(actor)
 	party_queue.erase(actor)
 	enemy_queue.erase(actor)
+	# Also remove from initiative_order
+	initiative_order.erase(actor)
 	if current_actor == actor:
 		current_actor = null
 
@@ -94,4 +128,20 @@ func reset_round(actors: Array[BattleTypes.BattleActor]):
 	# Filter out dead actors
 	var living_actors = actors.filter(func(a): return not a.is_dead)
 	calculate_initiative(living_actors)
+
+## Advances initiative index (for old engine style execution)
+func advance_initiative_index() -> int:
+	initiative_who += 1
+	if initiative_who >= initiative_order.size():
+		initiative_who = -1
+		return -1
+	return initiative_who
+
+## Gets current initiative index
+func get_current_initiative_index() -> int:
+	return initiative_who
+
+## Sets initiative index
+func set_initiative_index(index: int):
+	initiative_who = index
 

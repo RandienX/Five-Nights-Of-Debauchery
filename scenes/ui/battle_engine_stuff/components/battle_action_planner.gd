@@ -2,16 +2,23 @@ class_name BattleActionPlanner
 extends Node
 
 ## Manages action planning phase for party members
-## Allows queuing actions before execution
+## Allows queuing actions before execution (like old engine)
 
 signal action_planned(action: BattleTypes.PlannedAction)
 signal action_undone(index: int)
 signal planning_complete()
 
 var planned_actions: Array[BattleTypes.PlannedAction] = []
+var action_history: Array[Object] = []  # For undo functionality (like old engine)
 var current_plan_index: int = 0
 var is_planning: bool = false
 var battle_engine: BattleEngine = null  # Reference to battle engine for actor lookup
+
+# Planning state (matches old engine)
+var attack_array: Dictionary = {}  # {actor: [targets, skill]}
+var current_party_plan_index: int = 0
+var selected_enemy: int = 1
+var previous_enemy: int = 1
 
 func _ready():
 	pass
@@ -23,8 +30,11 @@ func init_manager(engine: BattleEngine):
 ## Starts the planning phase
 func start_planning(party: Array[BattleTypes.BattleActor]):
 	planned_actions.clear()
+	action_history.clear()
+	attack_array.clear()
 	current_plan_index = 0
 	is_planning = true
+	current_party_plan_index = 0
 	
 	# Pre-create placeholder actions for each party member
 	for member in party:
@@ -52,15 +62,41 @@ func plan_action(actor: BattleTypes.BattleActor, type: BattleTypes.ActionType, t
 	else:
 		planned_actions.append(action)
 	
+	# Store in attack_array like old engine
+	if type == BattleTypes.ActionType.ATTACK or type == BattleTypes.ActionType.SKILL or type == BattleTypes.ActionType.ITEM:
+		var targets = []
+		if target:
+			targets.append(target)
+		attack_array[actor] = [targets, skill_id]
+	
 	action_planned.emit(action)
 	return action
 
-## Undoes the last planned action
+## Undoes the last planned action (matches old engine undo_last_action)
 func undo_last_action() -> bool:
-	if planned_actions.is_empty():
+	if action_history.is_empty():
 		return false
 	
-	planned_actions.remove_at(planned_actions.size() - 1)
+	var last = action_history.pop_back()
+	if attack_array.has(last):
+		var atk_data = attack_array[last]
+		if atk_data.size() >= 2:
+			var skill_id = atk_data[1]
+			# Restore item if it was an item use (attack_type == 3)
+			if skill_id and battle_engine and battle_engine.has_method("_get_item_data"):
+				var item_data = battle_engine._get_item_data(skill_id)
+				if item_data and item_data.has("id"):
+					# Restore item to inventory via Global
+					Global.add_item_by_id(item_data.id, 1)
+		attack_array.erase(last)
+	
+	# Update current attacker and state
+	if battle_engine:
+		battle_engine.current_actor = last
+		battle_engine.state = BattleTypes.BattleState.PLANNING
+	
+	current_party_plan_index = max(0, current_party_plan_index - 1)
+	
 	action_undone.emit(planned_actions.size())
 	return true
 
@@ -99,6 +135,8 @@ func end_planning():
 func clear_plans():
 	planned_actions.clear()
 	current_plan_index = 0
+	attack_array.clear()
+	action_history.clear()
 
 ## Helper to check if an actor is dead
 func _is_actor_dead(actor_id: String) -> bool:
@@ -107,3 +145,7 @@ func _is_actor_dead(actor_id: String) -> bool:
 		if actor:
 			return actor.is_dead
 	return false
+
+## Adds an attack to the attack array (matches old engine add_attack)
+func add_attack(attacker: BattleTypes.BattleActor, attacked: Array[BattleTypes.BattleActor], skill_id: String):
+	attack_array[attacker] = [attacked, skill_id]
