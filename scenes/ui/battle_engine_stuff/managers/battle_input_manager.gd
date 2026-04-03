@@ -5,14 +5,11 @@ extends Node
 ## Based on tech_demo1_engine.gd _input() logic
 ## Supports UP/DOWN navigation for 5 action buttons without $TheMove
 
-signal action_button_selected(index: int)
 signal action_confirmed(action_index: int)
-signal up_pressed()
-signal down_pressed()
+signal cancel_pressed()
+signal use_pressed()
 signal left_pressed()
 signal right_pressed()
-signal use_pressed()
-signal cancel_pressed()
 
 enum InputState {
 	ON_ACTION,
@@ -27,27 +24,19 @@ enum InputState {
 
 var current_state: InputState = InputState.ON_ACTION
 var battle_root: Node2D = null
-var selected_action_index: int = 0  # 0-4 for Fight, Skills, Defend, Item, Run
+var action_selector: BattleActionSelector = null
 var selected_enemy: int = 1
 var previous_enemy: int = 1
 var selected_party_member: int = 0
 var item_target_type: int = 0  # 0 = enemy, 1 = party
 var saved_party_plan_index: int = 0
 
-# Action button paths (5 main buttons)
-const ACTION_BUTTONS = [
-	"Control/gui/HBoxContainer2/actions/FightButton/fight",
-	"Control/gui/HBoxContainer2/actions/SkillsButton/skills",
-	"Control/gui/HBoxContainer2/actions/DefendButton/defend",
-	"Control/gui/HBoxContainer2/actions/ItemButton/item",
-	"Control/gui/HBoxContainer2/actions/RunButton/run"
-]
-
 func _ready():
 	pass
 
-func init_manager(root: Node2D):
+func setup(root: Node2D, selector: BattleActionSelector):
 	battle_root = root
+	action_selector = selector
 
 ## Main input handler - processes all battle input
 func handle_input(event: InputEvent, game_over_active: bool, can_reload: bool, planning_phase: bool):
@@ -65,15 +54,18 @@ func handle_input(event: InputEvent, game_over_active: bool, can_reload: bool, p
 	# Handle cancel/undo during planning phase
 	if planning_phase and (event.is_action_pressed("ui_undo") or event.is_action_pressed("ui_cancel")):
 		if current_state == InputState.ON_SKILLS or current_state == InputState.ON_SKILL_SELECT:
-			cancel_pressed.emit()
+			if battle_root and battle_root.has_method("close_skills_menu"):
+				battle_root.close_skills_menu()
 			get_viewport().set_input_as_handled()
 			return
 		elif current_state == InputState.ON_ITEMS or current_state == InputState.ON_ITEM_SELECT:
-			cancel_pressed.emit()
+			if battle_root and battle_root.has_method("close_items_menu"):
+				battle_root.close_items_menu()
 			get_viewport().set_input_as_handled()
 			return
 		else:
-			# Signal to undo last action
+			if battle_root and battle_root.has_method("undo_last_action"):
+				battle_root.undo_last_action()
 			get_viewport().set_input_as_handled()
 			return
 	
@@ -104,15 +96,16 @@ func handle_input(event: InputEvent, game_over_active: bool, can_reload: bool, p
 
 func _handle_action_input(event: InputEvent):
 	if event.is_action_pressed("down"):
-		selected_action_index = wrapi(selected_action_index + 1, 0, 5)
-		action_button_selected.emit(selected_action_index)
+		if action_selector:
+			action_selector.handle_navigation_input(1)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("up"):
-		selected_action_index = wrapi(selected_action_index - 1, 0, 5)
-		action_button_selected.emit(selected_action_index)
+		if action_selector:
+			action_selector.handle_navigation_input(-1)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("use"):
-		action_confirmed.emit(selected_action_index)
+		if action_selector:
+			action_selector.confirm_selection()
 		get_viewport().set_input_as_handled()
 
 func _handle_skills_input(event: InputEvent):
@@ -177,6 +170,8 @@ func _handle_item_select_input(event: InputEvent):
 			var party_in_initiative = get_party_members_from_initiative()
 			selected_party_member = wrapi(selected_party_member - 1, 0, party_in_initiative.size())
 			print("DEBUG Input Left: selected_party_member = ", selected_party_member)
+			if battle_root and battle_root.has_method("move_who_moves"):
+				battle_root.move_who_moves(selected_party_member)
 			get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("right"):
 		if item_target_type == 0:
@@ -185,6 +180,8 @@ func _handle_item_select_input(event: InputEvent):
 			var party_in_initiative = get_party_members_from_initiative()
 			selected_party_member = wrapi(selected_party_member + 1, 0, party_in_initiative.size())
 			print("DEBUG Input Right: selected_party_member = ", selected_party_member)
+			if battle_root and battle_root.has_method("move_who_moves"):
+				battle_root.move_who_moves(selected_party_member)
 			get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("use"):
 		use_pressed.emit()
@@ -248,6 +245,7 @@ func get_state() -> InputState:
 
 ## Resets selection
 func reset_selection():
-	selected_action_index = 0
 	selected_enemy = 1
 	selected_party_member = 0
+	if action_selector:
+		action_selector.reset_selection()
