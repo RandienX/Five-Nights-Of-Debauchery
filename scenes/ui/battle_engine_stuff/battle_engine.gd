@@ -124,6 +124,96 @@ func _connect_signals():
 		ui_manager.item_selected.connect(_on_item_selected)
 		ui_manager.cancel_pressed.connect(_on_cancel_pressed)
 
+## Handles action button pressed from UI
+func _on_action_button_pressed(action_type: BattleTypes.ActionType):
+	if state != BattleTypes.BattleState.PLANNING or not is_player_phase:
+		return
+	
+	var current_member = get_current_planning_party()
+	if not current_member:
+		return
+	
+	# Get the actor for the current planning member
+	var current_actor_data = _get_current_planning_actor()
+	if not current_actor_data:
+		return
+	
+	match action_type:
+		BattleTypes.ActionType.ATTACK:
+			# Default attack - select random enemy target
+			var target = _get_random_enemy_target()
+			player_select_action(BattleTypes.ActionType.ATTACK, target)
+			_advance_to_next_planner()
+		
+		BattleTypes.ActionType.DEFEND:
+			player_select_action(BattleTypes.ActionType.DEFEND)
+			_advance_to_next_planner()
+		
+		BattleTypes.ActionType.RUN:
+			player_select_action(BattleTypes.ActionType.RUN)
+			_advance_to_next_planner()
+
+## Handles skill selection from UI
+func _on_skill_selected(skill: Skill, index: int):
+	if state != BattleTypes.BattleState.PLANNING or not is_player_phase:
+		return
+	
+	var current_actor_data = _get_current_planning_actor()
+	if not current_actor_data:
+		return
+	
+	# For now, select random enemy target
+	var target = _get_random_enemy_target()
+	player_select_action(BattleTypes.ActionType.SKILL, target, skill.name)
+	_advance_to_next_planner()
+
+## Handles item selection from UI
+func _on_item_selected(item: Resource, index: int):
+	if state != BattleTypes.BattleState.PLANNING or not is_player_phase:
+		return
+	
+	var current_actor_data = _get_current_planning_actor()
+	if not current_actor_data:
+		return
+	
+	# For now, use item on self (party member)
+	var current_member = get_current_planning_party()
+	var target_actor = _get_actor_by_resource(current_member)
+	
+	player_select_action(BattleTypes.ActionType.ITEM, target_actor, "", item.resource_path if item else "")
+	_advance_to_next_planner()
+
+## Handles cancel/back from UI
+func _on_cancel_pressed():
+	if state != BattleTypes.BattleState.PLANNING or not is_player_phase:
+		return
+	
+	# In RPG Maker style, cancel could go back to previous planner
+	# For now, just return to action menu
+	pass
+
+## Gets the BattleActor for the current planning party member
+func _get_current_planning_actor() -> BattleTypes.BattleActor:
+	if current_party_plan_index >= party_members.size():
+		return null
+	
+	var party_resource = party_members[current_party_plan_index]
+	for actor in battle_actors:
+		if not actor.is_enemy and actor.resource == party_resource:
+			return actor
+	
+	return null
+
+## Advances to the next party member in planning order
+func _advance_to_next_planner():
+	if current_party_plan_index >= party_battle_faces.size() - 1:
+		# All party members have planned - end planning phase
+		if action_planner:
+			action_planner.end_planning()
+	else:
+		# Move to next party member
+		advance_planning_index()
+
 ## Starts battle from the exported Battle resource
 func _start_battle_from_resource():
 	if not battle:
@@ -199,13 +289,21 @@ func _setup_party_ui():
 	
 	party_battle_faces.clear()
 	
-	# Create a battle face for each party member in initiative order
-	for actor in battle_actors:
-		if not actor.is_enemy:
-			var ui = PARTY_BATTLE_FACE_SCENE.instantiate()
-			party_container.add_child(ui)
-			ui.setup_from_actor(actor)  # Use BattleActor setup method
-			party_battle_faces.append(ui)
+	# Create a battle face for each party member in RPG Maker order (sorted by speed)
+	# Use party_queue from initiative_manager if available
+	var ordered_party_members: Array[BattleTypes.BattleActor] = []
+	if initiative_manager and not initiative_manager.party_queue.is_empty():
+		ordered_party_members = initiative_manager.party_queue.duplicate()
+	else:
+		# Fallback: use battle_actors filtered for party, sorted by speed
+		ordered_party_members = battle_actors.filter(func(a): return not a.is_enemy)
+		ordered_party_members.sort_custom(func(a, b): return a.speed > b.speed)
+	
+	for actor in ordered_party_members:
+		var ui = PARTY_BATTLE_FACE_SCENE.instantiate()
+		party_container.add_child(ui)
+		ui.setup_from_actor(actor)  # Use BattleActor setup method
+		party_battle_faces.append(ui)
 	
 	# Initialize planning index
 	current_party_plan_index = 0
@@ -637,6 +735,15 @@ func is_battle_active() -> bool:
 func _get_random_enemy_target() -> BattleTypes.BattleActor:
 	for actor in battle_actors:
 		if actor.is_enemy and not actor.is_dead:
+			return actor
+	return null
+
+## Helper to get actor by resource reference
+func _get_actor_by_resource(resource: Resource) -> BattleTypes.BattleActor:
+	if not resource:
+		return null
+	for actor in battle_actors:
+		if actor.resource == resource:
 			return actor
 	return null
 
