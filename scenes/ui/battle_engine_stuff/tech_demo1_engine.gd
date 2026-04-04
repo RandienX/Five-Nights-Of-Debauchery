@@ -8,9 +8,6 @@ var initiative: Array[Object]
 enum states { OnAction, OnEnemy, OnSkills, OnSkillSelect, OnItems, OnItemSelect, Waiting, OnRun}
 var state: states = states.OnAction
 
-# Selection Manager
-var selection_manager: BattleSelectionManager
-
 var planning_phase: bool = true
 var action_history: Array[Object] = []
 var current_attacker: Object
@@ -42,11 +39,6 @@ func _ready() -> void:
 	battle = Global.battle_current.duplicate(true)
 	Global.battle_ref = self
 	await get_tree().create_timer(0.05).timeout
-	
-	selection_manager = BattleSelectionManager.new()
-	add_child(selection_manager)
-	selection_manager.setup(self)
-	
 	setup_enemies()
 	initiative = setup_initiative()
 	setup_party()
@@ -226,7 +218,7 @@ func _input(event: InputEvent) -> void:
 	match state:
 		states.OnAction:
 			if event.is_action_pressed("down"):
-				selection_manager.navigate_actions(1)
+				move_the_move(1)
 			elif event.is_action_pressed("up"):
 				selection_manager.navigate_actions(-1)
 			elif event.is_action_pressed("use"):
