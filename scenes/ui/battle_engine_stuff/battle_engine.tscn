@@ -203,20 +203,20 @@ offset_left = 221.0
 offset_top = 487.0
 offset_right = 331.0
 offset_bottom = 648.0
-mouse_filter = 2
+mouse_filter = 1
 
 [node name="Control" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 864.0
 offset_bottom = 648.0
-mouse_filter = 2
+mouse_filter = 1
 
 [node name="enemy_ui" type="Control" parent="Control"]
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
-mouse_filter = 2
+mouse_filter = 1
 
 [node name="bg" type="TextureRect" parent="Control/enemy_ui"]
 z_index = -6
@@ -224,14 +224,13 @@ layout_mode = 0
 offset_left = -54.0
 offset_right = 931.0
 offset_bottom = 648.0
-mouse_filter = 2
 texture = ExtResource("6_iptht")
 
 [node name="enemies" type="Control" parent="Control/enemy_ui"]
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
-mouse_filter = 2
+mouse_filter = 1
 
 [node name="enemy1" type="TextureRect" parent="Control/enemy_ui/enemies"]
 material = SubResource("ShaderMaterial_bhyi3")
@@ -255,6 +254,7 @@ offset_left = 16.0
 offset_top = -26.0
 offset_right = 115.0
 offset_bottom = -5.0
+mouse_filter = 1
 theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
 theme_override_styles/fill = SubResource("StyleBoxFlat_o0w63")
 show_percentage = false
@@ -298,6 +298,7 @@ offset_left = 16.0
 offset_top = -26.0
 offset_right = 115.0
 offset_bottom = -5.0
+mouse_filter = 1
 theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
 theme_override_styles/fill = SubResource("StyleBoxFlat_o0w63")
 show_percentage = false
@@ -341,6 +342,7 @@ offset_left = 16.0
 offset_top = -26.0
 offset_right = 115.0
 offset_bottom = -5.0
+mouse_filter = 1
 theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
 theme_override_styles/fill = SubResource("StyleBoxFlat_o0w63")
 show_percentage = false
@@ -384,6 +386,7 @@ offset_left = 16.0
 offset_top = -26.0
 offset_right = 115.0
 offset_bottom = -5.0
+mouse_filter = 1
 theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
 theme_override_styles/fill = SubResource("StyleBoxFlat_o0w63")
 show_percentage = false
@@ -427,6 +430,7 @@ offset_left = 16.0
 offset_top = -26.0
 offset_right = 115.0
 offset_bottom = -5.0
+mouse_filter = 1
 theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
 theme_override_styles/fill = SubResource("StyleBoxFlat_o0w63")
 show_percentage = false
@@ -452,11 +456,11 @@ custom_minimum_size = Vector2(864, 81)
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
-mouse_filter = 2
 
 [node name="output" type="RichTextLabel" parent="Control/enemy_ui/CenterContainer"]
 custom_minimum_size = Vector2(750, 120)
 layout_mode = 2
+mouse_filter = 1
 bbcode_enabled = true
 horizontal_alignment = 1
 
@@ -465,7 +469,7 @@ layout_mode = 1
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
-mouse_filter = 2
+mouse_filter = 1
 
 [node name="bg" type="ColorRect" parent="Control/gui"]
 z_index = -5
@@ -474,7 +478,7 @@ layout_mode = 0
 offset_top = 486.0
 offset_right = 864.0
 offset_bottom = 648.0
-mouse_filter = 2
+mouse_filter = 1
 
 [node name="MarginContainer" type="MarginContainer" parent="Control/gui/bg"]
 layout_mode = 0
@@ -487,6 +491,7 @@ theme_override_constants/margin_right = 3
 [node name="ColorRect2" type="ColorRect" parent="Control/gui/bg/MarginContainer"]
 custom_minimum_size = Vector2(858, 156)
 layout_mode = 2
+mouse_filter = 1
 color = Color(0, 0, 0, 1)
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="Control/gui"]
@@ -500,14 +505,12 @@ offset_right = 1732.0
 offset_bottom = 770.0
 grow_vertical = 0
 scale = Vector2(0.5, 0.5)
-mouse_filter = 2
 
 [node name="actions" type="VBoxContainer" parent="Control/gui/HBoxContainer2"]
 custom_minimum_size = Vector2(432, 324)
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 8
-mouse_filter = 2
 
 [node name="FightButton" type="Button" parent="Control/gui/HBoxContainer2/actions"]
 custom_minimum_size = Vector2(432, 0)
