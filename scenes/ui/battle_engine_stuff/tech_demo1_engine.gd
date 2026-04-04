@@ -8,6 +8,9 @@ var initiative: Array[Object]
 enum states { OnAction, OnEnemy, OnSkills, OnSkillSelect, OnItems, OnItemSelect, Waiting, OnRun}
 var state: states = states.OnAction
 
+# Selection Manager
+var selection_manager: BattleSelectionManager
+
 var planning_phase: bool = true
 var action_history: Array[Object] = []
 var current_attacker: Object
@@ -39,6 +42,11 @@ func _ready() -> void:
 	battle = Global.battle_current.duplicate(true)
 	Global.battle_ref = self
 	await get_tree().create_timer(0.05).timeout
+	
+	selection_manager = BattleSelectionManager.new()
+	add_child(selection_manager)
+	selection_manager.setup(self)
+	
 	setup_enemies()
 	initiative = setup_initiative()
 	setup_party()
@@ -218,23 +226,23 @@ func _input(event: InputEvent) -> void:
 	match state:
 		states.OnAction:
 			if event.is_action_pressed("down"):
-				move_the_move(1)
+				selection_manager.navigate_actions(1)
 			elif event.is_action_pressed("up"):
-				move_the_move(-1)
+				selection_manager.navigate_actions(-1)
 			elif event.is_action_pressed("use"):
-				simulate_click_move()
+				selection_manager.confirm_action_selection()
 			if get_viewport():
 				get_viewport().set_input_as_handled()
 		
 		states.OnSkills:
 			if event.is_action_pressed("down"):
-				navigate_skills(2)
+				selection_manager.navigate_skills(2)
 			elif event.is_action_pressed("up"):
-				navigate_skills(-2)
+				selection_manager.navigate_skills(-2)
 			elif event.is_action_pressed("right"):
-				navigate_skills(1)
+				selection_manager.navigate_skills(1)
 			elif event.is_action_pressed("left"):
-				navigate_skills(-1)
+				selection_manager.navigate_skills(-1)
 			elif event.is_action_pressed("use"):
 				select_skill()
 			elif event.is_action_pressed("ui_cancel"):
@@ -256,13 +264,13 @@ func _input(event: InputEvent) -> void:
 		
 		states.OnItems:
 			if event.is_action_pressed("down"):
-				navigate_items(2)  
+				selection_manager.navigate_items(2)  
 			elif event.is_action_pressed("up"):
-				navigate_items(-2)
+				selection_manager.navigate_items(-2)
 			elif event.is_action_pressed("right"):
-				navigate_items(1)
+				selection_manager.navigate_items(1)
 			elif event.is_action_pressed("left"):
-				navigate_items(-1)
+				selection_manager.navigate_items(-1)
 			elif event.is_action_pressed("use"):
 				select_item()
 			elif event.is_action_pressed("ui_cancel"):
@@ -314,40 +322,6 @@ func _input(event: InputEvent) -> void:
 			if get_viewport():
 				get_viewport().set_input_as_handled()
 				
-func simulate_click_move():
-	if not $TheMove/Area2D.get_overlapping_areas(): return
-	var area = $TheMove/Area2D.get_overlapping_areas()[0]
-	
-	# Check if overlapping with skill box
-	if area.owner is SkillBox or area.get_parent() is SkillBox:
-		var skill_box = area.owner if area.owner is SkillBox else area.get_parent()
-		if skill_box is SkillBox:
-			current_skill_index = skill_box.skill_index
-			select_skill()
-			return
-	
-	# Check if overlapping with item box
-	if area.owner is ItemBox or area.get_parent() is ItemBox:
-		var item_box = area.owner if area.owner is ItemBox else area.get_parent()
-		if item_box is ItemBox:
-			current_item_index = item_box.item_index
-			select_item()
-			return
-	
-	var buttons = [$Control/gui/HBoxContainer2/actions/FightButton/fight,
-		$Control/gui/HBoxContainer2/actions/SkillsButton/skills,
-		$Control/gui/HBoxContainer2/actions/DefendButton/defend,
-		$Control/gui/HBoxContainer2/actions/ItemButton/item,
-		$Control/gui/HBoxContainer2/actions/RunButton/run]
-	var funcs = [_on_fight_button_pressed, _on_skills_button_pressed, _on_defend_button_pressed, _on_item_button_pressed, _on_run_button_pressed]
-	for i in range(buttons.size()):
-		if area == buttons[i]:
-			funcs[i].call()
-
-func move_the_move(input: int):
-	if $TheMove.position.y == 487 and input == -1: $TheMove.position.y = 615
-	elif $TheMove.position.y == 615 and input == 1: $TheMove.position.y = 487
-	else: $TheMove.position.y += 32 * input
 
 func move_who_moves(index: int):
 	$WhoMoves.visible = true
