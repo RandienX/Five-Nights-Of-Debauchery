@@ -137,15 +137,7 @@ func navigate_skills(direction: int):
 		update_skill_selection()
 
 func check_skill_overlap():
-	var overlapping = root.get_node("TheMove/Area2D.get_overlapping_areas()")
-	for area in overlapping:
-		var parent = area.get_parent()
-		if parent is SkillBox:
-			var new_index = parent.skill_index
-			if skill_affordable[new_index] and new_index != current_skill_index:
-				current_skill_index = new_index
-				update_skill_selection()
-			return
+	pass
 
 func select_skill():
 	if current_skill_index < 0 or current_skill_index >= available_skills.size():
