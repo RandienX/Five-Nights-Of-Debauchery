@@ -165,15 +165,7 @@ func navigate_items(direction: int):
 		update_item_selection()
 
 func check_item_overlap():
-	var overlapping = root.get_node("TheMove/Area2D.get_overlapping_areas()")
-	for area in overlapping:
-		var parent = area.get_parent()
-		if parent is ItemBox:
-			var new_index = parent.item_index
-			if item_amounts[new_index] > 0 and new_index != current_item_index:
-				current_item_index = new_index
-				update_item_selection()
-			return
+	pass
 
 func select_item():
 	if current_item_index < 0 or current_item_index >= available_items.size():

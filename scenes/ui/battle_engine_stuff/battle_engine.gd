@@ -13,6 +13,8 @@ var state: states = states.OnAction
 var item_manager: ItemManager
 var skill_manager: SkillManager
 var effect_manager: EffectManager
+var action_selector: BattleActionSelector
+var selection_manager: BattleSelectionManager
 
 var planning_phase: bool = true
 var action_history: Array[Object] = []
@@ -60,6 +62,20 @@ func _setup_managers():
 	
 	skill_manager = SkillManager.new()
 	skill_manager.setup_skills_ui(self)
+	
+	action_selector = BattleActionSelector.new()
+	add_child(action_selector)
+	action_selector.setup(self, 
+		$Control/gui/HBoxContainer2/actions/FightButton/fight,
+		$Control/gui/HBoxContainer2/actions/SkillsButton/skills,
+		$Control/gui/HBoxContainer2/actions/DefendButton/defend,
+		$Control/gui/HBoxContainer2/actions/ItemButton/item,
+		$Control/gui/HBoxContainer2/actions/RunButton/run
+	)
+	
+	selection_manager = BattleSelectionManager.new()
+	add_child(selection_manager)
+	selection_manager.setup(self, action_selector, skill_manager, item_manager)
 
 func setup_enemies():
 	for e in range(5):
@@ -198,23 +214,27 @@ func _input(event: InputEvent) -> void:
 	match state:
 		states.OnAction:
 			if event.is_action_pressed("down"):
-				move_the_move(1)
+				selection_manager.navigate(1)
 			elif event.is_action_pressed("up"):
-				move_the_move(-1)
+				selection_manager.navigate(-1)
 			elif event.is_action_pressed("use"):
-				simulate_click_move()
+				selection_manager.confirm_selection()
 			if get_viewport():
 				get_viewport().set_input_as_handled()
 		
 		states.OnSkills:
 			if event.is_action_pressed("down"):
-				skill_manager.navigate_skills(2)
+				selection_manager.switch_selection_type(BattleSelectionManager.SelectionType.SKILLS)
+				selection_manager.navigate(2)
 			elif event.is_action_pressed("up"):
-				skill_manager.navigate_skills(-2)
+				selection_manager.switch_selection_type(BattleSelectionManager.SelectionType.SKILLS)
+				selection_manager.navigate(-2)
 			elif event.is_action_pressed("right"):
-				skill_manager.navigate_skills(1)
+				selection_manager.switch_selection_type(BattleSelectionManager.SelectionType.SKILLS)
+				selection_manager.navigate(1)
 			elif event.is_action_pressed("left"):
-				skill_manager.navigate_skills(-1)
+				selection_manager.switch_selection_type(BattleSelectionManager.SelectionType.SKILLS)
+				selection_manager.navigate(-1)
 			elif event.is_action_pressed("use"):
 				skill_manager.select_skill()
 			elif event.is_action_pressed("ui_cancel"):
@@ -236,13 +256,17 @@ func _input(event: InputEvent) -> void:
 		
 		states.OnItems:
 			if event.is_action_pressed("down"):
-				item_manager.navigate_items(2)  
+				selection_manager.switch_selection_type(BattleSelectionManager.SelectionType.ITEMS)
+				selection_manager.navigate(2)  
 			elif event.is_action_pressed("up"):
-				item_manager.navigate_items(-2)
+				selection_manager.switch_selection_type(BattleSelectionManager.SelectionType.ITEMS)
+				selection_manager.navigate(-2)
 			elif event.is_action_pressed("right"):
-				item_manager.navigate_items(1)
+				selection_manager.switch_selection_type(BattleSelectionManager.SelectionType.ITEMS)
+				selection_manager.navigate(1)
 			elif event.is_action_pressed("left"):
-				item_manager.navigate_items(-1)
+				selection_manager.switch_selection_type(BattleSelectionManager.SelectionType.ITEMS)
+				selection_manager.navigate(-1)
 			elif event.is_action_pressed("use"):
 				item_manager.select_item()
 			elif event.is_action_pressed("ui_cancel"):
@@ -268,39 +292,7 @@ func _input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				
 func simulate_click_move():
-	if not $TheMove/Area2D.get_overlapping_areas(): return
-	var area = $TheMove/Area2D.get_overlapping_areas()[0]
-	
-	# Check if overlapping with skill box
-	if area.owner is SkillBox or area.get_parent() is SkillBox:
-		var skill_box = area.owner if area.owner is SkillBox else area.get_parent()
-		if skill_box is SkillBox:
-			skill_manager.current_skill_index = skill_box.skill_index
-			skill_manager.select_skill()
-			return
-	
-	# Check if overlapping with item box
-	if area.owner is ItemBox or area.get_parent() is ItemBox:
-		var item_box = area.owner if area.owner is ItemBox else area.get_parent()
-		if item_box is ItemBox:
-			item_manager.current_item_index = item_box.item_index
-			item_manager.select_item()
-			return
-	
-	var buttons = [$Control/gui/HBoxContainer2/actions/FightButton/fight,
-		$Control/gui/HBoxContainer2/actions/SkillsButton/skills,
-		$Control/gui/HBoxContainer2/actions/DefendButton/defend,
-		$Control/gui/HBoxContainer2/actions/ItemButton/item,
-		$Control/gui/HBoxContainer2/actions/RunButton/run]
-	var funcs = [_on_fight_button_pressed, _on_skills_button_pressed, _on_defend_button_pressed, _on_item_button_pressed, _on_run_button_pressed]
-	for i in range(buttons.size()):
-		if area == buttons[i]:
-			funcs[i].call()
-
-func move_the_move(input: int):
-	if $TheMove.position.y == 487 and input == -1: $TheMove.position.y = 615
-	elif $TheMove.position.y == 615 and input == 1: $TheMove.position.y = 487
-	else: $TheMove.position.y += 32 * input
+	selection_manager.confirm_selection()
 
 func move_who_moves(index: int):
 	$WhoMoves.visible = true
