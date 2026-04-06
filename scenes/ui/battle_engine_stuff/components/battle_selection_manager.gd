@@ -17,44 +17,75 @@ var action_funcs: Array[Callable] = []
 enum SelectionType { ACTIONS, SKILLS, ITEMS }
 var current_selection_type: SelectionType = SelectionType.ACTIONS
 
-func setup(battleroot):
-root = battleroot
-# Get action buttons
-action_buttons = [
-root.get_node("Control/gui/HBoxContainer2/actions/FightButton/fight"),
-root.get_node("Control/gui/HBoxContainer2/actions/SkillsButton/skills"),
-root.get_node("Control/gui/HBoxContainer2/actions/DefendButton/defend"),
-root.get_node("Control/gui/HBoxContainer2/actions/ItemButton/item"),
-root.get_node("Control/gui/HBoxContainer2/actions/RunButton/run")
-]
-action_funcs = [
-root._on_fight_button_pressed,
-root._on_skills_button_pressed,
-root._on_defend_button_pressed,
-root._on_item_button_pressed,
-root._on_run_button_pressed
-]
-update_action_selection()
+func setup(battleroot, action_sel, skill_mgr, item_mgr):
+	root = battleroot
+	action_selector = action_sel
+	skill_manager = skill_mgr
+	item_manager = item_mgr
+	
+	# Get action buttons
+	action_buttons = [
+		root.get_node("Control/gui/HBoxContainer2/actions/FightButton/fight"),
+		root.get_node("Control/gui/HBoxContainer2/actions/SkillsButton/skills"),
+		root.get_node("Control/gui/HBoxContainer2/actions/DefendButton/defend"),
+		root.get_node("Control/gui/HBoxContainer2/actions/ItemButton/item"),
+		root.get_node("Control/gui/HBoxContainer2/actions/RunButton/run")
+	]
+	action_funcs = [
+		root._on_fight_button_pressed,
+		root._on_skills_button_pressed,
+		root._on_defend_button_pressed,
+		root._on_item_button_pressed,
+		root._on_run_button_pressed
+	]
+	update_action_selection()
 
 func update_action_selection():
-for i in range(action_buttons.size()):
-if i == current_action_index:
-action_buttons[i].modulate = Color(1, 1, 0.5)  # Yellow highlight
-else:
-action_buttons[i].modulate = Color(1, 1, 1)
+	for i in range(action_buttons.size()):
+		if i == current_action_index:
+			action_buttons[i].modulate = Color(1, 1, 0.5)  # Yellow highlight
+		else:
+			action_buttons[i].modulate = Color(1, 1, 1)
 
 func navigate_actions(direction: int):
-current_action_index = wrapi(current_action_index + direction, 0, action_buttons.size())
-update_action_selection()
+	current_action_index = wrapi(current_action_index + direction, 0, action_buttons.size())
+	update_action_selection()
 
 func confirm_action_selection():
-if current_action_index < action_funcs.size():
-action_funcs[current_action_index].call()
+	if current_action_index < action_funcs.size():
+		action_funcs[current_action_index].call()
+
+# Unified navigate function that works for all selection types
+# Uses index-based navigation (id = child index in container)
+func navigate(direction: int):
+	match current_selection_type:
+		SelectionType.ACTIONS:
+			navigate_actions(direction)
+		SelectionType.SKILLS:
+			if skill_manager:
+				skill_manager.navigate_skills(direction)
+		SelectionType.ITEMS:
+			if item_manager:
+				item_manager.navigate_items(direction)
+
+func switch_selection_type(new_type: SelectionType):
+	current_selection_type = new_type
+
+func confirm_selection():
+	match current_selection_type:
+		SelectionType.ACTIONS:
+			confirm_action_selection()
+		SelectionType.SKILLS:
+			if skill_manager:
+				skill_manager.select_skill()
+		SelectionType.ITEMS:
+			if item_manager:
+				item_manager.select_item()
 
 func navigate_skills(direction: int):
-if root.has_method("navigate_skills"):
-root.navigate_skills(direction)
+	if root.has_method("navigate_skills"):
+		root.navigate_skills(direction)
 
 func navigate_items(direction: int):
-if root.has_method("navigate_items"):
-root.navigate_items(direction)
+	if root.has_method("navigate_items"):
+		root.navigate_items(direction)
