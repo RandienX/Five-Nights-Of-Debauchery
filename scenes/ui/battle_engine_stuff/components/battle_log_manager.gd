@@ -8,16 +8,38 @@ func setup(broot, e_mgr):
 	root = broot
 	effect_manager = e_mgr
 
-var battle_log: Array[String] = []
+# Each log entry stores the text and its remaining display time
+var battle_log: Array[Dictionary] = []
 var max_log_entries: int = 6
 var log_display_time: float = 8.0
-var log_timer: float = 0.0
+
+func _process(delta: float) -> void:
+	# Update timers for each log entry
+	for i in range(battle_log.size() - 1, -1, -1):
+		battle_log[i]["time_left"] -= delta
+		if battle_log[i]["time_left"] <= 0:
+			battle_log.remove_at(i)
+	
+	# Enforce max entries limit (remove oldest if exceeded)
+	while battle_log.size() > max_log_entries:
+		battle_log.remove_at(0)
+	
+	update_battle_log_display()
 
 func add_to_battle_log(text: String) -> void:
-	log_timer = 0.0
-	battle_log.append(text)
-	if battle_log.size() > max_log_entries:
+	# Split text into lines and add each line as a separate log entry
+	var lines = text.split("\n")
+	for line in lines:
+		if not line.is_empty():
+			battle_log.append({
+				"text": line,
+				"time_left": log_display_time
+			})
+	
+	# Enforce max entries limit immediately after adding
+	while battle_log.size() > max_log_entries:
 		battle_log.remove_at(0)
+	
 	update_battle_log_display()
 
 func remove_oldest_log_entry() -> void:
@@ -29,7 +51,12 @@ func update_battle_log_display() -> void:
 	if battle_log.is_empty():
 		root.get_node("Control/enemy_ui/CenterContainer/output").text = ""
 	else:
-		root.get_node("Control/enemy_ui/CenterContainer/output").text = "\n".join(battle_log)
+		var display_text = ""
+		for i in range(battle_log.size()):
+			if i > 0:
+				display_text += "\n"
+			display_text += battle_log[i]["text"]
+		root.get_node("Control/enemy_ui/CenterContainer/output").text = display_text
 
 func print_outcome(atk: Object, targets: Array, attack: Skill, dmg: int, crit: bool, miss: bool, mp_cost: int = 0, effects_applied: Array = []):
 	var t = ""
