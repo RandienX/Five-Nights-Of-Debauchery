@@ -4,12 +4,12 @@
 __pycache__/
 *.o
 *.obj
-*.class
-*.exe
-*.dll
 *.so
-*.a
+*.dll
+*.exe
+*.class
 *.out
+*.a
 
 # Dependencies
 node_modules/
@@ -39,9 +39,11 @@ target/
 __pycache__/
 .mypy_cache/
 .pytest_cache/
-.coverage
 coverage/
 htmlcov/
+
+# Logs
+*.log
 
 # System files
 .DS_Store
