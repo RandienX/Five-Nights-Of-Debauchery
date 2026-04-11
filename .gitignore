@@ -4,12 +4,12 @@
 __pycache__/
 *.o
 *.obj
-*.class
-*.exe
-*.dll
 *.so
-*.a
+*.dll
+*.exe
+*.class
 *.out
+*.a
 
 # Dependencies
 node_modules/
@@ -17,23 +17,20 @@ venv/
 .venv/
 .env
 .env.local
-*.env.*
+.env.*
 
 # Build directories
 dist/
 build/
 target/
-*.egg-info/
+.gradle/
 
-# Caches
+# Cache directories
 .mypy_cache/
 .pytest_cache/
-.coverage
 coverage/
 htmlcov/
-.gradle/
-.julia/
-zig-cache/
+.coverage
 
 # Editors
 .vscode/
@@ -42,10 +39,12 @@ zig-cache/
 *.swo
 *.tmp
 
+# Logs
+*.log
+
 # System files
 .DS_Store
 Thumbs.db
-*.log
 
 # Compressed files
 *.zip
