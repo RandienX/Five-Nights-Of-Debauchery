@@ -5,7 +5,7 @@ signal skill_selected(skill: Skill, index: int)
 
 var name_label: Label
 var mana_label: Label
-var hitbox: Area2D
+var can_select
 
 var skill: Skill
 var skill_index: int = 0
@@ -15,12 +15,13 @@ var party_mode = false
 func _ready() -> void:
 	name_label = $HSplitContainer/name
 	mana_label = $HSplitContainer/mana_cost
-	hitbox = $skill_hitbox
 	
 	custom_minimum_size = Vector2(370, 70)
 	size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	$skill_hitbox/NinePatchRect.visible = false
-	Global.lower_font(name_label)
+	$NinePatchRect.visible = false
+	
+	if party_mode:
+		$Button.disabled = true
 
 func setup(skill_: Skill, index: int, is_affordable: bool):
 	skill = skill_
@@ -37,29 +38,20 @@ func setup(skill_: Skill, index: int, is_affordable: bool):
 		else:
 			mana_label.text = str(skill.mana_cost) + " MP"
 			modulate = Color(0.5, 0.5, 0.5)
-	
-	if hitbox:
-		hitbox.set_collision_layer_value(1, affordable)
-		hitbox.set_collision_mask_value(1, affordable)
-		
-	$skill_hitbox/NinePatchRect/Desc.text = skill.desc
-	$skill_hitbox/NinePatchRect.size.x = $skill_hitbox/NinePatchRect/Desc.size.x
-	$skill_hitbox/NinePatchRect.size.y = $skill_hitbox/NinePatchRect/Desc.size.y + 16
-
-func set_collisions(enabled: bool):
-	if hitbox:
-		hitbox.set_collision_layer_value(1, enabled)
-		hitbox.set_collision_mask_value(1, enabled)
-			
+	Global.lower_font(name_label)
 
 func _on_button_pressed() -> void:
 	if party_mode:
-		if $skill_hitbox/NinePatchRect.visible == false:
+		if $NinePatchRect.visible == false:
 			if affordable:
-				$skill_hitbox/NinePatchRect.visible = true
-				$skill_hitbox/NinePatchRect.global_position = get_global_mouse_position()
+				$NinePatchRect.visible = true
+				$NinePatchRect.global_position = get_global_mouse_position() - Vector2(10, 10)
 		else:
-			$skill_hitbox/NinePatchRect.visible = false
+			$NinePatchRect.visible = false
 
-func _on_button_mouse_exited() -> void:
-	$skill_hitbox/NinePatchRect.visible = false
+func _on_nine_patch_rect_focus_exited() -> void:
+	$NinePatchRect.visible = false
+
+func _on_fight_button_pressed() -> void:
+	if can_select:
+		skill_selected.emit(skill, skill_index)

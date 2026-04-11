@@ -23,7 +23,6 @@ func item_select_input(event):
 		else:
 			var party_in_initiative = root.get_party_members_from_initiative()
 			selected_party_member = wrapi(selected_party_member - 1, 0, party_in_initiative.size())
-			print("DEBUG Input Left: selected_party_member = ", selected_party_member, " target = ", party_in_initiative[selected_party_member].name)
 			root.move_who_moves(selected_party_member)
 		root.get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("right"):
@@ -55,6 +54,7 @@ func setup_items_ui(battleroot):
 		items_container.name = "items_container"
 		items_container.set_anchors_preset(Control.PRESET_FULL_RECT)
 		items_container.visible = false
+		items_container.z_index = 10
 		
 		var scroll = ScrollContainer.new()
 		scroll.name = "ScrollContainer"
@@ -71,15 +71,15 @@ func setup_items_ui(battleroot):
 		grid.custom_minimum_size = Vector2(1296, 0)  # MATCH SKILLS: 1296px width
 		scroll.add_child(grid)
 		
-		root.get_node("Control/gui/HBoxContainer2.add_child(items_container)")
+		root.get_node("Control/gui/HBoxContainer2").add_child(items_container)
 	
 	items_container = root.get_node("Control/gui/HBoxContainer2/items_container")
 
 func open_items_menu():
 	root.state = root.states.OnItems
 	items_container.visible = true
-	root.get_node("Control/gui/HBoxContainer2/party.visible = false")
-	root.get_node("WhoMoves.visible = false")
+	root.get_node("Control/gui/HBoxContainer2/party").visible = false
+	root.get_node("WhoMoves").visible = false
 	
 	available_items.clear()
 	item_amounts.clear()
@@ -127,10 +127,8 @@ func update_item_selection():
 		
 		if i == current_item_index and has_items:
 			box.modulate = Color(1, 1, 0.5)
-			box.set_collisions(true)
 		else:
 			box.modulate = Color(1, 1, 1) if has_items else Color(0.5, 0.5, 0.5)
-			box.set_collisions(false)
 	
 	if current_item_index >= item_scroll_offset + max_visible_items:
 		item_scroll_offset = current_item_index - max_visible_items + 1
@@ -164,9 +162,6 @@ func navigate_items(direction: int):
 		current_item_index = new_index
 		update_item_selection()
 
-func check_item_overlap():
-	pass
-
 func select_item():
 	if current_item_index < 0 or current_item_index >= available_items.size():
 		return
@@ -199,10 +194,10 @@ func select_item():
 			
 			saved_party_plan_index = root.current_party_plan_index
 			items_container.visible = false
-			root.get_node("Control/gui/HBoxContainer2/party.visible = true")
-			root.get_node("WhoMoves.visible = true")
+			root.get_node("Control/gui/HBoxContainer2/party").visible = true
+			root.get_node("WhoMoves").visible = true
 			root.move_who_moves(selected_party_member)
-			root.get_node('Control/enemy_ui/CenterContainer/output.text = "Select party member..."')
+			root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select party member..."
 			return
 
 func confirm_item_target():
@@ -238,7 +233,7 @@ func confirm_item_target():
 			root.get_node("WhoMoves.visible = true")
 			root.move_who_moves(saved_party_plan_index)
 			
-			root.action_history.append(root.scurrent_attacker)
+			root.action_history.append(root.current_attacker)
 			close_items_menu()
 			root.advance_planning()
 

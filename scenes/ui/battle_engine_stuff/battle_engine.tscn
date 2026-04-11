@@ -7,7 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://cfoscxh3td7hk" path="res://assets/battleui/backgrounds/FNaF 1 - Dining Area.png" id="6_iptht"]
 [ext_resource type="Shader" uid="uid://c1n4qnyxnj208" path="res://scenes/ui/battle_engine_stuff/flash.tres" id="6_mq0o5"]
 [ext_resource type="Script" uid="uid://cktt8sbju7vyf" path="res://scenes/ui/battle_engine_stuff/enemies_hp_bars.gd" id="6_sc6or"]
-[ext_resource type="Script" uid="uid://b37fsbilrhgtk" path="res://code/conditions/textbox_conditions/conditions_none.gd" id="7_x8o33"]
+[ext_resource type="Script" uid="uid://82tj1ugboxcb" path="res://scenes/ui/battle_engine_stuff/components/battle_selection_manager.gd" id="8_iptht"]
 
 [sub_resource type="Animation" id="Animation_bhyi3"]
 length = 0.001
@@ -192,9 +192,6 @@ parameters/looping = true
 autoplay = true
 
 [node name="SfxPlayer2" type="AudioStreamPlayer" parent="."]
-
-[node name="ConditionsScript" type="Node" parent="."]
-script = ExtResource("7_x8o33")
 
 [node name="WhoMoves" type="ColorRect" parent="."]
 z_index = 2
@@ -506,11 +503,17 @@ offset_bottom = 770.0
 grow_vertical = 0
 scale = Vector2(0.5, 0.5)
 
-[node name="actions" type="VBoxContainer" parent="Control/gui/HBoxContainer2"]
+[node name="actions" type="VBoxContainer" parent="Control/gui/HBoxContainer2" node_paths=PackedStringArray("target_container")]
 custom_minimum_size = Vector2(432, 324)
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 8
+alignment = 2
+script = ExtResource("8_iptht")
+target_container = NodePath(".")
+navigation_action = "up"
+back_navigation_action = "down"
+use_action = "use"
 
 [node name="FightButton" type="Button" parent="Control/gui/HBoxContainer2/actions"]
 custom_minimum_size = Vector2(432, 0)

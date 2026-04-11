@@ -42,7 +42,8 @@ func setup_skills_ui(battleroot):
 		grid.custom_minimum_size = Vector2(1296, 0)
 		
 		scroll.add_child(grid)
-	
+		root.get_node("Control/gui/HBoxContainer2").add_child(skills_container)
+		
 	skills_container = root.get_node("Control/gui/HBoxContainer2/skills_container")
 
 func open_skills_menu():
@@ -72,7 +73,7 @@ func open_skills_menu():
 	update_skill_selection()
 
 func create_skill_boxes():
-	var grid = skills_container.root.get_node("ScrollContainer/SkillGrid")
+	var grid = skills_container.get_node("ScrollContainer/SkillGrid")
 	for child in grid.get_children():
 		child.queue_free()
 	skill_boxes.clear()
@@ -94,11 +95,11 @@ func update_skill_selection():
 		
 		if i == current_skill_index and affordable:
 			box.modulate = Color(1, 1, 0.5)  # Yellow highlight
-			box.set_collisions(true)
+			box.can_select = true
 		else:
 			# Keep affordable skills white, unaffordable gray
 			box.modulate = Color(1, 1, 1) if affordable else Color(0.5, 0.5, 0.5)
-			box.set_collisions(false)
+			box.can_select = false
 	
 	# Handle scrolling
 	if current_skill_index >= skill_scroll_offset + max_visible_skills:
@@ -106,11 +107,10 @@ func update_skill_selection():
 	elif current_skill_index < skill_scroll_offset:
 		skill_scroll_offset = current_skill_index
 	
-	var scroll = skills_container.root.get_node("ScrollContainer")
+	var scroll = skills_container.get_node("ScrollContainer")
 	scroll.scroll_vertical = skill_scroll_offset * 70
 
 func navigate_skills(direction: int):
-	var columns = 2  # Must match grid.columns
 	var new_index = current_skill_index + direction
 	
 	# Loop around if needed
@@ -135,9 +135,6 @@ func navigate_skills(direction: int):
 	if skill_affordable[new_index]:
 		current_skill_index = new_index
 		update_skill_selection()
-
-func check_skill_overlap():
-	pass
 
 func select_skill():
 	if current_skill_index < 0 or current_skill_index >= available_skills.size():
