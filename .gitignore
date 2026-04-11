@@ -19,25 +19,28 @@ venv/
 .env.local
 .env.*
 
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Editors
+.vscode/
+.idea/
+
 # Build directories
 dist/
 build/
 target/
 .gradle/
 
-# Cache directories
+# Python specific
+*.pyc
+__pycache__/
 .mypy_cache/
 .pytest_cache/
 coverage/
 htmlcov/
-.coverage
-
-# Editors
-.vscode/
-.idea/
-*.swp
-*.swo
-*.tmp
 
 # Logs
 *.log
