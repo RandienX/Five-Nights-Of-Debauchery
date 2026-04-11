@@ -4,10 +4,11 @@
 __pycache__/
 *.o
 *.obj
-*.so
-*.dll
-*.exe
 *.class
+*.exe
+*.dll
+*.so
+*.a
 *.out
 
 # Dependencies
@@ -18,6 +19,15 @@ venv/
 .env.local
 .env.*
 
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Editors
+.vscode/
+.idea/
+
 # Build directories
 dist/
 build/
@@ -27,43 +37,15 @@ target/
 # Python specific
 *.pyc
 __pycache__/
-*.pyo
-*.pyd
-.Python
-*.so
+.mypy_cache/
+.pytest_cache/
 .coverage
 coverage/
 htmlcov/
 
-# Logs and temp files
-*.log
-*.tmp
-*.swp
-*.swo
-
-# Editors
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-
-# OS generated files
+# System files
 .DS_Store
 Thumbs.db
-ehthumbs.db
-Icon?
-.directory
-*.nib
-*._*
-.dirstamp
-
-# MyPy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# PyTest
-.pytest_cache/
 
 # Compressed files
 *.zip
