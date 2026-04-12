@@ -17,7 +17,7 @@ signal dialogue_started(data: DialogueData)
 signal node_displayed(node: DialogueNodeData, index: int, data: DialogueData)
 
 ## Emitted when choices are available (UI should show choice buttons)
-signal choices_available(choices: Array[DialogueNodeData.DialogueChoice])
+signal choices_available(choices: Array[DialogueChoice])
 
 ## Emitted when dialogue ends naturally (reaches END node or no more nodes)
 signal dialogue_ended(data: DialogueData)
@@ -72,7 +72,7 @@ var is_running: bool = false
 var is_waiting: bool = false
 
 ## Current pending branch evaluations (for CONDITIONAL_BRANCH nodes)
-var pending_branches: Array[DialogueNodeData.DialogueBranch] = []
+var pending_branches: Array[DialogueBranch] = []
 
 
 # =====================
@@ -227,7 +227,7 @@ func select_choice(choice_index: int) -> bool:
 		push_error("DialogueEngine: Choice index %d out of range" % choice_index)
 		return false
 	
-	var choice: DialogueNodeData.DialogueChoice = current_node.choices[choice_index]
+	var choice: DialogueChoice = current_node.choices[choice_index]
 	
 	# Check visibility condition if present
 	if choice.is_visible_condition != "":
@@ -345,7 +345,7 @@ func _process_current_node() -> void:
 			
 		DialogueNodeData.NodeType.CHOICE:
 			# Filter choices by visibility conditions
-			var visible_choices: Array[DialogueNodeData.DialogueChoice] = []
+			var visible_choices: Array[DialogueChoice] = []
 			for choice in node.choices:
 				if choice.is_visible_condition == "":
 					visible_choices.append(choice)
@@ -392,10 +392,16 @@ func _process_current_node() -> void:
 			if not jumped:
 				# No condition was true - handle default behavior
 				if not node.branches.is_empty():
-					var last_branch: DialogueNodeData.DialogueBranch = node.branches[-1]
-					if last_branch.on_false_behavior == "JUMP":
-						jump_to(last_branch.on_false_target)
-						jumped = true
+					var last_branch: DialogueBranch = node.branches[-1]
+					match last_branch.on_false_behavior:
+						DialogueBranch.FalseBehavior.JUMP:
+							jump_to(last_branch.on_false_target)
+							jumped = true
+						DialogueBranch.FalseBehavior.END:
+							_end_dialogue()
+							return
+						_:  # NEXT or default
+							pass
 				
 				if not jumped:
 					# Proceed to next node
