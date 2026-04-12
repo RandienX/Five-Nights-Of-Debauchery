@@ -1,7 +1,3 @@
-# Ultra-Minimalist Dialogue System for Godot 4.x
-
-**Zero code for 95% of dialogue cases. Full control for the 5% edge cases.**
-
 ## Quick Start (3 Steps)
 
 ### 1. Create Dialogue Data
