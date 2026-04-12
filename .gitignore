@@ -3,17 +3,19 @@
 *.import
 *.uid
 .project
-.scn
-.res
-.gdignore
+.user
+.autoload.gd
+.godot/
 
 # Build artifacts
 export_presets.cfg
 
 # Temporary files
 *.tmp
-*.log
+*.temp
+*.bak
 
-# Dependencies
-.addons/
+# OS-specific files
+.DS_Store
+Thumbs.db
 ```
