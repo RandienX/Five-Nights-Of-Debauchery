@@ -17,7 +17,7 @@ extends Resource
 enum NodeType { STANDARD, CHOICE, CONDITIONAL_BRANCH, JUMP, END }
 @export var node_type: NodeType = NodeType.STANDARD
 
-## For CONDITIONAL_BRANCH: List of conditions with jump targets
+## For CONDITIONAL_BRANCH type: List of conditional branches
 @export var branches: Array[DialogueBranch] = []
 
 ## For JUMP type: Target index or label to jump to
@@ -37,46 +37,8 @@ enum NodeType { STANDARD, CHOICE, CONDITIONAL_BRANCH, JUMP, END }
 @export var metadata: Dictionary = {}  ## Custom data for game-specific logic
 
 
-## Represents a conditional branch in the dialogue
-class DialogueBranch:
-	## Condition ID to check (registered in DialogueRegistry)
-	var condition_id: String = ""
-	## Arguments for the condition
-	var arguments: Array = []
-	## Target to jump to if condition is true (index or label)
-	var jump_target: String = ""
-	## What to do if false: NEXT (proceed to next index) or JUMP (to specific target)
-	var on_false_behavior: String = "NEXT"
-	var on_false_target: String = ""
-	
-	func _init(
-		p_condition_id: String = "",
-		p_arguments: Array = [],
-		p_jump_target: String = "",
-		p_on_false_behavior: String = "NEXT",
-		p_on_false_target: String = ""
-	):
-		condition_id = p_condition_id
-		arguments = p_arguments
-		jump_target = p_jump_target
-		on_false_behavior = p_on_false_behavior
-		on_false_target = p_on_false_target
-
-
-## Represents a player choice in a CHOICE node
-class DialogueChoice:
-	var text: String = ""
-	var target: String = ""  ## Index or label to jump to when selected
-	var is_visible_condition: String = ""  ## Optional condition to show/hide choice
-	var is_visible_args: Array = []
-	
-	func _init(
-		p_text: String = "",
-		p_target: String = "",
-		p_is_visible_condition: String = "",
-		p_is_visible_args: Array = []
-	):
-		text = p_text
-		target = p_target
-		is_visible_condition = p_is_visible_condition
-		is_visible_args = p_is_visible_args
+## Returns a string representation for debugging
+func _to_string() -> String:
+	return "DialogueNodeData(id=%d, label=%s, type=%s)" % [
+		node_id, label if not label.is_empty() else str(node_id), NodeType.keys()[node_type]
+	]

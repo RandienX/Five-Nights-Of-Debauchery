@@ -37,7 +37,7 @@ dialogue_system/
 
 ### 1. Install
 
-Copy the `dialogue_system/` folder into your Godot project's `res://` directory.w
+Copy the `dialogue_system/` folder into your Godot project's `res://` directory.
 
 ### 2. Create Dialogue Data
 

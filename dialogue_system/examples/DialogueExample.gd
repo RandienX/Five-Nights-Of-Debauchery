@@ -122,10 +122,10 @@ func _on_node_displayed(node: DialogueNodeData, index: int, data: DialogueData) 
 	# - Enable "Next" button if waiting for input
 
 
-func _on_choices_available(choices: Array[DialogueNodeData.DialogueChoice]) -> void:
+func _on_choices_available(choices: Array[DialogueChoice]) -> void:
 	print("\n--- Choices Available ---")
 	for i in range(choices.size()):
-		var choice: DialogueNodeData.DialogueChoice = choices[i]
+		var choice: DialogueChoice = choices[i]
 		print("[%d] %s" % [i, choice.text])
 	print("-------------------------")
 	print("Call select_choice(index) to make a selection")

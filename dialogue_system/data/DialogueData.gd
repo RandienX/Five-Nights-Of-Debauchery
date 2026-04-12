@@ -61,11 +61,11 @@ func validate() -> bool:
 				push_error("DialogueData '%s' node %d: Invalid jump_target '%s' in branch" % [title, i, branch.jump_target])
 				is_valid = false
 			
-			if branch.on_false_behavior not in ["NEXT", "JUMP"]:
-				push_error("DialogueData '%s' node %d: Invalid on_false_behavior '%s'" % [title, i, branch.on_false_behavior])
+			if branch.on_false_behavior not in [DialogueBranch.FalseBehavior.NEXT, DialogueBranch.FalseBehavior.JUMP]:
+				push_error("DialogueData '%s' node %d: Invalid on_false_behavior '%s'" % [title, i, DialogueBranch.FalseBehavior.keys()[branch.on_false_behavior]])
 				is_valid = false
 			
-			if branch.on_false_behavior == "JUMP" and not _is_valid_target(branch.on_false_target):
+			if branch.on_false_behavior == DialogueBranch.FalseBehavior.JUMP and not _is_valid_target(branch.on_false_target):
 				push_error("DialogueData '%s' node %d: Invalid on_false_target '%s'" % [title, i, branch.on_false_target])
 				is_valid = false
 		
