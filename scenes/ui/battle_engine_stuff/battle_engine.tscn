@@ -1,14 +1,13 @@
-[gd_scene load_steps=24 format=3 uid="uid://ciu8rtat0ypho"]
+[gd_scene load_steps=20 format=3 uid="uid://ciu8rtat0ypho"]
 
 [ext_resource type="FontFile" uid="uid://bbkqbneky7jdt" path="res://assets/courbd.ttf" id="1_4ejce"]
 [ext_resource type="Script" uid="uid://dcmh5clht1ou8" path="res://scenes/ui/battle_engine_stuff/battle_engine.gd" id="1_mq0o5"]
 [ext_resource type="AudioStream" uid="uid://bnajx4f37io4r" path="res://assets/sound/battle/1-81.mp3" id="2_bhyi3"]
-[ext_resource type="Resource" uid="uid://hcjum4b6iriu" path="res://resources/battles/alpha_party_hat_3.tres" id="2_uue3o"]
 [ext_resource type="Shader" uid="uid://78ytsnaia8ko" path="res://resources/battles/white_flash.tres" id="5_bhyi3"]
 [ext_resource type="Texture2D" uid="uid://cfoscxh3td7hk" path="res://assets/battleui/backgrounds/FNaF 1 - Dining Area.png" id="6_iptht"]
 [ext_resource type="Shader" uid="uid://c1n4qnyxnj208" path="res://scenes/ui/battle_engine_stuff/flash.tres" id="6_mq0o5"]
 [ext_resource type="Script" uid="uid://cktt8sbju7vyf" path="res://scenes/ui/battle_engine_stuff/enemies_hp_bars.gd" id="6_sc6or"]
-[ext_resource type="Script" uid="uid://b37fsbilrhgtk" path="res://code/conditions/textbox_conditions/conditions_none.gd" id="7_x8o33"]
+[ext_resource type="Script" uid="uid://82tj1ugboxcb" path="res://scenes/ui/battle_engine_stuff/components/battle_selection_manager.gd" id="8_iptht"]
 
 [sub_resource type="Animation" id="Animation_bhyi3"]
 length = 0.001
@@ -113,8 +112,6 @@ shader_parameter/is_flashing = true
 shader_parameter/FlashSpeed = 3.0000001425
 shader_parameter/FlashIntensity = 0.70000002673023
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_c38lh"]
-
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bhyi3"]
 shader = ExtResource("5_bhyi3")
 shader_parameter/is_flashing = false
@@ -178,15 +175,8 @@ shader_parameter/FlashColor = Color(1, 1, 1, 1)
 shader_parameter/FlashSpeed = 5.0
 shader_parameter/FlashIntensity = 1.54400006682023
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_mq0o5"]
-size = Vector2(240, 64)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_c38lh"]
-size = Vector2(240, 64)
-
 [node name="BattleEngine" type="Node2D"]
 script = ExtResource("1_mq0o5")
-battle = ExtResource("2_uue3o")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
@@ -203,9 +193,6 @@ autoplay = true
 
 [node name="SfxPlayer2" type="AudioStreamPlayer" parent="."]
 
-[node name="ConditionsScript" type="Node" parent="."]
-script = ExtResource("7_x8o33")
-
 [node name="WhoMoves" type="ColorRect" parent="."]
 z_index = 2
 material = SubResource("ShaderMaterial_x8o33")
@@ -213,35 +200,20 @@ offset_left = 221.0
 offset_top = 487.0
 offset_right = 331.0
 offset_bottom = 648.0
-mouse_filter = 2
-
-[node name="TheMove" type="ColorRect" parent="."]
-z_index = 2
-material = SubResource("ShaderMaterial_x8o33")
-offset_left = 2.0
-offset_top = 487.0
-offset_right = 218.0
-offset_bottom = 517.0
-mouse_filter = 2
-
-[node name="Area2D" type="Area2D" parent="TheMove"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="TheMove/Area2D"]
-position = Vector2(69, 14)
-shape = SubResource("CircleShape2D_c38lh")
+mouse_filter = 1
 
 [node name="Control" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 864.0
 offset_bottom = 648.0
-mouse_filter = 2
+mouse_filter = 1
 
 [node name="enemy_ui" type="Control" parent="Control"]
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
-mouse_filter = 2
+mouse_filter = 1
 
 [node name="bg" type="TextureRect" parent="Control/enemy_ui"]
 z_index = -6
@@ -249,14 +221,13 @@ layout_mode = 0
 offset_left = -54.0
 offset_right = 931.0
 offset_bottom = 648.0
-mouse_filter = 2
 texture = ExtResource("6_iptht")
 
 [node name="enemies" type="Control" parent="Control/enemy_ui"]
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
-mouse_filter = 2
+mouse_filter = 1
 
 [node name="enemy1" type="TextureRect" parent="Control/enemy_ui/enemies"]
 material = SubResource("ShaderMaterial_bhyi3")
@@ -280,6 +251,7 @@ offset_left = 16.0
 offset_top = -26.0
 offset_right = 115.0
 offset_bottom = -5.0
+mouse_filter = 1
 theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
 theme_override_styles/fill = SubResource("StyleBoxFlat_o0w63")
 show_percentage = false
@@ -323,6 +295,7 @@ offset_left = 16.0
 offset_top = -26.0
 offset_right = 115.0
 offset_bottom = -5.0
+mouse_filter = 1
 theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
 theme_override_styles/fill = SubResource("StyleBoxFlat_o0w63")
 show_percentage = false
@@ -366,6 +339,7 @@ offset_left = 16.0
 offset_top = -26.0
 offset_right = 115.0
 offset_bottom = -5.0
+mouse_filter = 1
 theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
 theme_override_styles/fill = SubResource("StyleBoxFlat_o0w63")
 show_percentage = false
@@ -409,6 +383,7 @@ offset_left = 16.0
 offset_top = -26.0
 offset_right = 115.0
 offset_bottom = -5.0
+mouse_filter = 1
 theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
 theme_override_styles/fill = SubResource("StyleBoxFlat_o0w63")
 show_percentage = false
@@ -452,6 +427,7 @@ offset_left = 16.0
 offset_top = -26.0
 offset_right = 115.0
 offset_bottom = -5.0
+mouse_filter = 1
 theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
 theme_override_styles/fill = SubResource("StyleBoxFlat_o0w63")
 show_percentage = false
@@ -477,11 +453,11 @@ custom_minimum_size = Vector2(864, 81)
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
-mouse_filter = 2
 
 [node name="output" type="RichTextLabel" parent="Control/enemy_ui/CenterContainer"]
 custom_minimum_size = Vector2(750, 120)
 layout_mode = 2
+mouse_filter = 1
 bbcode_enabled = true
 horizontal_alignment = 1
 
@@ -490,7 +466,7 @@ layout_mode = 1
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
-mouse_filter = 2
+mouse_filter = 1
 
 [node name="bg" type="ColorRect" parent="Control/gui"]
 z_index = -5
@@ -499,7 +475,7 @@ layout_mode = 0
 offset_top = 486.0
 offset_right = 864.0
 offset_bottom = 648.0
-mouse_filter = 2
+mouse_filter = 1
 
 [node name="MarginContainer" type="MarginContainer" parent="Control/gui/bg"]
 layout_mode = 0
@@ -512,6 +488,7 @@ theme_override_constants/margin_right = 3
 [node name="ColorRect2" type="ColorRect" parent="Control/gui/bg/MarginContainer"]
 custom_minimum_size = Vector2(858, 156)
 layout_mode = 2
+mouse_filter = 1
 color = Color(0, 0, 0, 1)
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="Control/gui"]
@@ -525,14 +502,18 @@ offset_right = 1732.0
 offset_bottom = 770.0
 grow_vertical = 0
 scale = Vector2(0.5, 0.5)
-mouse_filter = 2
 
-[node name="actions" type="VBoxContainer" parent="Control/gui/HBoxContainer2"]
+[node name="actions" type="VBoxContainer" parent="Control/gui/HBoxContainer2" node_paths=PackedStringArray("target_container")]
 custom_minimum_size = Vector2(432, 324)
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 8
-mouse_filter = 2
+alignment = 2
+script = ExtResource("8_iptht")
+target_container = NodePath(".")
+navigation_action = "up"
+back_navigation_action = "down"
+use_action = "use"
 
 [node name="FightButton" type="Button" parent="Control/gui/HBoxContainer2/actions"]
 custom_minimum_size = Vector2(432, 0)
@@ -550,6 +531,7 @@ z_index = -2
 layout_mode = 0
 offset_right = 442.0
 offset_bottom = 64.0
+mouse_filter = 1
 
 [node name="ColorRect" type="ColorRect" parent="Control/gui/HBoxContainer2/actions/FightButton/ColorRect"]
 layout_mode = 0
@@ -557,13 +539,8 @@ offset_left = 6.0
 offset_top = 6.0
 offset_right = 436.0
 offset_bottom = 60.0
+mouse_filter = 1
 color = Color(0, 0, 0, 1)
-
-[node name="fight" type="Area2D" parent="Control/gui/HBoxContainer2/actions/FightButton"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Control/gui/HBoxContainer2/actions/FightButton/fight"]
-position = Vector2(120, 32)
-shape = SubResource("RectangleShape2D_mq0o5")
 
 [node name="SkillsButton" type="Button" parent="Control/gui/HBoxContainer2/actions"]
 custom_minimum_size = Vector2(432, 50)
@@ -582,6 +559,7 @@ layout_mode = 0
 offset_top = -1.0
 offset_right = 442.0
 offset_bottom = 63.0
+mouse_filter = 1
 
 [node name="ColorRect" type="ColorRect" parent="Control/gui/HBoxContainer2/actions/SkillsButton/ColorRect"]
 layout_mode = 0
@@ -589,13 +567,8 @@ offset_left = 6.0
 offset_top = 2.0
 offset_right = 436.0
 offset_bottom = 58.0
+mouse_filter = 1
 color = Color(0, 0, 0, 1)
-
-[node name="skills" type="Area2D" parent="Control/gui/HBoxContainer2/actions/SkillsButton"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Control/gui/HBoxContainer2/actions/SkillsButton/skills"]
-position = Vector2(120, 32)
-shape = SubResource("RectangleShape2D_mq0o5")
 
 [node name="DefendButton" type="Button" parent="Control/gui/HBoxContainer2/actions"]
 custom_minimum_size = Vector2(432, 50)
@@ -614,6 +587,7 @@ layout_mode = 0
 offset_top = -3.0
 offset_right = 442.0
 offset_bottom = 63.0
+mouse_filter = 1
 
 [node name="ColorRect" type="ColorRect" parent="Control/gui/HBoxContainer2/actions/DefendButton/ColorRect"]
 layout_mode = 0
@@ -621,13 +595,8 @@ offset_left = 6.0
 offset_top = 2.0
 offset_right = 436.0
 offset_bottom = 58.0
+mouse_filter = 1
 color = Color(0, 0, 0, 1)
-
-[node name="defend" type="Area2D" parent="Control/gui/HBoxContainer2/actions/DefendButton"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Control/gui/HBoxContainer2/actions/DefendButton/defend"]
-position = Vector2(120, 32)
-shape = SubResource("RectangleShape2D_mq0o5")
 
 [node name="ItemButton" type="Button" parent="Control/gui/HBoxContainer2/actions"]
 custom_minimum_size = Vector2(432, 50)
@@ -646,6 +615,7 @@ layout_mode = 0
 offset_top = -3.0
 offset_right = 442.0
 offset_bottom = 63.0
+mouse_filter = 1
 
 [node name="ColorRect" type="ColorRect" parent="Control/gui/HBoxContainer2/actions/ItemButton/ColorRect"]
 layout_mode = 0
@@ -653,13 +623,8 @@ offset_left = 6.0
 offset_top = 2.0
 offset_right = 436.0
 offset_bottom = 58.0
+mouse_filter = 1
 color = Color(0, 0, 0, 1)
-
-[node name="item" type="Area2D" parent="Control/gui/HBoxContainer2/actions/ItemButton"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Control/gui/HBoxContainer2/actions/ItemButton/item"]
-position = Vector2(120, 32)
-shape = SubResource("RectangleShape2D_mq0o5")
 
 [node name="RunButton" type="Button" parent="Control/gui/HBoxContainer2/actions"]
 custom_minimum_size = Vector2(432, 50)
@@ -678,6 +643,7 @@ layout_mode = 0
 offset_top = -3.0
 offset_right = 442.0
 offset_bottom = 63.0
+mouse_filter = 1
 
 [node name="ColorRect" type="ColorRect" parent="Control/gui/HBoxContainer2/actions/RunButton/ColorRect"]
 layout_mode = 0
@@ -685,13 +651,8 @@ offset_left = 6.0
 offset_top = 2.0
 offset_right = 436.0
 offset_bottom = 58.0
+mouse_filter = 1
 color = Color(0, 0, 0, 1)
-
-[node name="run" type="Area2D" parent="Control/gui/HBoxContainer2/actions/RunButton"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Control/gui/HBoxContainer2/actions/RunButton/run"]
-position = Vector2(120, 32)
-shape = SubResource("RectangleShape2D_c38lh")
 
 [node name="party" type="HBoxContainer" parent="Control/gui/HBoxContainer2"]
 custom_minimum_size = Vector2(1296, 324)

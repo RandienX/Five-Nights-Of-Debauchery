@@ -13,3 +13,6 @@ class_name Battle
 @export var music_override: AudioStreamMP3
 @export var phases: Dictionary[String, Battle]
 @export var add_to_party: String
+
+@export_category("Battle End Conditions")
+@export var end_conditions: Array[BattleEndCondition]
