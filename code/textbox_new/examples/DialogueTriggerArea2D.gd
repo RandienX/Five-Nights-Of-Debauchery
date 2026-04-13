@@ -26,8 +26,11 @@ func _ready() -> void:
 	# Validate data early
 	if not dialogue_data:
 		push_warning("DialogueTriggerArea2D: No DialogueData assigned!")
-	elif not dialogue_data.validate():
-		push_error("DialogueTriggerArea2D: DialogueData validation failed!")
+	else:
+		var validation_errors = dialogue_data.validate()
+		if not validation_errors.is_empty():
+			for err in validation_errors:
+				push_error("DialogueTriggerArea2D: %s" % err)
 
 
 func _on_body_entered(body: Node) -> void:
@@ -59,15 +62,14 @@ func _start_dialogue() -> void:
 	
 	# Connect signals
 	_dialogue_runner.dialogue_started.connect(_on_dialogue_started)
-	_dialogue_runner.node_displayed.connect(_on_node_displayed)
+	_dialogue_runner.node_entered.connect(_on_node_displayed)
 	_dialogue_runner.dialogue_ended.connect(_on_dialogue_ended)
-	_dialogue_runner.choice_made.connect(_on_choice_made)
 	
 	# Start dialogue
 	_dialogue_runner.start(dialogue_data)
 
 
-func _on_dialogue_started() -> void:
+func _on_dialogue_started(_data: DialogueData) -> void:
 	# Disable player movement if you have a player reference
 	if _player and _player.has_method("set_input_enabled"):
 		_player.set_input_enabled(false)
@@ -92,13 +94,8 @@ func _on_dialogue_ended() -> void:
 		_dialogue_runner = null
 
 
-func _on_choice_made(choice_index: int) -> void:
-	if _dialogue_runner:
-		_dialogue_runner.select_choice(choice_index)
-
-
 func _input(event: InputEvent) -> void:
-	if not _dialogue_runner or not _dialogue_runner.is_running():
+	if not _dialogue_runner or not _dialogue_runner.is_running:
 		return
 	
 	if require_input_to_finish:
