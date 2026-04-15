@@ -1,21 +1,31 @@
 ```
-# Godot-specific ignores
-*.import
-*.remap
-export_presets.cfg
-.autosave/
-
 # Compiled and build artifacts
-*.import
-*.remap
+*.pyc
+__pycache__/
+*.o
+*.obj
+*.so
+*.dll
+*.exe
+*.class
+*.out
 
-# Dependencies and build directories
-res://.godot/
-local://.godot/
+# Dependencies
+.venv/
+venv/
+node_modules/
+dist/
+build/
+target/
+.gradle/
+.mypy_cache/
+.pytest_cache/
 
 # Logs and temp files
 *.log
 *.tmp
+*.swp
+*.swo
 
 # Environment
 .env
@@ -25,93 +35,15 @@ local://.godot/
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# OS generated files
+# System files
 .DS_Store
 Thumbs.db
 
-# Coverage reports
+# Coverage
 coverage/
 htmlcov/
 .coverage
-
-# Python specific
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
-.coverage*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git/
-.mypy_cache/
-.pytest_cache/
-.hypothesis/
-
-# Node.js specific
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-node_modules/
-dist/
-build/
-*.min.js
-*.min.css
-
-# Java specific
-*.class
-*.jar
-*.war
-*.ear
-target/
-.gradle/
-build/
-
-# C/C++ specific
-*.o
-*.obj
-*.exe
-*.dll
-*.so
-*.a
-*.out
-
-# Go specific
-*.o
-*.a
-*.swp
-*~
-._*
-.DS_Store
-pkg/
-
-# Rust specific
-target/
-*.rs.bk
-Cargo.lock
-
-# Ruby specific
-*.gem
-*.rbc
-.bundle/
-.config/
-vendor/bundle/
-vendor/cache/
-vendor/gems/
-vendor/ruby/
 
 # Compressed files
 *.zip
@@ -136,5 +68,4 @@ vendor/ruby/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-
 ```
