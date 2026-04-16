@@ -178,7 +178,7 @@ func use_item(item: Resource, target: Object) -> bool:
 	if item.consume_effects_given:
 		for effect_key in item.consume_effects_given.keys():
 			var effect_data = item.consume_effects_given[effect_key]
-			if effect_key == Global.effect.Revive:
+			if effect_key == BattleEffect.StatusEffect.Revive:
 				if target.hp <= 0:
 					target.hp = 1
 				elif target.hp > 0:

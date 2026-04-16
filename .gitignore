@@ -1,4 +1,10 @@
 ```
+# Godot-specific ignores
+*.import
+*.uid
+.export_presets
+.godot/
+
 # Compiled and build artifacts
 *.pyc
 __pycache__/
@@ -7,15 +13,11 @@ __pycache__/
 *.so
 *.dll
 *.exe
-*.class
-*.out
 
 # Dependencies
 .venv/
 venv/
 node_modules/
-dist/
-build/
 target/
 .gradle/
 .mypy_cache/
@@ -36,7 +38,7 @@ target/
 .vscode/
 .idea/
 
-# System files
+# OS specific
 .DS_Store
 Thumbs.db
 

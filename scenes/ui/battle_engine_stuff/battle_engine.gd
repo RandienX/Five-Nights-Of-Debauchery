@@ -89,16 +89,16 @@ func setup_initiative() -> Array[Object]:
 	for e in range(5):
 		if battle.get('enemy_pos'+str(e+1)):
 			var ai = battle.get('enemy_pos'+str(e+1)).ai
-			var speed_mult = effect_manager.get_effect_multiplier(battle.get('enemy_pos'+str(e+1)), Global.effect.Speed)
-			var slow_mult = effect_manager.get_effect_multiplier(battle.get('enemy_pos'+str(e+1)), Global.effect.Slow)
+			var speed_mult = effect_manager.get_effect_multiplier(battle.get('enemy_pos'+str(e+1)), BattleEffect.StatusEffect.Speed)
+			var slow_mult = effect_manager.get_effect_multiplier(battle.get('enemy_pos'+str(e+1)), BattleEffect.StatusEffect.Slow)
 			var total_mult = speed_mult * slow_mult
 			var rng = randi_range(ceili(ai * 0.75 * total_mult), floori(ai * 1.25 * total_mult))
 			while rng in speed: rng += 1
 			speed[rng] = battle.get('enemy_pos'+str(e+1))
 	for p in party:
 		var ai = p.max_stats["ai"]
-		var speed_mult = effect_manager.get_effect_multiplier(p, Global.effect.Speed)
-		var slow_mult = effect_manager.get_effect_multiplier(p, Global.effect.Slow)
+		var speed_mult = effect_manager.get_effect_multiplier(p, BattleEffect.StatusEffect.Speed)
+		var slow_mult = effect_manager.get_effect_multiplier(p, BattleEffect.StatusEffect.Slow)
 		var total_mult = speed_mult * slow_mult
 		var rng = randi_range(ceili(ai * 0.75 * total_mult), floori(ai * 1.25 * total_mult))
 		while rng in speed: rng += 1
@@ -335,7 +335,7 @@ func advance_initiative():
 		await attack_executor.do_attacks()
 		return
 	var current = initiative[initiative_who]
-	if effect_manager.get_effect_duration(current, Global.effect.Sleep) > 0:
+	if effect_manager.get_effect_duration(current, BattleEffect.StatusEffect.Sleep) > 0:
 		if attack_executor.attack_array.has(current):
 			attack_executor.attack_array.erase(current)
 		$Control/enemy_ui/CenterContainer/output.text = current.name + " is asleep!"
@@ -368,7 +368,7 @@ func add_enemy_attack(e: Enemy):
 			if prob[i] > 0: valid.append(i)
 		if not valid.is_empty(): prob[valid[randi_range(0, valid.size()-1)]] += 1
 	for i in range(party.size()):
-		if Global.effect.Focus in party[i].effects:
+		if BattleEffect.StatusEffect.Focus in party[i].effects:
 			prob[i] += 5 if e.ai_type != 4 else 1
 	var target = null
 	if atk.target_type == 0:
