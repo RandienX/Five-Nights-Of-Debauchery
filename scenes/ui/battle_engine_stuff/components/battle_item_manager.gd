@@ -205,7 +205,7 @@ func confirm_item_target():
 	
 	if item_target_type == 0:
 		if item.is_item_attack and item.item_attack:
-			var target = root.battle.get('enemy_pos'+str(root.selected_enemy))
+			var target = root.get_enemy(root.selected_enemy)
 			if target and target.hp > 0:
 				var item_attack = item.item_attack.duplicate()
 				item_attack.item_reference = item
@@ -230,7 +230,7 @@ func confirm_item_target():
 			
 			root.add_attack(root.current_attacker, [target], item_attack)
 			
-			root.get_node("WhoMoves.visible = true")
+			root.get_node("WhoMoves").visible = true
 			root.move_who_moves(saved_party_plan_index)
 			
 			root.action_history.append(root.current_attacker)
@@ -239,7 +239,7 @@ func confirm_item_target():
 
 func close_items_menu():
 	items_container.visible = false
-	root.get_node("Control/gui/HBoxContainer2/party.visible = true")
-	root.get_node("WhoMoves.visible = true")
+	root.get_node("Control/gui/HBoxContainer2/party").visible = true
+	root.get_node("WhoMoves").visible = true
 	root.move_who_moves(saved_party_plan_index)
 	root.state = root.states.OnAction

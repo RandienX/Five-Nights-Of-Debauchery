@@ -108,10 +108,7 @@ func _handle_check_skill(attacker: Object, targets: Array) -> void:
 
 
 func _assign_random_target(attacker: Object, atk: Skill) -> bool:
-	var enemies: Array = []
-	for e in range(5):
-		if battle.get('enemy_pos'+str(e+1)) and battle.get('enemy_pos'+str(e+1)).hp > 0:
-			enemies.append(battle.get('enemy_pos'+str(e+1)))
+	var enemies: Array = root.get_alive_enemies()
 	if not enemies.is_empty():
 		var new_target = [enemies[randi_range(0, enemies.size()-1)]]
 		attack_array[attacker][0] = new_target
@@ -195,10 +192,13 @@ func _handle_multi_attack(attacker: Object, alive: Array, atk: Skill) -> void:
 					multi_log += "\n[color=#FFD700]" + target.name + " woke up![/color]"
 			
 			# Update enemy UI
-			for e in range(5):
-				var node = get_node_or_null("Control/enemy_ui/enemies/enemy"+str(e+1))
-				if node and battle.get('enemy_pos'+str(e+1)):
-					node.hp = max(0, battle.get('enemy_pos'+str(e+1)).hp)
+			for e in root.enemy_instances:
+				if e and e.hp > 0:
+					var idx = root.get_enemy_index(e)
+					if idx >= 0:
+						var node = get_node_or_null("Control/enemy_ui/enemies/enemy"+str(idx+1))
+						if node:
+							node.hp = max(0, e.hp)
 		else:
 			total_misses += 1
 			multi_log += "\n[color=#FF9800]Hit " + str(i+1) + ": MISSED[/color]"

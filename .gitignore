@@ -1,8 +1,11 @@
 ```
 # Godot-specific ignores
 *.import
-*.uid
-.export_presets
+*.remap
+.rsync_exclude
+export_presets.cfg
+.autoload_singleton_nodes
+.editor
 .godot/
 
 # Compiled and build artifacts
@@ -10,18 +13,20 @@
 __pycache__/
 *.o
 *.obj
-*.so
-*.dll
 *.exe
+*.dll
+*.so
+*.a
+*.out
 
 # Dependencies
 .venv/
 venv/
 node_modules/
-target/
-.gradle/
 .mypy_cache/
 .pytest_cache/
+target/
+.gradle/
 
 # Logs and temp files
 *.log
@@ -47,7 +52,7 @@ coverage/
 htmlcov/
 .coverage
 
-# Compressed files
+# Archives
 *.zip
 *.gz
 *.tar

@@ -49,30 +49,26 @@ return 1.0 - (level * 0.2)
 return 1.0
 
 func remove_effect(target: Object, effect: BattleEffect.StatusEffect):
-if target.effects.has(effect):
-target.effects.erase(effect)
-if effect_durations.has(target) and effect_durations[target].has(effect):
-effect_durations[target].erase(effect)
-
-var party_container = root.get_node("Control/gui/HBoxContainer2/party")
-if target is Party:
-for i in range(party_container.get_child_count()):
-var ui = party_container.get_child(i)
-if ui.has_method("update_effects_ui"):
-ui.update_effects_ui()
-else:
-var slot = 0
-for i in range(5):
-if root.battle.get('enemy_pos'+str(i+1)) == target:
-slot = i + 1
-break
-if slot > 0:
-var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot))
-if node:
-var container = node.get_node_or_null("EffectContainer")
-if container:
-for child in container.get_children():
-child.queue_free()
+	if target.effects.has(effect):
+		target.effects.erase(effect)
+	if effect_durations.has(target) and effect_durations[target].has(effect):
+		effect_durations[target].erase(effect)
+	
+	var party_container = root.get_node("Control/gui/HBoxContainer2/party")
+	if target is Party:
+		for i in range(party_container.get_child_count()):
+			var ui = party_container.get_child(i)
+			if ui.has_method("update_effects_ui"):
+				ui.update_effects_ui()
+	else:
+		var slot = root.get_enemy_index(target)
+		if slot >= 0:
+			var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
+			if node:
+				var container = node.get_node_or_null("EffectContainer")
+				if container:
+					for child in container.get_children():
+						child.queue_free()
 
 func apply_effects(target: Object, atk: Skill):
 if atk.effects:
@@ -188,16 +184,66 @@ var ui = party_container.get_child(i)
 if ui.has_method("setup") and ui.party_member == actor:
 container = ui.effect_container
 break
-else:
-var slot = 0
-for i in range(5):
-if root.battle.get('enemy_pos'+str(i+1)) == actor:
-slot = i + 1
-break
-if slot > 0:
-var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot))
-if node:
-container = node.get_node_or_null("EffectContainer")
+	else:
+		var slot = root.get_enemy_index(actor)
+		if slot >= 0:
+			var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
+			if node:
+				container = node.get_node_or_null("EffectContainer")
+	else:
+		var slot = root.get_enemy_index(actor)
+		if slot >= 0:
+			var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
+			if node:
+				container = node.get_node_or_null("EffectContainer")
+	else:
+		var slot = root.get_enemy_index(actor)
+		if slot >= 0:
+			var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
+			if node:
+				container = node.get_node_or_null("EffectContainer")
+	else:
+		var slot = root.get_enemy_index(actor)
+		if slot >= 0:
+			var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
+			if node:
+				container = node.get_node_or_null("EffectContainer")
+	else:
+		var slot = root.get_enemy_index(actor)
+		if slot >= 0:
+			var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
+			if node:
+				container = node.get_node_or_null("EffectContainer")
+	else:
+		var slot = root.get_enemy_index(actor)
+		if slot >= 0:
+			var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
+			if node:
+				container = node.get_node_or_null("EffectContainer")
+	else:
+		var slot = root.get_enemy_index(actor)
+		if slot >= 0:
+			var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
+			if node:
+				container = node.get_node_or_null("EffectContainer")
+	else:
+		var slot = root.get_enemy_index(actor)
+		if slot >= 0:
+			var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
+			if node:
+				container = node.get_node_or_null("EffectContainer")
+	else:
+		var slot = root.get_enemy_index(actor)
+		if slot >= 0:
+			var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
+			if node:
+				container = node.get_node_or_null("EffectContainer")
+	else:
+		var slot = root.get_enemy_index(actor)
+		if slot >= 0:
+			var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
+			if node:
+				container = node.get_node_or_null("EffectContainer")
 
 if container:
 for child in container.get_children():

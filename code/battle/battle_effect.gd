@@ -42,7 +42,7 @@ enum EffectType {
 	DAMAGE_HP,            # Deal HP damage
 	DAMAGE_MP,            # Deal MP damage
 	
-	# Status Effects (replaces Global.effect system)
+	# Status Effects (new resource-based system)
 	ADD_STATUS,           # Apply a status effect from StatusEffect enum
 	REMOVE_STATUS,        # Remove a status effect
 	CLEAR_ALL_STATUS,     # Remove all status effects

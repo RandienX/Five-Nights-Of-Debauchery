@@ -4,6 +4,8 @@ class_name Enemy
 
 ## Enemy configuration with comprehensive customization
 
+enum AI {Dumb, Casual, Violent, Defensive, Intelligent, Flexible}
+
 @export_group("Basic Info")
 @export var enemy_name: String = ""
 @export_multiline var description: String = ""
@@ -23,7 +25,7 @@ class_name Enemy
 @export var magic_defense: int = 5
 
 @export_group("AI Behavior")
-@export var ai_type: Global.AI = Global.AI.Casual
+@export var ai_type: AI = AI.Casual
 @export var aggression: float = 0.5            # 0=passive, 1=aggressive
 @export var prefer_defend: bool = false
 @export var target_priority: int = 0           # 0=random, 1=lowest HP, 2=highest threat
