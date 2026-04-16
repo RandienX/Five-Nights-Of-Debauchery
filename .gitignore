@@ -1,25 +1,32 @@
 ```
+# Godot-specific ignores
+*.import
+*.remap
+.rsync_exclude
+export_presets.cfg
+.autoload_singleton_nodes
+.editor
+.godot/
+
 # Compiled and build artifacts
 *.pyc
 __pycache__/
 *.o
 *.obj
-*.so
-*.dll
 *.exe
-*.class
+*.dll
+*.so
+*.a
 *.out
 
 # Dependencies
 .venv/
 venv/
 node_modules/
-dist/
-build/
-target/
-.gradle/
 .mypy_cache/
 .pytest_cache/
+target/
+.gradle/
 
 # Logs and temp files
 *.log
@@ -36,7 +43,7 @@ target/
 .vscode/
 .idea/
 
-# System files
+# OS specific
 .DS_Store
 Thumbs.db
 
@@ -45,7 +52,7 @@ coverage/
 htmlcov/
 .coverage
 
-# Compressed files
+# Archives
 *.zip
 *.gz
 *.tar

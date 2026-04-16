@@ -35,33 +35,29 @@ func setup_game_over_ui() -> void:
 	add_child(game_over_texture)
 	
 func check_enemy_death_and_xp():
-	var all_dead = true
-	for e in range(5):
-		if battle.get('enemy_pos'+str(e+1)) and battle.get('enemy_pos'+str(e+1)).hp > 0:
-			all_dead = false
-			break
-	if all_dead:
-		var total_xp = 0
-		for e in range(5):
-			if battle.get('enemy_pos'+str(e+1)):
-				total_xp += battle.get('enemy_pos'+str(e+1)).xp_reward
-		for actor in root.initiative:
-			if actor is Party:
-				actor.xp += total_xp
-				$Control/enemy_ui/CenterContainer/output.text = actor.name + " gained " + str(total_xp) + " XP! "
-				while actor.xp >= actor.xp_to_level_up:
-					actor.xp -= actor.xp_to_level_up
-					actor.level += 1
-					actor.xp_to_level_up = ceil(actor.xp_to_level_up * actor.level_up_xp_multilpier)
-					for stat in ["hp", "mp", "atk", "def", "ai"]:
-						actor.max_stats[stat] += int(actor.level_up[stat] * actor.level)
-						actor.base_stats[stat] += int(actor.level_up[stat] * actor.level)
-					actor.hp = actor.max_stats["hp"]
-					actor.mp = actor.max_stats["mp"]
-					$Control/enemy_ui/CenterContainer/output.text = actor.name + " leveled up to " + str(actor.level) + "! "
-					await get_tree().create_timer(1.0).timeout
-		await end_battle_victory()
+	if not root.are_all_enemies_defeated():
 		return
+	
+	var total_xp = 0
+	for e in root.enemy_instances:
+		if e:
+			total_xp += e.xp_reward
+	for actor in root.initiative:
+		if actor is Party:
+			actor.xp += total_xp
+			$Control/enemy_ui/CenterContainer/output.text = actor.name + " gained " + str(total_xp) + " XP! "
+			while actor.xp >= actor.xp_to_level_up:
+				actor.xp -= actor.xp_to_level_up
+				actor.level += 1
+				actor.xp_to_level_up = ceil(actor.xp_to_level_up * actor.level_up_xp_multilpier)
+				for stat in ["hp", "mp", "atk", "def", "ai"]:
+					actor.max_stats[stat] += int(actor.level_up[stat] * actor.level)
+					actor.base_stats[stat] += int(actor.level_up[stat] * actor.level)
+				actor.hp = actor.max_stats["hp"]
+				actor.mp = actor.max_stats["mp"]
+				$Control/enemy_ui/CenterContainer/output.text = actor.name + " leveled up to " + str(actor.level) + "! "
+				await get_tree().create_timer(1.0).timeout
+	await end_battle_victory()
 
 func end_battle_victory() -> void:
 	await get_tree().create_timer(1.0).timeout
@@ -73,15 +69,11 @@ func end_battle_victory() -> void:
 func animate_enemy_death(e: Enemy) -> void:
 	if is_animating_death: return
 	is_animating_death = true
-	var slot = 0
-	for i in range(5):
-		if battle.get('enemy_pos'+str(i+1)) == e:
-			slot = i + 1
-			break
-	if slot == 0:
+	var slot = root.get_enemy_index(e)
+	if slot < 0:
 		is_animating_death = false
 		return
-	var node = get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot))
+	var node = get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
 	if not node:
 		is_animating_death = false
 		return
@@ -108,12 +100,12 @@ func animate_enemy_death(e: Enemy) -> void:
 	is_animating_death = false
 
 func move_flash_to_next_enemy(slot: int):
-	for i in range(1, 6):
-		var next = ((slot + i - 1) % 5) + 1
-		if battle.get('enemy_pos'+str(next)) and battle.get('enemy_pos'+str(next)).hp > 0:
+	for i in range(1, root.enemy_instances.size()):
+		var next = (slot + i) % root.enemy_instances.size()
+		if root.enemy_instances[next] and root.enemy_instances[next].hp > 0:
 			root.selected_enemy = next
 			return
-	root.selected_enemy = 0
+	root.selected_enemy = -1
 
 func death(obj):
 	for i in range(root.initiative.size()-1, -1, -1):

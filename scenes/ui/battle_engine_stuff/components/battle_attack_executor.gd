@@ -108,10 +108,7 @@ func _handle_check_skill(attacker: Object, targets: Array) -> void:
 
 
 func _assign_random_target(attacker: Object, atk: Skill) -> bool:
-	var enemies: Array = []
-	for e in range(5):
-		if battle.get('enemy_pos'+str(e+1)) and battle.get('enemy_pos'+str(e+1)).hp > 0:
-			enemies.append(battle.get('enemy_pos'+str(e+1)))
+	var enemies: Array = root.get_alive_enemies()
 	if not enemies.is_empty():
 		var new_target = [enemies[randi_range(0, enemies.size()-1)]]
 		attack_array[attacker][0] = new_target
@@ -188,17 +185,20 @@ func _handle_multi_attack(attacker: Object, alive: Array, atk: Skill) -> void:
 			multi_log += "[/color]"
 			
 			# Check for sleep wake
-			if target.effects.has(Global.effect.Sleep):
-				var sleep_level = target.effects[Global.effect.Sleep][0]
+			if target.effects.has(BattleEffect.StatusEffect.Sleep):
+				var sleep_level = target.effects[BattleEffect.StatusEffect.Sleep][0]
 				if randf() < (1.0 - (0.1 * sleep_level)):
-					effect_manager.remove_effect(target, Global.effect.Sleep)
+					effect_manager.remove_effect(target, BattleEffect.StatusEffect.Sleep)
 					multi_log += "\n[color=#FFD700]" + target.name + " woke up![/color]"
 			
 			# Update enemy UI
-			for e in range(5):
-				var node = get_node_or_null("Control/enemy_ui/enemies/enemy"+str(e+1))
-				if node and battle.get('enemy_pos'+str(e+1)):
-					node.hp = max(0, battle.get('enemy_pos'+str(e+1)).hp)
+			for e in root.enemy_instances:
+				if e and e.hp > 0:
+					var idx = root.get_enemy_index(e)
+					if idx >= 0:
+						var node = get_node_or_null("Control/enemy_ui/enemies/enemy"+str(idx+1))
+						if node:
+							node.hp = max(0, e.hp)
 		else:
 			total_misses += 1
 			multi_log += "\n[color=#FF9800]Hit " + str(i+1) + ": MISSED[/color]"
@@ -226,11 +226,11 @@ func _handle_single_attack(attacker: Object, target: Object, atk: Skill) -> void
 	var crit = randi_range(1, 10 if attacker is Enemy else 8) == 1
 	var base = (attacker.damage if attacker is Enemy else attacker.max_stats['atk']) * atk.attack_multiplier
 	
-	var power_mult = effect_manager.get_effect_multiplier(attacker, Global.effect.Power)
-	var weak_mult = effect_manager.get_effect_multiplier(attacker, Global.effect.Weak)
+	var power_mult = effect_manager.get_effect_multiplier(attacker, BattleEffect.StatusEffect.Power)
+	var weak_mult = effect_manager.get_effect_multiplier(attacker, BattleEffect.StatusEffect.Weak)
 	base *= power_mult * weak_mult
 	
-	if Global.effect.Power in attacker.effects:
+	if BattleEffect.StatusEffect.Power in attacker.effects:
 		base *= 2
 	base *= randf_range(0.86 if attacker is Enemy else 0.9, 1.16 if attacker is Enemy else 1.2)
 	if crit:
@@ -246,18 +246,18 @@ func _handle_single_attack(attacker: Object, target: Object, atk: Skill) -> void
 			await death_manager.animate_enemy_death(target)
 			death_manager.death(target)
 	
-	var tough_mult = effect_manager.get_effect_multiplier(target, Global.effect.Tough)
-	var sick_mult = effect_manager.get_effect_multiplier(target, Global.effect.Sick)
+	var tough_mult = effect_manager.get_effect_multiplier(target, BattleEffect.StatusEffect.Tough)
+	var sick_mult = effect_manager.get_effect_multiplier(target, BattleEffect.StatusEffect.Sick)
 	var def_stat = target.max_stats["def"] if attacker is Enemy else target.defense * 2
-	var defend_mult = 1.5 if Global.effect.Defend in target.effects else 1.0
+	var defend_mult = 1.5 if BattleEffect.StatusEffect.Defend in target.effects else 1.0
 	var def_mult = clampf(1.0 - (float(def_stat) / (100.0 / (tough_mult * sick_mult))), 0.0, 1.0)
 	def_mult /= defend_mult
 	def_mult = clampf(def_mult, 0.0, 1.0)
 	
 	var dmg = max(0, floor(base * def_mult))
 	
-	var focus_mult = effect_manager.get_effect_multiplier(attacker, Global.effect.Focus)
-	var blind_mult = effect_manager.get_effect_multiplier(target, Global.effect.Blind)
+	var focus_mult = effect_manager.get_effect_multiplier(attacker, BattleEffect.StatusEffect.Focus)
+	var blind_mult = effect_manager.get_effect_multiplier(target, BattleEffect.StatusEffect.Blind)
 	var hit = randf() <= (atk.accuracy * focus_mult * blind_mult)
 	
 	var effects_applied: Array = []
@@ -272,10 +272,10 @@ func _handle_single_attack(attacker: Object, target: Object, atk: Skill) -> void
 				var duration = atk.effects[effect][1]
 				effects_applied.append([effect, level])
 		
-		if target.effects.has(Global.effect.Sleep):
-			var sleep_level = target.effects[Global.effect.Sleep][0]
+		if target.effects.has(BattleEffect.StatusEffect.Sleep):
+			var sleep_level = target.effects[BattleEffect.StatusEffect.Sleep][0]
 			if randf() < (1.0 - (0.1 * sleep_level)):
-				effect_manager.remove_effect(target, Global.effect.Sleep)
+				effect_manager.remove_effect(target, BattleEffect.StatusEffect.Sleep)
 		
 		if attacker is Party and target is Enemy and target.hp <= 0:
 			await death_manager.animate_enemy_death(target)
@@ -340,29 +340,29 @@ func _calculate_hit(attacker: Object, target: Object, atk: Skill) -> Dictionary:
 	var crit = randi_range(1, 10 if attacker is Enemy else 8) == 1
 	var base = (attacker.damage if attacker is Enemy else attacker.max_stats['atk']) * atk.attack_multiplier * atk.hit_damage_multiplier
 	
-	var power_mult = effect_manager.get_effect_multiplier(attacker, Global.effect.Power)
-	var weak_mult = effect_manager.get_effect_multiplier(attacker, Global.effect.Weak)
+	var power_mult = effect_manager.get_effect_multiplier(attacker, BattleEffect.StatusEffect.Power)
+	var weak_mult = effect_manager.get_effect_multiplier(attacker, BattleEffect.StatusEffect.Weak)
 	base *= power_mult * weak_mult
 	
-	if Global.effect.Power in attacker.effects:
+	if BattleEffect.StatusEffect.Power in attacker.effects:
 		base *= 2
 	base *= randf_range(0.86 if attacker is Enemy else 0.9, 1.16 if attacker is Enemy else 1.2)
 	if crit:
 		base *= 1.5
 	base += atk.attack_bonus
 	
-	var tough_mult = effect_manager.get_effect_multiplier(target, Global.effect.Tough)
-	var sick_mult = effect_manager.get_effect_multiplier(target, Global.effect.Sick)
+	var tough_mult = effect_manager.get_effect_multiplier(target, BattleEffect.StatusEffect.Tough)
+	var sick_mult = effect_manager.get_effect_multiplier(target, BattleEffect.StatusEffect.Sick)
 	var def_stat = target.max_stats["def"] if attacker is Enemy else target.defense * 2
-	var defend_mult = 1.5 if Global.effect.Defend in target.effects else 1.0
+	var defend_mult = 1.5 if BattleEffect.StatusEffect.Defend in target.effects else 1.0
 	var def_mult = clampf(1.0 - (float(def_stat) / (100.0 / (tough_mult * sick_mult))), 0.0, 1.0)
 	def_mult /= defend_mult
 	def_mult = clampf(def_mult, 0.0, 1.0)
 	
 	var dmg = max(0, floor(base * def_mult))
 	
-	var focus_mult = effect_manager.get_effect_multiplier(attacker, Global.effect.Focus)
-	var blind_mult = effect_manager.get_effect_multiplier(target, Global.effect.Blind)
+	var focus_mult = effect_manager.get_effect_multiplier(attacker, BattleEffect.StatusEffect.Focus)
+	var blind_mult = effect_manager.get_effect_multiplier(target, BattleEffect.StatusEffect.Blind)
 	var hit = randf() <= (atk.accuracy * focus_mult * blind_mult)
 	
 	return {

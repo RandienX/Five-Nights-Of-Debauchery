@@ -5,6 +5,7 @@ class_name BattleEngine
 var party: Array = Global.party
 var battle_start_position: Vector2 = Vector2.ZERO
 var initiative: Array[Object]
+var enemy_instances: Array[Enemy] = []  # Runtime enemy instances from BattleEnemySlot
 
 enum states { OnAction, OnEnemy, OnSkills, OnSkillSelect, OnItems, OnItemSelect, Waiting, OnRun}
 var state: states = states.OnAction
@@ -21,8 +22,8 @@ var planning_phase: bool = true
 var action_history: Array[Object] = []
 var current_attacker: Object
 var current_party_plan_index: int = 0
-var selected_enemy: int = 1
-var previous_enemy: int = 1
+var selected_enemy: int = 0  # Index into enemy_instances array
+var previous_enemy: int = 0
 var initiative_who: int = -1
 
 # === SETUP ===
@@ -38,8 +39,8 @@ func _ready() -> void:
 	setup_current_attacker()
 	death_manager.setup_game_over_ui()
 	_setup_battle_log_label()
-	if battle.music_override:
-		$AudioStreamPlayer.stream = battle.music_override
+	if battle.music:
+		$AudioStreamPlayer.stream = battle.music
 
 func _setup_managers():
 	effect_manager = EffectManager.new()
@@ -61,14 +62,25 @@ func _setup_managers():
 	attack_executor.setup(self, death_manager, effect_manager, log_manager, battle)
 
 func setup_enemies():
+	# Clear and populate enemy_instances from BattleEnemySlot array
+	enemy_instances.clear()
+	for slot in battle.enemies:
+		if slot and slot.enemy:
+			var enemy_copy = slot.enemy.duplicate_deep_custom()
+			enemy_instances.append(enemy_copy)
+	
+	# Setup UI for up to 5 enemies (legacy compatibility)
 	for e in range(5):
 		var path = "Control/enemy_ui/enemies/enemy" + str(e+1)
-		if battle.get('enemy_pos'+str(e+1)):
-			battle.set('enemy_pos'+str(e+1), battle.get('enemy_pos'+str(e+1)).duplicate(true))
-			var node = get_node(path)
-			node.texture = battle.get('enemy_pos'+str(e+1)).battleSprite
-			node.hp = battle.get('enemy_pos'+str(e+1)).hp
-			node.max_hp = battle.get('enemy_pos'+str(e+1)).hp
+		var node = get_node_or_null(path)
+		
+		if e < enemy_instances.size():
+			var enemy = enemy_instances[e]
+			var prog = node.get_node_or_null("ProgressBar")
+			if prog: prog.visible = true
+			node.texture = enemy.sprite
+			node.hp = enemy.hp
+			node.max_hp = enemy.max_hp
 			
 			var effect_cont = node.get_node_or_null("EffectContainer")
 			if not effect_cont:
@@ -81,24 +93,26 @@ func setup_enemies():
 				effect_cont.position = Vector2(0, 64)
 				node.add_child(effect_cont)
 		else:
-			var prog = get_node_or_null(path + "/ProgressBar")
+			var prog = node.get_node_or_null("ProgressBar") if node else null
 			if prog: prog.visible = false
+			if node: node.texture = null
 
 func setup_initiative() -> Array[Object]:
 	var speed: Dictionary[int, Object] = {}
-	for e in range(5):
-		if battle.get('enemy_pos'+str(e+1)):
-			var ai = battle.get('enemy_pos'+str(e+1)).ai
-			var speed_mult = effect_manager.get_effect_multiplier(battle.get('enemy_pos'+str(e+1)), Global.effect.Speed)
-			var slow_mult = effect_manager.get_effect_multiplier(battle.get('enemy_pos'+str(e+1)), Global.effect.Slow)
+	# Add enemies to initiative
+	for e in enemy_instances:
+		if e and e.hp > 0:
+			var speed_mult = effect_manager.get_effect_multiplier(e, BattleEffect.StatusEffect.Speed)
+			var slow_mult = effect_manager.get_effect_multiplier(e, BattleEffect.StatusEffect.Slow)
 			var total_mult = speed_mult * slow_mult
-			var rng = randi_range(ceili(ai * 0.75 * total_mult), floori(ai * 1.25 * total_mult))
+			var rng = randi_range(ceili(e.speed * 0.75 * total_mult), floori(e.speed * 1.25 * total_mult))
 			while rng in speed: rng += 1
-			speed[rng] = battle.get('enemy_pos'+str(e+1))
+			speed[rng] = e
+	# Add party members to initiative
 	for p in party:
-		var ai = p.max_stats["ai"]
-		var speed_mult = effect_manager.get_effect_multiplier(p, Global.effect.Speed)
-		var slow_mult = effect_manager.get_effect_multiplier(p, Global.effect.Slow)
+		var ai = p.max_stats["ai"] if p.max_stats.has("ai") else p.base_stats.get("speed", 10)
+		var speed_mult = effect_manager.get_effect_multiplier(p, BattleEffect.StatusEffect.Speed)
+		var slow_mult = effect_manager.get_effect_multiplier(p, BattleEffect.StatusEffect.Slow)
 		var total_mult = speed_mult * slow_mult
 		var rng = randi_range(ceili(ai * 0.75 * total_mult), floori(ai * 1.25 * total_mult))
 		while rng in speed: rng += 1
@@ -135,10 +149,12 @@ func _setup_battle_log_label() -> void:
 
 func _process(delta: float) -> void:
 	update_flash()
-	for e in range(5):
-		var node = get_node_or_null("Control/enemy_ui/enemies/enemy"+str(e+1))
-		if node and battle.get('enemy_pos'+str(e+1)):
-			node.hp = max(0, battle.get('enemy_pos'+str(e+1)).hp)
+	# Sync enemy HP with UI
+	for e in range(enemy_instances.size()):
+		if e < 5:  # Only update first 5 for UI compatibility
+			var node = get_node_or_null("Control/enemy_ui/enemies/enemy"+str(e+1))
+			if node and e < enemy_instances.size():
+				node.hp = max(0, enemy_instances[e].hp)
 	
 	if not log_manager.battle_log.is_empty():
 		log_manager.log_timer += delta
@@ -241,7 +257,11 @@ func _input(event: InputEvent) -> void:
 				move_enemy_input(1)
 			elif event.is_action_pressed("use"):
 				get_viewport().set_input_as_handled()
-				add_attack(current_attacker, [battle.get('enemy_pos'+str(selected_enemy))], load("res://resources/attacks/attack.tres"))
+				# Use enemy_instances array instead of battle.enemy_pos
+				var target_enemy = null
+				if selected_enemy >= 0 and selected_enemy < enemy_instances.size():
+					target_enemy = enemy_instances[selected_enemy]
+				add_attack(current_attacker, [target_enemy], load("res://resources/attacks/attack.tres"))
 				action_history.append(current_attacker)
 				previous_enemy = selected_enemy
 				selected_enemy = 0
@@ -257,15 +277,20 @@ func move_who_moves(index: int):
 	$WhoMoves.position.x = 220 + (index * $WhoMoves.size.x)
 
 func move_enemy_input(input: int):
-	if input == 0: return
-	while true:
-		selected_enemy = wrapi(selected_enemy + input - 1, 0, 5) + 1
-		if battle.get('enemy_pos'+str(selected_enemy)) in initiative: break
+	if input == 0 or enemy_instances.is_empty(): return
+	# Find next valid enemy in initiative
+	var attempts = 0
+	while attempts < enemy_instances.size():
+		selected_enemy = wrapi(selected_enemy + input, 0, enemy_instances.size())
+		if selected_enemy < enemy_instances.size() and enemy_instances[selected_enemy] in initiative and enemy_instances[selected_enemy].hp > 0:
+			break
+		attempts += 1
 
 func update_flash():
 	for c in $Control/enemy_ui/enemies.get_children():
 		if c.material:
-			c.material.set("shader_parameter/is_flashing", c.name == "enemy" + str(selected_enemy))
+			var enemy_index = int(c.name.replace("enemy", "")) - 1
+			c.material.set("shader_parameter/is_flashing", enemy_index == selected_enemy and enemy_index < enemy_instances.size())
 
 func get_party_members_from_initiative() -> Array[Object]:
 	var party_members: Array[Object] = []
@@ -284,6 +309,30 @@ func update_party_ui():
 
 func add_attack(attacker: Object, attacked: Array, attack: Skill):
 	attack_executor.attack_array[attacker] = [attacked, attack]
+
+func get_enemy(index: int) -> Enemy:
+	if index >= 0 and index < enemy_instances.size():
+		return enemy_instances[index]
+	return null
+
+func get_enemy_index(enemy: Enemy) -> int:
+	for i in range(enemy_instances.size()):
+		if enemy_instances[i] == enemy:
+			return i
+	return -1
+
+func get_alive_enemies() -> Array[Enemy]:
+	var alive: Array[Enemy] = []
+	for e in enemy_instances:
+		if e and e.hp > 0:
+			alive.append(e)
+	return alive
+
+func are_all_enemies_defeated() -> bool:
+	for e in enemy_instances:
+		if e and e.hp > 0:
+			return false
+	return true
 
 func undo_last_action():
 	if action_history.is_empty(): return
@@ -312,6 +361,10 @@ func advance_planning():
 			current_party_plan_index += 1
 			move_who_moves(current_party_plan_index)
 			return
+	# Check if all enemies are defeated before starting resolution
+	if are_all_enemies_defeated():
+		death_manager.check_victory()
+		return
 	start_resolution_phase()
 
 func start_resolution_phase():
@@ -335,7 +388,7 @@ func advance_initiative():
 		await attack_executor.do_attacks()
 		return
 	var current = initiative[initiative_who]
-	if effect_manager.get_effect_duration(current, Global.effect.Sleep) > 0:
+	if effect_manager.get_effect_duration(current, BattleEffect.StatusEffect.Sleep) > 0:
 		if attack_executor.attack_array.has(current):
 			attack_executor.attack_array.erase(current)
 		$Control/enemy_ui/CenterContainer/output.text = current.name + " is asleep!"
@@ -350,40 +403,66 @@ func advance_initiative():
 	advance_initiative()
 
 func add_enemy_attack(e: Enemy):
-	if e.attacks.is_empty(): return
-	var atk: Skill = e.attacks[randi_range(0, len(e.attacks)-1)]
-	while atk.mana_cost > e.mp:
-		atk = e.attacks[randi_range(0, len(e.attacks)-1)]
+	if not e or e.hp <= 0: return
+	if e.attacks.is_empty(): 
+		# Use default attack if no attacks defined
+		var default_atk = Skill.new()
+		default_atk.skill_name = "Attack"
+		default_atk.attack_type = 0
+		default_atk.target_type = 0
+		default_atk.accuracy = 1.0
+		attack_executor.attack_array[e] = [[party[randi_range(0, party.size()-1)]], default_atk]
+		return
+	
+	var atk: Skill = e.attacks[randi_range(0, e.attacks.size()-1)]
+	# Find affordable attack
+	var attempts = 0
+	while atk.mana_cost > e.mp and attempts < 10:
+		atk = e.attacks[randi_range(0, e.attacks.size()-1)]
+		attempts += 1
+	
 	var prob: Array[int] = []
 	var lowest = 0
 	for i in range(party.size()):
 		prob.append(1 if party[i].hp > 0 else 0)
-		if party[i].hp > 0 and party[i].hp < party[lowest].hp: lowest = i
+		if party[i].hp > 0 and party[i].hp < party[lowest].hp: 
+			lowest = i
+	
 	var dumbness = [10, 4, 3, 3, 1]
-	var rng = randi_range(1, dumbness[e.ai_type])
-	if rng <= 2: prob[lowest] += 3 - rng
+	var ai_idx = clamp(e.ai_type as int, 0, dumbness.size()-1)
+	var rng = randi_range(1, dumbness[ai_idx])
+	if rng <= 2: 
+		prob[lowest] += 3 - rng
 	else:
 		var valid: Array[int] = []
 		for i in range(prob.size()):
-			if prob[i] > 0: valid.append(i)
-		if not valid.is_empty(): prob[valid[randi_range(0, valid.size()-1)]] += 1
+			if prob[i] > 0: 
+				valid.append(i)
+		if not valid.is_empty(): 
+			prob[valid[randi_range(0, valid.size()-1)]] += 1
+	
 	for i in range(party.size()):
-		if Global.effect.Focus in party[i].effects:
-			prob[i] += 5 if e.ai_type != 4 else 1
+		if BattleEffect.StatusEffect.Focus in party[i].effects:
+			prob[i] += 5 if e.ai_type != Enemy.AI.Intelligent else 1
+	
 	var target = null
-	if atk.target_type == 0:
+	if atk.target_type == 0:  # SingleEnemy
 		var total = 0
-		for p in prob: total += p
-		if total == 0: return
+		for p in prob: 
+			total += p
+		if total == 0: 
+			return
 		var rng2 = randi_range(1, total)
 		for i in range(prob.size()):
 			rng2 -= prob[i]
 			if rng2 <= 0 and prob[i] > 0:
 				target = [party[i]]
 				break
-	elif atk.target_type == 2:
-		target = party
-	if target: attack_executor.attack_array[e] = [target, atk]
+	elif atk.target_type == 2:  # Party
+		target = party.filter(func(p): return p.hp > 0)
+	
+	if target and not target.is_empty(): 
+		attack_executor.attack_array[e] = [target, atk]
 
 func start_round():
 	effect_manager.update_effects() 
@@ -401,13 +480,24 @@ func start_round():
 
 func _on_fight_button_pressed() -> void:
 	state = states.OnEnemy
-	selected_enemy = previous_enemy if previous_enemy != 0 else 1
+	selected_enemy = previous_enemy if previous_enemy >= 0 and previous_enemy < enemy_instances.size() else 0
 
 func _on_skills_button_pressed() -> void:
 	skill_manager.open_skills_menu()
 	
 func _on_defend_button_pressed() -> void:
-	add_attack(current_attacker, [current_attacker], load("res://resources/attacks/defend.tres"))
+	var defend_skill = Skill.new()
+	defend_skill.skill_name = "Defend"
+	defend_skill.attack_type = 1  # Buff
+	defend_skill.target_type = 1  # Self
+	defend_skill.on_use_effects.resize(1)
+	var defend_effect = BattleEffect.new()
+	defend_effect.effect_type = BattleEffect.EffectType.ADD_STATUS
+	defend_effect.status_effect = BattleEffect.StatusEffect.Defend
+	defend_effect.status_level = 1
+	defend_effect.status_duration = 1
+	defend_skill.on_use_effects[0] = defend_effect
+	add_attack(current_attacker, [current_attacker], defend_skill)
 	action_history.append(current_attacker)
 	advance_planning() 
 
@@ -416,10 +506,11 @@ func _on_item_button_pressed() -> void:
 	
 func _on_run_button_pressed() -> void:
 	var counter = 0
-	for e in range(5):
-		if battle.get('enemy_pos'+str(e+1)): counter += battle.get('enemy_pos'+str(e+1)).ai
+	for e in enemy_instances:
+		counter += e.speed if e.hp > 0 else 0
 	var chance = 0
-	for p in party: chance += p.max_stats["ai"]
+	for p in party: 
+		chance += p.max_stats["ai"] if p.max_stats.has("ai") else p.base_stats.get("speed", 10)
 	var diff = clampf(counter - chance + 10, 0, 30)
 	if randi_range(1, 20) > diff:
 		Global.player_position = battle_start_position
@@ -429,7 +520,7 @@ func _on_run_button_pressed() -> void:
 	else:
 		$Control/enemy_ui/CenterContainer/output.text = "Couldn't escape!"
 		await get_tree().create_timer(0.5).timeout
-		for e in range(5):
-			if battle.get('enemy_pos'+str(e+1)):
-				add_enemy_attack(battle.get('enemy_pos'+str(e+1)))
-				attack_executor.do_attacks()
+		for e in enemy_instances:
+			if e.hp > 0:
+				add_enemy_attack(e)
+		await attack_executor.do_attacks()
