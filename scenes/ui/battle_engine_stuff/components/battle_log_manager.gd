@@ -43,8 +43,11 @@ func add_to_battle_log(text: String) -> void:
 	update_battle_log_display()
 
 func remove_oldest_log_entry() -> void:
-	if not battle_log.is_empty():
+	if battle_log.size() > 1:
 		battle_log.remove_at(0)
+		update_battle_log_display()
+	elif battle_log.size() == 1:
+		battle_log.clear()
 		update_battle_log_display()
 
 func update_battle_log_display() -> void:

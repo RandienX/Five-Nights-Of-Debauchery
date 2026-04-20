@@ -155,12 +155,7 @@ func _process(delta: float) -> void:
 			var node = get_node_or_null("Control/enemy_ui/enemies/enemy"+str(e+1))
 			if node and e < enemy_instances.size():
 				node.hp = max(0, enemy_instances[e].hp)
-	
-	if not log_manager.battle_log.is_empty():
-		log_manager.log_timer += delta
-		if log_manager.log_timer >= log_manager.log_display_time:
-			log_manager.log_timer = 0.0
-			log_manager.remove_oldest_log_entry()
+			
 
 func _input(event: InputEvent) -> void:
 	if event.is_echo(): return
@@ -331,6 +326,7 @@ func get_alive_enemies() -> Array[Enemy]:
 func are_all_enemies_defeated() -> bool:
 	for e in enemy_instances:
 		if e and e.hp > 0:
+			print(e, "  ", e.hp)
 			return false
 	return true
 

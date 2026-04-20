@@ -29,7 +29,7 @@ func setup(skill_: Skill, index: int, is_affordable: bool):
 	affordable = is_affordable
 	
 	if name_label and skill:
-		name_label.text = skill.name
+		name_label.text = skill.skill_name
 	
 	if mana_label and skill:
 		if affordable:

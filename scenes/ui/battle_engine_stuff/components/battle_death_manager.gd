@@ -45,7 +45,7 @@ func check_enemy_death_and_xp():
 	for actor in root.initiative:
 		if actor is Party:
 			actor.xp += total_xp
-			$Control/enemy_ui/CenterContainer/output.text = actor.name + " gained " + str(total_xp) + " XP! "
+			root.get_node("Control/enemy_ui/CenterContainer/output").text = actor.name + " gained " + str(total_xp) + " XP! "
 			while actor.xp >= actor.xp_to_level_up:
 				actor.xp -= actor.xp_to_level_up
 				actor.level += 1
@@ -55,15 +55,15 @@ func check_enemy_death_and_xp():
 					actor.base_stats[stat] += int(actor.level_up[stat] * actor.level)
 				actor.hp = actor.max_stats["hp"]
 				actor.mp = actor.max_stats["mp"]
-				$Control/enemy_ui/CenterContainer/output.text = actor.name + " leveled up to " + str(actor.level) + "! "
+				root.get_node("Control/enemy_ui/CenterContainer/output").text = actor.name + " leveled up to " + str(actor.level) + "! "
 				await get_tree().create_timer(1.0).timeout
 	await end_battle_victory()
 
 func end_battle_victory() -> void:
-	await get_tree().create_timer(1.0).timeout
+	await root.get_tree().create_timer(1.0).timeout
 	Global.player_position = root.battle_start_position
 	Global.loading = true
-	get_tree().change_scene_to_file(Global.current_scene)
+	root.get_tree().change_scene_to_file(Global.current_scene)
 	Global.loading = false
 
 func animate_enemy_death(e: Enemy) -> void:
@@ -128,9 +128,9 @@ func check_party_wipe() -> void:
 func trigger_game_over() -> void:
 	game_over_active = true
 	root.state = root.states.Waiting
-	$Control/gui/HBoxContainer2.visible = false
-	$Control/enemy_ui.visible = false
-	$WhoMoves.visible = false
+	root.get_node("Control/gui/HBoxContainer2").visible = false
+	root.get_node("Control/enemy_ui").visible = false
+	root.get_node("WhoMoves").visible = false
 	
 	var tween = create_tween()
 	tween.tween_property(game_over_overlay, "modulate:a", 1.0, 2.0)

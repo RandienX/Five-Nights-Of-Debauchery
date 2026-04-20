@@ -38,7 +38,7 @@ func execute_single_attack(attacker: Object) -> void:
 	var alive: Array = _get_alive_targets(targets)
 	
 	# Step 2: Handle Check skill (special case)
-	if atk.name == "Check ":
+	if atk.skill_name == "Check ":
 		await _handle_check_skill(attacker, targets)
 		return
 	
@@ -61,13 +61,13 @@ func execute_single_attack(attacker: Object) -> void:
 func _route_attack_execution(attacker: Object, alive: Array, atk: Skill) -> void:
 	"""Routes the attack to the appropriate handler based on attack properties."""
 	
-	# Item usage (attack_type == 3)
-	if atk.attack_type == 3:
+	# Item usage (attack_type == 5)
+	if atk.attack_type == 5:
 		await _handle_item_usage(attacker, attack_array[attacker][0], atk)
 		return
 	
-	# Multi-attack skills (attack_type == 2)
-	if atk.attack_type == 2:
+	# Multi-attack skills (attack_type == 4)
+	if atk.attack_type == 4:
 		await _handle_multi_attack(attacker, alive, atk)
 		return
 	
@@ -265,12 +265,6 @@ func _handle_single_attack(attacker: Object, target: Object, atk: Skill) -> void
 		root.get_node("AnimationPlayer").play("move_around_screen")
 		target.hp -= dmg
 		effect_manager.apply_effects(target, atk)
-		
-		if atk.effects:
-			for effect in atk.effects.keys():
-				var level = atk.effects[effect][0]
-				var duration = atk.effects[effect][1]
-				effects_applied.append([effect, level])
 		
 		if target.effects.has(BattleEffect.StatusEffect.Sleep):
 			var sleep_level = target.effects[BattleEffect.StatusEffect.Sleep][0]
