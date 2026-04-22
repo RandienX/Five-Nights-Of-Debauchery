@@ -18,8 +18,9 @@ var shop_item: ShopItem
 var quantity: int = 1
 
 func _ready() -> void:
-	#to be sure
-	buy_button.pressed.connect(_on_buy_button_pressed)
+	# Ensure button connection
+	if buy_button:
+		buy_button.pressed.connect(_on_buy_button_pressed)
 	
 	_update_visuals()
 
@@ -84,7 +85,8 @@ func _update_visuals() -> void:
 		price_label.modulate = Color.WHITE
 
 func set_disabled(disabled: bool) -> void:
-	buy_button.disabled = disabled
+	if buy_button:
+		buy_button.disabled = disabled
 	modulate.a = 0.5 if disabled else 1.0
 
 func refresh() -> void:
@@ -96,11 +98,17 @@ func refresh() -> void:
 		quantity_spinbox.value = min(quantity_spinbox.value, quantity_spinbox.max_value)
 
 func _on_buy_button_pressed() -> void:
-	if shop_item:
+	if shop_item and quantity_spinbox:
 		quantity = int(quantity_spinbox.value)
 		purchase_requested.emit(shop_item, quantity)
 
 func on_currency_changed() -> void:
 	_update_visuals()
+
 func on_stock_changed() -> void:
 	refresh()
+
+## Enable or disable bulk buying (show/hide spinbox)
+func enable_bulk_buy(enabled: bool) -> void:
+	if quantity_spinbox:
+		quantity_spinbox.visible = enabled

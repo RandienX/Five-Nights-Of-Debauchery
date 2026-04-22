@@ -5,35 +5,46 @@ class_name ShopUI
 ## Handles shop data loading, item card instantiation, purchase logic, and filtering
 
 signal item_purchased(shop_item: ShopItem, quantity: int)
+signal item_sold(item: Item, quantity: int, earnings: int)
 signal purchase_failed(shop_item: ShopItem, reason: String)
 signal shop_closed()
 
-@onready var shop_title: Label = $MarginContainer/VBoxContainer/ShopTitle
-@onready var shop_description: Label = $MarginContainer/VBoxContainer/ShopDescription
-@onready var currency_label: Label = $MarginContainer/VBoxContainer/CurrencyLabel
-@onready var category_container: HBoxContainer = $MarginContainer/VBoxContainer/CategoryContainer
-@onready var items_grid: GridContainer = $MarginContainer/VBoxContainer/ScrollContainer/ItemsGrid
-@onready var close_button: Button = $MarginContainer/VBoxContainer/CloseButton
-@onready var restock_button: Button = $MarginContainer/VBoxContainer/RestockButton
+# Updated node paths to match actual shop.tscn structure
+@onready var currency_label: Label = $HBoxContainer/ColorRect/MarginContainer/VBoxContainer/Currencies
+@onready var category_container: HBoxContainer = $HBoxContainer/ColorRect/MarginContainer/VBoxContainer/ItemCategoryButtons
+@onready var items_container: VBoxContainer = $HBoxContainer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer
+@onready var exit_button: Button = $HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/buttons/VBoxContainer/Exit
+@onready var buy_button: Button = $HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/buttons/VBoxContainer/Buy
+@onready var talk_button: Button = $HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/buttons/VBoxContainer/Talk
+@onready var sell_button: Button = $HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/buttons/VBoxContainer/Sell
+@onready var question_container: VBoxContainer = $HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/MarginContainer/ColorRect/QuestionContainer
+@onready var dialogue_label: RichTextLabel = $HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/MarginContainer/ColorRect/RichTextLabel
 
 const SHOP_ITEM_CARD_SCENE: PackedScene = preload("res://scenes/ui/shop/shop_item_card.tscn")
 
 @export var current_shop_data: ShopData
+@export var current_dialogue_data: DialogueData
 var current_filter: StringName = &"all"
 var enable_bulk_buy: bool = true
 
 var item_cards: Array[ShopItemCard] = []
+var dialogue_runner: DialogueRunner
+var dialogue_evaluator: DialogueConditionEvaluator
+var is_typing: bool = false
+var full_text: String = ""
+var current_char_index: int = 0
+var type_timer: Timer
+var chars_per_second: float = 30.0
+var current_mode: String = "buy"  # "buy", "sell", "talk"
 
 
 func _ready() -> void:
-	close_button.pressed.connect(_on_close_button_pressed)
-	restock_button.pressed.connect(_on_restock_button_pressed)
+	if exit_button:
+		exit_button.pressed.connect(_on_close_button_pressed)
 	
 	if Engine.has_singleton("PlayerStats"):
 		var stats = Engine.get_singleton("PlayerStats")
 		stats.currency_changed.connect(_on_currency_changed)
-	
-	restock_button.visible = false
 
 
 func load_shop(data: ShopData) -> void:
@@ -52,12 +63,12 @@ func _setup_shop_ui() -> void:
 	if not current_shop_data:
 		return
 	
-	shop_title.text = current_shop_data.shop_name
-	shop_description.text = current_shop_data.shop_description
-	shop_description.visible = not current_shop_data.shop_description.is_empty()
+	# Note: shop title and description are not in the current scene structure
+	# They could be added to the talk box RichTextLabel if needed
 
 
 func _create_category_buttons() -> void:
+	# Clear existing buttons
 	for child in category_container.get_children():
 		child.queue_free()
 	
@@ -77,12 +88,14 @@ func _create_category_buttons() -> void:
 
 
 func _setup_items_grid() -> void:
+	# Clear existing cards
 	for card in item_cards:
 		card.queue_free()
 	item_cards.clear()
 	
 	if not current_shop_data:
 		return
+	
 	var items = current_shop_data.get_sorted_items(current_filter)
 	
 	for shop_item in items:
@@ -93,7 +106,7 @@ func _setup_items_grid() -> void:
 		card.purchase_requested.connect(_on_item_purchase_requested)
 		card.bulk_purchase_requested.connect(_on_item_bulk_purchase_requested)
 		
-		items_grid.add_child(card)
+		items_container.add_child(card)
 		item_cards.append(card)
 
 func filter_by_tag(tag: StringName) -> void:
@@ -101,12 +114,15 @@ func filter_by_tag(tag: StringName) -> void:
 	_setup_items_grid()
 
 func _update_currency_display() -> void:
+	if not currency_label:
+		return
+	
 	if not Engine.has_singleton("PlayerStats"):
-		currency_label.text = "G: 0"
+		currency_label.text = "Gold:\nShit:\nFazTokens:"
 		return
 	
 	var stats = Engine.get_singleton("PlayerStats")
-	currency_label.text = "G: %d | S: %d | T: %d" % [stats.gold, stats.silver, stats.tokens]
+	currency_label.text = "Gold: %d\nShit: %d\nFazTokens: %d" % [stats.gold, stats.silver, stats.tokens]
 
 func _on_item_purchase_requested(shop_item: ShopItem, quantity: int) -> void:
 	_attempt_purchase(shop_item, quantity)
@@ -175,13 +191,6 @@ func _on_category_button_pressed(category: StringName) -> void:
 	for child in category_container.get_children():
 		if child is Button:
 			child.button_pressed = (child.text.to_lower() == category.capitalize().to_lower())
-
-
-## Restock all items (for testing/debugging)
-func _on_restock_button_pressed() -> void:
-	if current_shop_data:
-		current_shop_data.restock_all()
-		_setup_items_grid()
 
 
 ## Close button handler

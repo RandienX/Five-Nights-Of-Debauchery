@@ -164,8 +164,13 @@ theme_override_constants/margin_bottom = 4
 layout_mode = 2
 color = Color(0, 0, 0, 1)
 
+[node name="QuestionContainer" type="VBoxContainer" parent="HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/MarginContainer/ColorRect"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
 [node name="RichTextLabel" type="RichTextLabel" parent="HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/MarginContainer/ColorRect"]
 layout_mode = 0
+offset_top = 20.0
 offset_right = 380.0
 offset_bottom = 150.0
 theme_override_font_sizes/normal_font_size = 21
