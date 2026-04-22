@@ -80,6 +80,12 @@ func get_save_data() -> Dictionary:
 			p_data.append(p_dict)
 	
 	data["party"] = p_data
+	
+	# Include PlayerStats data if available
+	if Engine.has_singleton("PlayerStats"):
+		var stats = Engine.get_singleton("PlayerStats")
+		data["player_stats"] = stats.get_save_data()
+	
 	return data
 
 func load_save_data(data: Dictionary, scenes_data: Dictionary) -> void:
@@ -108,6 +114,11 @@ func load_save_data(data: Dictionary, scenes_data: Dictionary) -> void:
 	scene_data = scenes_data
 	await get_tree().create_timer(0.03).timeout
 	loading = false
+	
+	# Load PlayerStats data if available
+	if data.has("player_stats") and Engine.has_singleton("PlayerStats"):
+		var stats = Engine.get_singleton("PlayerStats")
+		stats.load_save_data(data["player_stats"])
 
 func set_scene_data(data: Object):
 	var is_room = scene_data.find_key(data.room_name)
