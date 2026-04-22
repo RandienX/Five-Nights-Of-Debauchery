@@ -1,8 +1,16 @@
-[gd_scene load_steps=4 format=3 uid="uid://duee2xl28nl3p"]
+[gd_scene load_steps=9 format=3 uid="uid://duee2xl28nl3p"]
 
+[ext_resource type="Script" uid="uid://d8n1r58k2vo5" path="res://scenes/ui/shop/shop.gd" id="1_b72a6"]
 [ext_resource type="Texture2D" uid="uid://cfoscxh3td7hk" path="res://assets/battleui/backgrounds/FNaF 1 - Dining Area.png" id="1_h6h54"]
+[ext_resource type="Script" uid="uid://b2nv155ae50jn" path="res://code/shop/shop_item.gd" id="2_6mwi1"]
 [ext_resource type="Texture2D" uid="uid://bly8f2c01poij" path="res://assets/menu/shop/bb_shop.png" id="2_14h7y"]
+[ext_resource type="Script" uid="uid://dqtfnwt45e6s6" path="res://code/shop/shop_data.gd" id="3_o4tlq"]
 [ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="3_robsg"]
+[ext_resource type="PackedScene" uid="uid://wn4paq2271ml" path="res://scenes/ui/shop/shop_item_card.tscn" id="4_14h7y"]
+
+[sub_resource type="Resource" id="Resource_1q0x5"]
+script = ExtResource("3_o4tlq")
+metadata/_custom_type_script = "uid://dqtfnwt45e6s6"
 
 [node name="Control" type="Control"]
 layout_mode = 3
@@ -11,10 +19,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_b72a6")
+current_shop_data = SubResource("Resource_1q0x5")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
+clip_contents = true
 layout_mode = 0
 offset_right = 864.0
+offset_bottom = 648.0
 theme_override_constants/separation = 0
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
@@ -156,6 +168,13 @@ color = Color(0, 0, 0, 1)
 layout_mode = 0
 offset_right = 380.0
 offset_bottom = 150.0
+theme_override_font_sizes/normal_font_size = 21
+theme_override_font_sizes/bold_font_size = 21
+theme_override_font_sizes/bold_italics_font_size = 21
+theme_override_font_sizes/italics_font_size = 21
+theme_override_font_sizes/mono_font_size = 21
+bbcode_enabled = true
+text = "BB TALK BOX"
 
 [node name="ColorRect" type="ColorRect" parent="HBoxContainer"]
 custom_minimum_size = Vector2(288, 0)
@@ -174,6 +193,40 @@ theme_override_constants/margin_bottom = 4
 layout_mode = 2
 color = Color(0, 0, 0, 1)
 
-[node name="display_items" type="VBoxContainer" parent="HBoxContainer/ColorRect/MarginContainer"]
-custom_minimum_size = Vector2(280, 640)
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/ColorRect/MarginContainer"]
 layout_mode = 2
+
+[node name="Label" type="Label" parent="HBoxContainer/ColorRect/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Category:"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ItemCategoryButtons" type="HBoxContainer" parent="HBoxContainer/ColorRect/MarginContainer/VBoxContainer"]
+z_index = 10
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HBoxContainer/ColorRect/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 400)
+layout_mode = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+
+[node name="ItemCard" parent="HBoxContainer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer" instance=ExtResource("4_14h7y")]
+modulate = Color(1, 1, 1, 0.5)
+layout_mode = 2
+
+[node name="Currencies" type="Label" parent="HBoxContainer/ColorRect/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+text = "Gold:
+Shit:
+FazTokens:"
+horizontal_alignment = 1
+vertical_alignment = 1
