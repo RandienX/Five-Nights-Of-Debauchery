@@ -45,44 +45,35 @@ class_name Item
 @export var revive_amount: int = 0
 
 @export_category("General")
-@export var sell_price: int = 10
+@export var sell_price: Dictionary[PlayerStats.CurrencyType, int] = {
+	PlayerStats.CurrencyType.GOLD: 10,
+	PlayerStats.CurrencyType.SHIT: 10,
+	PlayerStats.CurrencyType.FAZTOKENS: 10,
+}
 @export var max_stack: int = 99
 @export var can_use_in_battle: bool = true
 @export var can_use_outside_battle: bool = true
 
-
 func _init():
-pass
-
-
+	pass
 func get_bonus(stat_name: String) -> int:
-return item_bonuses.get(stat_name, 0)
-
-
+	return item_bonuses.get(stat_name, 0)
 func get_total_hp_bonus() -> int:
-return get_bonus("hp")
-
-
+	return get_bonus("hp")
 func get_total_mp_bonus() -> int:
-return get_bonus("mp")
-
-
+	return get_bonus("mp")
 func get_total_atk_bonus() -> int:
-return get_bonus("atk")
-
-
+	return get_bonus("atk")
 func get_total_def_bonus() -> int:
-return get_bonus("def")
-
+	return get_bonus("def")
 
 func can_equip(character: Party) -> bool:
-if required_level > 0 and character.level < required_level:
-return false
-if not required_class.is_empty():
-# Could check character class here
-pass
-return true
-
+	if required_level > 0 and character.level < required_level:
+		return false
+	if not required_class.is_empty():
+	# Could check character class here
+		pass
+	return true
 
 func get_consume_effects_array() -> Array[BattleEffect]:
-return consume_effects
+	return consume_effects

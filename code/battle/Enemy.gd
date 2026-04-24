@@ -7,7 +7,7 @@ class_name Enemy
 enum AI {Dumb, Casual, Violent, Defensive, Intelligent, Flexible}
 
 @export_group("Basic Info")
-@export var enemy_name: String = ""
+@export var name: String = ""
 @export_multiline var description: String = ""
 @export var sprite: Texture2D
 @export var portrait: Texture2D
@@ -62,7 +62,6 @@ func _init():
 
 func is_immune_to(effect: BattleEffect.StatusEffect) -> bool:
 	return effect in immune_to_effects
-
 
 func get_effective_damage() -> int:
 	var dmg = damage

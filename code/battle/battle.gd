@@ -7,13 +7,13 @@ extends Resource
 
 @export_group("Battle Configuration")
 @export var battle_name: String = ""
-@export_multiline var description: String = ""
+@export_multiline var description: String = "temp"
 
 @export_group("Enemies")
-@export var enemies: Array[BattleEnemySlot] = []
+@export var enemies: Array[BattleEnemySlot]
 
 @export_group("Party Members (Optional)")
-@export var forced_party_members: Array[Party] = []  # Empty = use current party
+@export var forced_party_members: Array[Party]  # Empty = use current party
 
 @export_group("Battle Settings")
 @export var background: Texture2D

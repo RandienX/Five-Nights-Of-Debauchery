@@ -1,4 +1,5 @@
 extends Node2D
+class_name RootScene
 
 @export var room_name: String
 @export var possible_battles: Array[Battle]

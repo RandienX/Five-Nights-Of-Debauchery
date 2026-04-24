@@ -23,7 +23,6 @@ class_name Skill
 @export var attack_multiplier: float = 1.0
 @export var attack_bonus: int = 0
 @export var damage_type: int = 0                 # 0=Physical, 1=Magical
-@export var element: int = 0                     # For elemental weaknesses
 
 @export_group("Multiattack")
 @export var hit_count: int = 3
@@ -57,7 +56,7 @@ func get_effective_accuracy(user: Object) -> float:
 
 
 func get_total_damage(user: Object, target: Object) -> int:
-	var base_dmg = user.damage if user.has_method("get_effective_damage") else user.get("damage", 10)
+	var base_dmg = user.damage if user.has_method("get_effective_damage") else user.get("damage")
 	var total = floor(base_dmg * attack_multiplier) + attack_bonus
 	return max(1, total)
 

@@ -16,6 +16,7 @@ enum StatusEffect {
 	Power,          # Increases damage dealt
 	Tough,          # Increases defense
 	Focus,          # Increases accuracy
+	Speed,
 	Defend,         # Reduces damage taken
 	Kill,           # Chance to instantly kill non-boss enemies
 	Absorb,         # Increases max HP temporarily
@@ -115,12 +116,13 @@ var effect_type: int = 0
 @export var target_type: TargetType = TargetType.SELF
 @export var timing: Timing = Timing.ON_USE
 
-@export_group("Parameters")
+@export_group("Parameters (Stat)")
 @export var stat_name: String = ""              # For MODIFY_STAT, SET_STAT
 @export var stat_value: float = 0.0             # Value or multiplier
 @export var stat_operation: int = 0             # 0=Add, 1=Multiply, 2=Set
 @export_range(-10, 10) var stat_levels: int = 0 # For buff/debuff levels
 
+@export_group("Parameters (Effect)")
 @export var heal_amount: int = 0
 @export var heal_percent: float = 0.0
 @export var damage_amount: int = 0
@@ -129,19 +131,21 @@ var effect_type: int = 0
 @export var status_effect: StatusEffect = StatusEffect.Heal
 @export_range(1, 99) var status_level: int = 1
 @export_range(1, 99) var status_duration: int = 3
+@export_range(0, 100) var chance_percent: float = 100.0       # Chance for effect to trigger
 
+@export_group("Parameters (Offering)")
 @export var xp_amount: int = 0
 @export var currency_amount: int = 0
 @export var item_reference: Resource              # Item to add/remove
 @export var item_quantity: int = 1
 
+@export_group("Parameters (Other)")
 @export var animation_name: String = ""
 @export var sound_path: String = ""
 @export var shake_intensity: float = 5.0
 @export var flash_color: Color = Color.WHITE
 @export var flash_duration: float = 0.3
 
-@export var chance_percent: float = 100.0       # Chance for effect to trigger
 @export var custom_script_path: String = ""     # Path to custom effect script
 
 @export_group("Conditions")
@@ -153,6 +157,7 @@ var effect_type: int = 0
 @export var require_turn_number_min: int = 0
 @export var require_turn_number_max: int = 0
 
+@export_group("Changeable")
 
 func _get_property_list() -> Array[Dictionary]:
 	var props: Array[Dictionary] = []

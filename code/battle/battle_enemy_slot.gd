@@ -13,7 +13,7 @@ extends Resource
 @export var spawn_condition: String = ""          # Custom condition to trigger spawn
 
 @export_group("Positioning")
-@export var position_index: int = 0               # Visual position slot (0-5)
+@export var position_index: int = 0               # Visual position slot (0-4)
 @export var is_reinforcement: bool = false        # True = spawned mid-battle
 
 @export_group("Rewards (Override)")
