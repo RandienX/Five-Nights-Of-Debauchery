@@ -1,1 +1,18 @@
-Nothing should be ignored since only source code files (.gd files) were modified and no build artifacts, dependencies, or temporary files are present in the changes.
+```
+# Build artifacts
+*.import
+*.import*
+export_presets.cfg
+godot_settings.cfg
+
+# Dependencies
+*.import
+*.import*
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
+```
