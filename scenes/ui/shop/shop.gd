@@ -23,18 +23,10 @@ signal shop_closed()
 const SHOP_ITEM_CARD_SCENE: PackedScene = preload("res://scenes/ui/shop/shop_item_card.tscn")
 
 @export var current_shop_data: ShopData
-@export var current_dialogue_data: DialogueData
 var current_filter: StringName = &"all"
 var enable_bulk_buy: bool = true
 
 var item_cards: Array[ShopItemCard] = []
-var dialogue_runner: DialogueRunner
-var dialogue_evaluator: DialogueConditionEvaluator
-var is_typing: bool = false
-var full_text: String = ""
-var current_char_index: int = 0
-var type_timer: Timer
-var chars_per_second: float = 30.0
 var current_mode: String = "buy"  # "buy", "sell", "talk"
 
 
@@ -42,9 +34,11 @@ func _ready() -> void:
 	if exit_button:
 		exit_button.pressed.connect(_on_close_button_pressed)
 	
-	if Engine.has_singleton("PlayerStats"):
-		var stats = Engine.get_singleton("PlayerStats")
+	if PlayerStats:
+		var stats = PlayerStats
 		stats.currency_changed.connect(_on_currency_changed)
+		
+	load_shop(current_shop_data)
 
 
 func load_shop(data: ShopData) -> void:
@@ -58,17 +52,14 @@ func load_shop(data: ShopData) -> void:
 	_create_category_buttons()
 	_setup_items_grid()
 
-
 func _setup_shop_ui() -> void:
 	if not current_shop_data:
 		return
 	
 	# Note: shop title and description are not in the current scene structure
-	# They could be added to the talk box RichTextLabel if needed
-
+	# They could be added to the talk box RichTextLabel if neededs
 
 func _create_category_buttons() -> void:
-	# Clear existing buttons
 	for child in category_container.get_children():
 		child.queue_free()
 	
@@ -88,7 +79,6 @@ func _create_category_buttons() -> void:
 
 
 func _setup_items_grid() -> void:
-	# Clear existing cards
 	for card in item_cards:
 		card.queue_free()
 	item_cards.clear()
@@ -100,13 +90,12 @@ func _setup_items_grid() -> void:
 	
 	for shop_item in items:
 		var card = SHOP_ITEM_CARD_SCENE.instantiate() as ShopItemCard
-		card.init(shop_item)
 		card.enable_bulk_buy(enable_bulk_buy)
 		
 		card.purchase_requested.connect(_on_item_purchase_requested)
-		card.bulk_purchase_requested.connect(_on_item_bulk_purchase_requested)
 		
 		items_container.add_child(card)
+		card.init(shop_item)
 		item_cards.append(card)
 
 func filter_by_tag(tag: StringName) -> void:
@@ -117,17 +106,14 @@ func _update_currency_display() -> void:
 	if not currency_label:
 		return
 	
-	if not Engine.has_singleton("PlayerStats"):
+	if not PlayerStats:
 		currency_label.text = "Gold:\nShit:\nFazTokens:"
 		return
 	
-	var stats = Engine.get_singleton("PlayerStats")
-	currency_label.text = "Gold: %d\nShit: %d\nFazTokens: %d" % [stats.gold, stats.silver, stats.tokens]
+	var stats = PlayerStats
+	currency_label.text = "Gold: %d\nShit: %d\nFazTokens: %d" % [stats.gold, stats.shit, stats.tokens]
 
 func _on_item_purchase_requested(shop_item: ShopItem, quantity: int) -> void:
-	_attempt_purchase(shop_item, quantity)
-
-func _on_item_bulk_purchase_requested(shop_item: ShopItem, quantity: int) -> void:
 	_attempt_purchase(shop_item, quantity)
 
 func _attempt_purchase(shop_item: ShopItem, quantity: int) -> void:
@@ -150,38 +136,27 @@ func _attempt_purchase(shop_item: ShopItem, quantity: int) -> void:
 		success = shop_item.purchase_bulk(quantity)
 	
 	if success:
-		# Add item to player inventory via Global
 		_add_item_to_inventory(shop_item.item, quantity)
 		
-		# Emit success signal
 		item_purchased.emit(shop_item, quantity)
-		
-		# Refresh UI
 		_on_currency_changed()
 		_refresh_all_cards()
 	else:
 		purchase_failed.emit(shop_item, "Insufficient funds")
 
-
 ## Add purchased item to player inventory
 func _add_item_to_inventory(item: Item, quantity: int) -> void:
-	if Engine.has_singleton("Global"):
-		var global = Engine.get_singleton("Global")
-		if global.has_method("add_item"):
-			global.add_item(item, quantity)
-
+	PlayerStats.add_item(item, quantity)
 
 ## Refresh all item cards (call after purchase or currency change)
 func _refresh_all_cards() -> void:
 	for card in item_cards:
 		card.refresh()
 
-
 ## Handle currency change signal from PlayerStats
 func _on_currency_changed(_new_amount: int = 0) -> void:
 	_update_currency_display()
 	_refresh_all_cards()
-
 
 ## Handle category button press
 func _on_category_button_pressed(category: StringName) -> void:
@@ -191,17 +166,14 @@ func _on_category_button_pressed(category: StringName) -> void:
 	for child in category_container.get_children():
 		if child is Button:
 			child.button_pressed = (child.text.to_lower() == category.capitalize().to_lower())
-
-
+			
 ## Close button handler
 func _on_close_button_pressed() -> void:
 	shop_closed.emit()
 
-
 ## Public method to close the shop
 func close_shop() -> void:
 	_on_close_button_pressed()
-
 
 ## Enable or disable bulk buying on all cards
 func set_bulk_buy_enabled(enabled: bool) -> void:
@@ -209,11 +181,9 @@ func set_bulk_buy_enabled(enabled: bool) -> void:
 	for card in item_cards:
 		card.enable_bulk_buy(enabled)
 
-
 ## Refresh shop with new data (hot-swap)
 func refresh_shop(new_data: ShopData) -> void:
 	load_shop(new_data)
-
 
 ## Get current shop ID
 func get_shop_id() -> StringName:

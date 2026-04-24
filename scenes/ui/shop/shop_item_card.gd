@@ -5,7 +5,6 @@ class_name ShopItemCard
 ## Shows icon, name, description, price, stock, and handles purchase interaction
 
 signal purchase_requested(shop_item: ShopItem, quantity: int)
-signal bulk_purchase_requested(shop_item: ShopItem, quantity: int)
 
 @onready var icon_texture: TextureRect = $HBoxContainer/Icon
 @onready var name_label: Label = $HBoxContainer/VBoxContainer/Name
@@ -18,10 +17,6 @@ var shop_item: ShopItem
 var quantity: int = 1
 
 func _ready() -> void:
-	# Ensure button connection
-	if buy_button:
-		buy_button.pressed.connect(_on_buy_button_pressed)
-	
 	_update_visuals()
 
 func init(item: ShopItem) -> void:
@@ -41,17 +36,12 @@ func _setup() -> void:
 	else:
 		icon_texture.texture = null
 	
-	# Name
 	name_label.text = shop_item.item.item_name if shop_item.item.item_name != "" else "Unknown Item"
-	
-	# Description
 	description_label.text = shop_item.item.description if shop_item.item.description != "" else "No description"
 	
-	# Price with currency symbol
 	var currency_symbol = _get_currency_symbol(shop_item.currency_type)
 	price_label.text = "%d %s" % [shop_item.price, currency_symbol]
 	
-	# Max quantity for bulk purchase
 	if shop_item.max_stock != -1:
 		quantity_spinbox.max_value = min(99, shop_item.current_stock)
 	else:
@@ -97,7 +87,7 @@ func refresh() -> void:
 		quantity_spinbox.max_value = min(99, shop_item.current_stock)
 		quantity_spinbox.value = min(quantity_spinbox.value, quantity_spinbox.max_value)
 
-func _on_buy_button_pressed() -> void:
+func _on_buy_pressed() -> void:
 	if shop_item and quantity_spinbox:
 		quantity = int(quantity_spinbox.value)
 		purchase_requested.emit(shop_item, quantity)

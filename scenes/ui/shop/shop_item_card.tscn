@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://cn5hpouiu2idk" path="res://assets/item_textures/pizza.png" id="2_17jfm"]
 
 [node name="ItemCard" type="MarginContainer"]
+modulate = Color(1, 1, 1, 0.5)
 custom_minimum_size = Vector2(0, 128)
 offset_right = 280.0
 offset_bottom = 128.0
@@ -59,6 +60,7 @@ theme_override_constants/margin_bottom = 10
 z_index = 1
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
+disabled = true
 text = "Buy"
 flat = true
 
@@ -75,3 +77,5 @@ texture = ExtResource("1_reup3")
 layout_mode = 2
 max_value = 99.0
 rounded = true
+
+[connection signal="pressed" from="HBoxContainer/VBoxContainer2/MarginContainer/Buy" to="." method="_on_buy_pressed"]
