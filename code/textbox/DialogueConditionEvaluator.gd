@@ -8,11 +8,11 @@ extends RefCounted
 signal custom_condition_requested(branch: DialogueBranch, result_callback: Callable)
 
 # Game state hooks - connect these to your actual game systems
-var has_item_func: Callable = Callable()     # func(item: Item, amount: int) -> bool
-var has_status_func: Callable = Callable()     # func(effect_id: String) -> bool
-var get_variable_func: Callable = Callable()   # func(var_name: String) -> float
-var is_quest_complete_func: Callable = Callable()   # func(quest_id: String) -> bool
-var is_quest_active_func: Callable = Callable()     # func(quest_id: String) -> bool
+var has_item_func: Callable      # func(item: Item, amount: int) -> bool
+var has_status_func: Callable    # func(effect_id: String) -> bool
+var get_variable_func: Callable  # func(var_name: String) -> float
+var is_quest_complete_func: Callable  # func(quest_id: String) -> bool
+var is_quest_active_func: Callable    # func(quest_id: String) -> bool
 
 func evaluate(branch: DialogueBranch) -> bool:
 	if not branch:
