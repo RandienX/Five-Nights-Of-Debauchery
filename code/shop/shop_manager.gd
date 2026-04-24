@@ -17,31 +17,21 @@ func open_shop(shop_data: ShopData, parent: Node = null) -> void:
 		push_error("ShopManager: Attempted to open shop with null ShopData")
 		return
 	
-	# Determine parent (use current scene if not specified)
 	if not parent:
 		parent = get_tree().current_scene
-	
-	# Close any existing shop first
 	close_shop()
 	
-	# Instantiate shop scene if needed
 	current_shop_instance = SHOP_SCENE.instantiate()
 	
-	# Get the ShopUI controller
 	var shop_ui = current_shop_instance.get_node_or_null(".") as ShopUI
 	if not shop_ui:
-		# Try to find ShopUI script attached to root
 		shop_ui = current_shop_instance as ShopUI
 	
-	# Connect signals
 	shop_ui.item_purchased.connect(_on_item_purchased)
 	shop_ui.purchase_failed.connect(_on_purchase_failed)
 	shop_ui.shop_closed.connect(close_shop)
 	
-	# Add to scene tree
 	parent.add_child(current_shop_instance)
-	
-	# Load the shop data
 	shop_ui.load_shop(shop_data)
 	
 	current_shop_data = shop_data
@@ -80,6 +70,7 @@ func switch_shop(new_shop_data: ShopData) -> void:
 ## Handle item purchased signal
 func _on_item_purchased(shop_item: ShopItem, quantity: int) -> void:
 	print("Purchased %d x %s" % [quantity, shop_item.item.item_name])
+	PlayerStats.deduct_currency(shop_item.price, shop_item.currency_type)
 	
 	# Additional logic can be added here (achievements, quests, etc.)
 

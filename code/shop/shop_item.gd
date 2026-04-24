@@ -39,9 +39,9 @@ func has_stock() -> bool:
 
 ## Internal check if player can afford (assumes PlayerStats autoload exists)
 func _can_afford() -> bool:
-	if not Engine.has_singleton("PlayerStats"):
+	if not PlayerStats:
 		return true  # Assume affordable in editor
-	var stats = Engine.get_singleton("PlayerStats")
+	var stats = PlayerStats
 	return stats.has_currency(price, currency_type)
 
 
@@ -50,13 +50,13 @@ func purchase() -> bool:
 	if not can_purchase():
 		return false
 	
-	if not Engine.has_singleton("PlayerStats"):
+	if not PlayerStats:
 		# In editor, just decrement stock
 		if max_stock != -1:
 			current_stock -= 1
 		return true
 	
-	var stats = Engine.get_singleton("PlayerStats")
+	var stats = PlayerStats
 	if stats.deduct_currency(price, currency_type):
 		if max_stock != -1:
 			current_stock -= 1
@@ -78,13 +78,11 @@ func purchase_bulk(quantity: int) -> bool:
 	
 	# Check total cost
 	var total_cost = price * quantity
-	if not Engine.has_singleton("PlayerStats"):
-		# In editor, just decrement stock
-		if max_stock != -1:
-			current_stock -= quantity
-		return true
+	if max_stock != -1:
+		current_stock -= quantity
+	return true
 	
-	var stats = Engine.get_singleton("PlayerStats")
+	var stats = PlayerStats
 	if stats.deduct_currency(total_cost, currency_type):
 		if max_stock != -1:
 			current_stock -= quantity
