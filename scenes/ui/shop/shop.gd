@@ -28,6 +28,8 @@ var enable_bulk_buy: bool = true
 
 var item_cards: Array[ShopItemCard] = []
 var current_mode: String = "buy"  # "buy", "sell", "talk"
+var talk_options: Array[String] = []
+var current_talk_index: int = 0
 
 
 func _ready() -> void:

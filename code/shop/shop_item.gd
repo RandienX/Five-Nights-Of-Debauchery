@@ -9,6 +9,13 @@ class_name ShopItem
 @export var price: int = 100  ## Cost to purchase one unit
 @export var currency_type: PlayerStats.CurrencyType = PlayerStats.CurrencyType.GOLD  ## Which currency to use
 
+@export_group("Sell Price")
+@export var sell_price: Dictionary[PlayerStats.CurrencyType, int] = {
+	PlayerStats.CurrencyType.GOLD: 10,
+	PlayerStats.CurrencyType.SHIT: 10,
+	PlayerStats.CurrencyType.FAZTOKENS: 10,
+}
+
 @export_group("Stock")
 @export var max_stock: int = -1  ## -1 means unlimited stock
 @export var current_stock: int = -1  ## Current remaining stock (-1 = unlimited)
