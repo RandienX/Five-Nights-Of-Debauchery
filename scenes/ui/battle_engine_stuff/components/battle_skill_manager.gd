@@ -175,10 +175,12 @@ func select_skill():
 func confirm_skill_target():
 	var skill = available_skills[current_skill_index]
 	if skill.target_type == 0:
-		root.add_attack(root.current_attacker, [root.battle.get('enemy_pos'+str(root.selected_enemy))], skill)
-		root.action_history.append(root.current_attacker)
-		close_skills_menu()
-		root.advance_planning()
+		var target = root.get_enemy(root.selected_enemy)
+		if target and target.hp > 0:
+			root.add_attack(root.current_attacker, [target], skill)
+			root.action_history.append(root.current_attacker)
+			close_skills_menu()
+			root.advance_planning()
 	elif skill.target_type == 3:
 		var target = root.party[clamp(root.selected_enemy - 1, 0, root.party.size() - 1)]
 		root.add_attack(root.current_attacker, [target], skill)

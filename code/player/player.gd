@@ -1,8 +1,17 @@
 extends CharacterBody2D
 @onready var menu := $Camera2D/CanvasLayer/game_menu
+@export var stop_move := false
+@export var static_shader := true
+@export var can_menu := true
+@export var inbattle_cam := false
 func _ready() -> void:
-		$AnimatedSprite2D.play("idle1")
-
+	$AnimatedSprite2D.play("idle1")
+	$Camera2D/CanvasLayer/white_flash.visible = static_shader
+	$Camera2D/CanvasLayer/ColorRect.visible = static_shader
+	$Camera2D/CanvasLayer/Label.visible = static_shader
+	if inbattle_cam:
+		$Camera2D.queue_free()
+	
 func _physics_process(delta: float) -> void:
 	movement(delta)
 	
@@ -13,7 +22,6 @@ var acceleration = 500
 
 var current_direction: Vector2 = Vector2.ZERO
 var target_rotation: float = 0.0
-var stop_move = false
 
 func movement(delta) -> void:
 	var direction = Input.get_vector("left", "right", "up", "down")
@@ -26,7 +34,7 @@ func movement(delta) -> void:
 		else: velocity = velocity.move_toward(direction * move_speed, acceleration * delta)
 	else:
 		current_direction = Vector2.ZERO
-		velocity = velocity.move_toward(direction * 0, acceleration * delta)
+		velocity = Vector2.ZERO
 	
 	animate()
 	move_and_slide()
@@ -48,18 +56,14 @@ func animate():
 	else:
 		$AnimatedSprite2D.play("idle" + str(idle_state))
 		
-func make_textbox(data: TextboxData):
-	if data == null: return
-	var textbox = preload("res://scenes/ui/textbox.tscn").instantiate()
-	textbox.init(data, self)
-	textbox.global_position = Vector2(0, 0)
-	$Camera2D/CanvasLayer.add_child(textbox)
+func textbox():
 	stop_move = true
+	can_menu = false
 
 @export var party: Array[Party]
 
 func _input(event: InputEvent) -> void:
-	if Input.is_action_just_pressed("menu"):
+	if Input.is_action_just_pressed("menu") and can_menu:
 		if menu.visible == false:
 			menu.visible = true
 			stop_move = true

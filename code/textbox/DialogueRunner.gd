@@ -4,12 +4,12 @@ extends Node
 ## Runtime dialogue executor
 ## Manages flow, evaluates conditions, emits signals for UI
 
-signal dialogue_started(data: DialogueData)
+signal dialogue_started(_data: Object)
 signal node_entered(node: DialogueNode)
 signal text_displayed(text: String)
 signal choice_available(choice: DialogueChoice)
 signal choice_selected(choice: DialogueChoice)
-signal dialogue_ended(last_node: DialogueNode)
+signal dialogue_ended(last_node: Object)
 
 var data: DialogueData
 var evaluator: DialogueConditionEvaluator

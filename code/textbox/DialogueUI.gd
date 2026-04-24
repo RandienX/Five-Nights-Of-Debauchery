@@ -11,7 +11,7 @@ extends Control
 
 @export_group("Typewriter")
 @export var chars_per_second: float = 30.0
-@export var auto_advance_after_typing: bool = true
+@export var auto_advance_after_typing: bool = false
 @export var auto_advance_delay: float = 1.0
 
 var player
@@ -22,6 +22,11 @@ var full_text: String = ""
 var current_index: int = 0
 var type_timer: Timer
 var auto_advance_timer: Timer
+
+# Choice navigation
+var choice_buttons: Array[Button] = []
+var current_choice_index: int = 0
+var is_choosing: bool = false
 
 func _ready() -> void:
 	_setup_timers()
@@ -56,14 +61,43 @@ func _hide_ui() -> void:
 func _show_ui() -> void:
 	visible = true
 
-func _on_dialogue_started(_data: DialogueData) -> void:
+func _on_dialogue_started(_data: DialogueUI) -> void:
+	print("=== DEBUG START ===")
+	print("Target Object: ", _data)
+	print("Target Script: ", _data.get_script())
+
+	var all_props = _data.get_property_list()
+	print("Total Properties Count: ", all_props.size())
+
+	var found_script_vars = false
+
+	for p in all_props:
+		var name = p["name"]
+		var usage = p["usage"]
+		var type = p["type"]
+
+		if usage & 8192: 
+			var val = _data.get(name)
+			print("SCRIPT VAR FOUND: ", name, " | Type: ", type, " | Value: ", val)
+			found_script_vars = true
+
+	if not found_script_vars:
+		print("No script variables found with USAGE_SCRIPT_VARIABLE flag.")
+		print("Dumping first 10 raw properties for inspection:")
+	for i in range(min(10, all_props.size())):
+		print(all_props[i])
+
 	_show_ui()
+	print("=== DEBUG END ===")
 
 func display_node(node: DialogueNode) -> void:
 	# Clear previous choices
 	if choices_container:
 		for child in choices_container.get_children():
 			child.queue_free()
+	choice_buttons.clear()
+	current_choice_index = 0
+	is_choosing = false
 
 	# Update portrait
 	if portrait_texture and node.portrait:
@@ -97,6 +131,11 @@ func _finish_typing() -> void:
 	if auto_advance_after_typing and runner and runner.current_node:
 		if not runner.current_node.has_choices():
 			auto_advance_timer.start(auto_advance_delay)
+		else:
+		# Choices are available, enable navigation mode
+			is_choosing = true
+			if not choice_buttons.is_empty():
+				_update_choice_selection()
 
 func _on_auto_advance() -> void:
 	if runner and runner.is_running:
@@ -108,10 +147,40 @@ func _on_choice_available(choice: DialogueChoice) -> void:
 	var button = Button.new()
 	button.text = choice.text
 	button.pressed.connect(_on_choice_pressed.bind(choice))
+	button.set_meta("choice", choice)
 	choices_container.add_child(button)
+	choice_buttons.append(button)
+	
+func _update_choice_selection():
+	# Update visual selection of choice buttons (similar to SkillManager.navigate_skills)
+	for i in range(choice_buttons.size()):
+		var button = choice_buttons[i]
+		if i == current_choice_index:
+			button.grab_focus()
+			button.modulate = Color(1, 1, 0.5)  # Yellow highlight
+		else:
+			button.modulate = Color(1, 1, 1)
 
+func _navigate_choices(direction: int):
+	if choice_buttons.is_empty():
+		return
+
+	var new_index = current_choice_index + direction
+
+	# Loop around if needed
+	if new_index < 0:
+		new_index = choice_buttons.size() - 1
+	elif new_index >= choice_buttons.size():
+		new_index = 0
+
+	current_choice_index = new_index
+	_update_choice_selection()
+		
 func _on_choice_pressed(choice: DialogueChoice) -> void:
 	if runner and runner.is_running:
+		is_choosing = false
+		choice_buttons.clear()
+		current_choice_index = 0
 		runner.select_choice(choice)
 
 func _on_dialogue_ended(_node: DialogueNode) -> void:
@@ -121,6 +190,25 @@ func _on_dialogue_ended(_node: DialogueNode) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not runner or not runner.is_running:
 		return
+		
+	if is_choosing and not choice_buttons.is_empty():
+		if event is InputEventKey and event.pressed:
+			if event.keycode == KEY_UP:
+				_navigate_choices(-1)
+				get_viewport().set_input_as_handled()
+				return
+		elif event.keycode == KEY_DOWN:
+			_navigate_choices(1)
+			get_viewport().set_input_as_handled()
+			return
+		elif event.keycode == KEY_ENTER or event.keycode == KEY_SPACE:
+		# Select current choice
+			if current_choice_index >= 0 and current_choice_index < choice_buttons.size():
+				var selected_button = choice_buttons[current_choice_index]
+				var selected_choice = selected_button.get_meta("choice")
+				_on_choice_pressed(selected_choice)
+				get_viewport().set_input_as_handled()
+				return
 	
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_handle_advance_input()

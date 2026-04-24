@@ -1,13 +1,13 @@
 [gd_scene load_steps=7 format=3 uid="uid://buhtuaqxey512"]
 
-[ext_resource type="Script" uid="uid://cjesqud0gnfy5" path="res://code/textbox/textbox.gd" id="1_gc5d4"]
+[ext_resource type="Script" uid="uid://bf37trk8l3vd2" path="res://code/textbox/DialogueUI.gd" id="1_w1bcc"]
 [ext_resource type="Texture2D" uid="uid://ok0s30ywbc5e" path="res://assets/party/Classics+Swag.png" id="2_hyn88"]
 [ext_resource type="Texture2D" uid="uid://c6t3yqacgcfe1" path="res://assets/menu/Window.png" id="3_fto3e"]
 [ext_resource type="FontFile" uid="uid://bbkqbneky7jdt" path="res://assets/courbd.ttf" id="4_seire"]
 [ext_resource type="FontFile" uid="uid://bomifdi2dvjgd" path="res://assets/cour.ttf" id="5_hdjaa"]
 [ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="6_hyn88"]
 
-[node name="textbox" type="Control"]
+[node name="textbox" type="Control" node_paths=PackedStringArray("text_label", "choices_container", "portrait_texture")]
 z_index = 2
 custom_minimum_size = Vector2(864, 162)
 layout_mode = 3
@@ -18,7 +18,10 @@ offset_top = -2.0000305
 offset_bottom = -2.0
 grow_horizontal = 2
 grow_vertical = 0
-script = ExtResource("1_gc5d4")
+script = ExtResource("1_w1bcc")
+text_label = NodePath("Container/HBoxContainer/textbox/MarginContainer/RichTextLabel")
+choices_container = NodePath("NinePatchRect/ChoiceContainer")
+portrait_texture = NodePath("Container/HBoxContainer/face/Sprite2D")
 
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
 volume_db = 8.0

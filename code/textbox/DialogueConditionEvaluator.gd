@@ -52,9 +52,8 @@ func evaluate(branch: DialogueBranch) -> bool:
 
 
 func _eval_has_item(item_id: String, amount: int) -> bool:
-	print(has_item_func)
-	if has_item_func.is_valid():
-		return has_item_func.call(item_id, amount)
+	if Global.has_method("has_item"):
+		return Global.has_item(load(item_id), amount)
 	push_warning("Dialogue: has_item_func not set, cannot check for '%s'" % item_id)
 	return false
 

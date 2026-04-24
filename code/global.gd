@@ -8,8 +8,6 @@ var battle_ref: Node = null
 var battle_current = null
 
 #--Saved Variables--
-var inventory: Dictionary = {}
-var party: Array = [load("res://resources/party/freddy.tres").duplicate_deep(), load("res://resources/party/bonnie.tres").duplicate_deep()]
 var time_played: float = 0.0
 var current_scene: String = "res://scenes/maps/1ab.tscn"
 var scene_data: Dictionary = {}
@@ -17,13 +15,6 @@ var player_position: Vector2
 
 var loading = false
 
-func _ready() -> void:
-	add_item(preload("res://resources/items/consumables/small_soda.tres"), 5)
-	add_item(preload("res://resources/items/consumables/small_pizza.tres"), 5)
-	add_item(preload("res://resources/items/consumables/degreaser.tres"), 5)
-	add_item(preload("res://resources/items/armor/EndoBodyA.tres"), 1)
-	for p in party:
-		p.equip_stats_change()
 
 func _process(delta: float) -> void:
 	time_played += delta
@@ -66,10 +57,10 @@ func deserialize_value(value: Variant) -> Variant:
 func get_save_data() -> Dictionary:
 	var data = {"inventory": {}, "current_scene": current_scene, "player_position": player_position}
 	
-	for path in inventory.keys():
-		data["inventory"][path.resource_path] = inventory[path]
+	for path in PlayerStats.inventory.keys():
+		data["inventory"][path.resource_path] = PlayerStats.inventory[path]
 	var p_data = []
-	for p in party:
+	for p in PlayerStats.party:
 		if p is Resource:
 			var p_dict = {"resource_path": p.path_to, "properties": {}}
 			for prop in p.get_property_list():
@@ -80,16 +71,22 @@ func get_save_data() -> Dictionary:
 			p_data.append(p_dict)
 	
 	data["party"] = p_data
+	
+	# Include PlayerStats data if available
+	if Engine.has_singleton("PlayerStats"):
+		var stats = Engine.get_singleton("PlayerStats")
+		data["player_stats"] = stats.get_save_data()
+	
 	return data
 
 func load_save_data(data: Dictionary, scenes_data: Dictionary) -> void:
 	var inv_data = data.get("inventory", {})
-	inventory.clear()
+	PlayerStats.inventory.clear()
 	for path in inv_data.keys():
 		var item = deserialize_value(path)
 		var amount = inv_data[path]
-		inventory.merge({item: int(amount)})
-	party.clear()
+		PlayerStats.inventory.merge({item: int(amount)})
+	PlayerStats.party.clear()
 	for p_dict in data.get("party", []):
 		var resource: Party = load(p_dict["resource_path"]).duplicate_deep()
 		if resource:
@@ -98,7 +95,7 @@ func load_save_data(data: Dictionary, scenes_data: Dictionary) -> void:
 				var prop_value = deserialize_value(p_dict["properties"][prop_name])
 				if prop_name in resource:
 					resource.set(prop_name, prop_value)
-			party.append(resource)
+			PlayerStats.party.append(resource)
 			
 	loading = true
 	if data.has("current_scene"):
@@ -108,6 +105,11 @@ func load_save_data(data: Dictionary, scenes_data: Dictionary) -> void:
 	scene_data = scenes_data
 	await get_tree().create_timer(0.03).timeout
 	loading = false
+	
+	# Load PlayerStats data if available
+	if data.has("player_stats") and Engine.has_singleton("PlayerStats"):
+		var stats = Engine.get_singleton("PlayerStats")
+		stats.load_save_data(data["player_stats"])
 
 func set_scene_data(data: Object):
 	var is_room = scene_data.find_key(data.room_name)
@@ -138,33 +140,6 @@ func reload_last_save() -> void:
 	else:
 		get_tree().change_scene_to_file(current_scene)
 
-# === Inventory Management ===
-func add_item(item: Resource, amount: int = 1):
-	if not inventory.has(item):
-		inventory[item] = 0
-	inventory[item] += amount
-
-func remove_item(item: Resource, amount: int = 1):
-	if inventory.has(item):
-		inventory[item] -= amount
-		if inventory[item] <= 0:
-			inventory.erase(item)
-		return true
-	return false
-
-func has_item(item: Resource, amount: int = 1) -> bool:
-	if inventory.has(item):
-		return inventory[item] >= amount
-	return false
-
-func get_item_amount(item: Resource) -> int:
-	if inventory.has(item):
-		return inventory[item]
-	return 0
-
-func clear_inventory():
-	inventory.clear()
-
 # === Item Usage ===
 func use_item(item: Resource, target: Object) -> bool:
 	if not item or not target or not is_instance_valid(target):
@@ -172,13 +147,13 @@ func use_item(item: Resource, target: Object) -> bool:
 	if item.type != 2: 
 		return false
 
-	if not has_item(item):
+	if not PlayerStats.has_item(item):
 		return false
 
 	if item.consume_effects_given:
 		for effect_key in item.consume_effects_given.keys():
 			var effect_data = item.consume_effects_given[effect_key]
-			if effect_key == Global.effect.Revive:
+			if effect_key == BattleEffect.StatusEffect.Revive:
 				if target.hp <= 0:
 					target.hp = 1
 				elif target.hp > 0:
@@ -202,7 +177,7 @@ func use_item(item: Resource, target: Object) -> bool:
 			if target.effects.has(effect_key):
 				target.effects.erase(effect_key)
 
-	remove_item(item, 1)
+	PlayerStats.remove_item(item, 1)
 
 	if battle_ref and battle_ref.has_method("update_effect_ui"):
 		battle_ref.update_effect_ui(target)
@@ -228,18 +203,3 @@ func lower_font(target: Label):
 func load_battle(battle: Battle):
 	battle_current = battle
 	get_tree().change_scene_to_file("res://scenes/ui/battle_engine_stuff/battle_engine.tscn")
-
-func tb_has_item(item_path: String, amount: int = 1) -> bool:
-	var item = load(item_path) if item_path != "" else null
-	print(true if has_item(item, amount) else false)
-	return has_item(item, amount) if item else false
-
-func tb_remove_item(item_path: String, amount: int = 1) -> void:
-	var item = load(item_path) if item_path != "" else null
-	if item: remove_item(item, amount)
-
-func tb_set_flag(key: String, value: bool = true) -> void:
-	scene_data[key] = value
-
-func tb_get_flag(key: String, default: bool = false) -> bool:
-	return scene_data.get(key, default)
