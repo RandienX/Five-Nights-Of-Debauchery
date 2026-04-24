@@ -2,14 +2,28 @@
 extends Control
 class_name ShopUI
 ## ShopUI Controller - Main shop scene controller attached to shop.tscn root
-## Handles shop data loading, item card instantiation, purchase logic, and filtering
+## Handles shop data loading, item card instantiation, purchase/sell logic, and dialogue
+## 
+## INTEGRATION GUIDE:
+## 1. Ensure shop.tscn has the required node structure (see @onready variables below)
+## 2. Connect PlayerStats.currency_changed signal for auto-refresh
+## 3. For Talk tab: populate talk_responses Dictionary or use default
+## 4. For Sell tab: Items are pulled from PlayerStats.inventory automatically
+##
+## NODE STRUCTURE REQUIRED:
+## - HBoxContainer/ColorRect/MarginContainer/VBoxContainer/Currencies (Label)
+## - HBoxContainer/ColorRect/MarginContainer/VBoxContainer/ItemCategoryButtons (HBoxContainer)
+## - HBoxContainer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer (VBoxContainer - items container)
+## - HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/buttons/VBoxContainer/[Exit,Buy,Talk,Sell] (Buttons)
+## - HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/MarginContainer/ColorRect/QuestionContainer (VBoxContainer - dialogue buttons parent)
+## - HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/MarginContainer/ColorRect/RichTextLabel (RichTextLabel - dialogue text)
 
 signal item_purchased(shop_item: ShopItem, quantity: int)
 signal item_sold(item: Item, quantity: int, earnings: int)
 signal purchase_failed(shop_item: ShopItem, reason: String)
 signal shop_closed()
 
-# Updated node paths to match actual shop.tscn structure
+# === Cached Node References (@onready for performance) ===
 @onready var currency_label: Label = $HBoxContainer/ColorRect/MarginContainer/VBoxContainer/Currencies
 @onready var category_container: HBoxContainer = $HBoxContainer/ColorRect/MarginContainer/VBoxContainer/ItemCategoryButtons
 @onready var items_container: VBoxContainer = $HBoxContainer/ColorRect/MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer
@@ -20,27 +34,67 @@ signal shop_closed()
 @onready var question_container: VBoxContainer = $HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/MarginContainer/ColorRect/QuestionContainer
 @onready var dialogue_label: RichTextLabel = $HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/MarginContainer/ColorRect/RichTextLabel
 
+# === Preloaded Scenes ===
 const SHOP_ITEM_CARD_SCENE: PackedScene = preload("res://scenes/ui/shop/shop_item_card.tscn")
 
+# === Export Variables (Editor Integration) ===
 @export var current_shop_data: ShopData
-var current_filter: StringName = &"all"
-var enable_bulk_buy: bool = true
+@export var enable_bulk_buy: bool = true
+@export var chars_per_second: float = 30.0  # Typewriter speed
+@export_group("Talk Responses")
+@export var talk_responses: Dictionary[String, String] = {
+	"Greeting": "Hello, traveler! Welcome to my humble shop.",
+	"Farewell": "Safe travels! Come back soon!",
+	"Shop Info": "We offer the finest goods in all the land.",
+	"Rumors": "I heard there's treasure hidden in the old ruins...",
+}
+@export var default_response: String = "I'm not sure what to say about that."
 
+# === State Variables ===
+var current_filter: StringName = &"all"
 var item_cards: Array[ShopItemCard] = []
+var sell_cards: Array[ShopItemCard] = []  # Cards for sell tab
 var current_mode: String = "buy"  # "buy", "sell", "talk"
-var talk_options: Array[String] = []
-var current_talk_index: int = 0
+
+# Talk mode state
+var talk_option_buttons: Array[Button] = []
+var is_typing: bool = false
+var full_dialogue_text: String = ""
+var current_char_index: int = 0
+var type_timer: Timer
+var input_blocked: bool = false
 
 
 func _ready() -> void:
+	_setup_timers()
+	_connect_signals()
+	load_shop(current_shop_data)
+
+
+func _setup_timers() -> void:
+	type_timer = Timer.new()
+	type_timer.wait_time = 1.0 / chars_per_second
+	type_timer.timeout.connect(_on_type_tick)
+	type_timer.one_shot = false
+	add_child(type_timer)
+
+
+func _connect_signals() -> void:
 	if exit_button:
 		exit_button.pressed.connect(_on_close_button_pressed)
+	
+	if buy_button:
+		buy_button.pressed.connect(_on_buy_tab_pressed)
+	
+	if talk_button:
+		talk_button.pressed.connect(_on_talk_tab_pressed)
+	
+	if sell_button:
+		sell_button.pressed.connect(_on_sell_tab_pressed)
 	
 	if PlayerStats:
 		var stats = PlayerStats
 		stats.currency_changed.connect(_on_currency_changed)
-		
-	load_shop(current_shop_data)
 
 
 func load_shop(data: ShopData) -> void:
@@ -190,3 +244,274 @@ func refresh_shop(new_data: ShopData) -> void:
 ## Get current shop ID
 func get_shop_id() -> StringName:
 	return current_shop_data.shop_id if current_shop_data else &""
+
+
+# ============================================================================
+# === BUY TAB FUNCTIONALITY ===
+# ============================================================================
+
+func _on_buy_tab_pressed() -> void:
+if current_mode == "buy":
+return
+current_mode = "buy"
+_clear_all_cards()
+_setup_items_grid()
+_update_button_states()
+
+
+# ============================================================================
+# === SELL TAB FUNCTIONALITY ===
+# ============================================================================
+
+func _on_sell_tab_pressed() -> void:
+if current_mode == "sell":
+return
+current_mode = "sell"
+_clear_all_cards()
+_setup_sell_grid()
+_update_button_states()
+
+
+## Setup the sell grid by pulling items from PlayerStats.inventory
+func _setup_sell_grid() -> void:
+# Clear existing sell cards
+for card in sell_cards:
+if is_instance_valid(card):
+card.queue_free()
+sell_cards.clear()
+
+# Check if PlayerStats exists and has inventory
+if not PlayerStats or PlayerStats.inventory.is_empty():
+_show_empty_sell_message()
+return
+
+# Iterate through inventory and create sell cards
+for item: Item in PlayerStats.inventory.keys():
+var amount: int = PlayerStats.inventory[item]
+if amount <= 0 or not item:
+continue
+
+# Create a sell item card
+var card = _create_sell_card(item, amount)
+if card:
+sell_cards.append(card)
+items_container.add_child(card)
+
+
+## Create a sell card for an inventory item
+func _create_sell_card(item: Item, amount: int) -> ShopItemCard:
+if not SHOP_ITEM_CARD_SCENE:
+push_error("ShopUI: SHOP_ITEM_CARD_SCENE not loaded")
+return null
+
+var card = SHOP_ITEM_CARD_SCENE.instantiate() as SellItemCard
+if not card:
+push_error("ShopUI: Failed to instantiate SellItemCard")
+return null
+
+# Setup the card with item data
+card.setup_for_sell(item, amount)
+
+# Connect the sold signal
+card.sold.connect(_on_item_sold)
+
+return card
+
+
+## Show a message when inventory is empty
+func _show_empty_sell_message() -> void:
+var label = Label.new()
+label.text = "Your inventory is empty.\nNothing to sell!"
+label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+label.set_anchors_preset(Control.PRESET_FULL_RECT)
+items_container.add_child(label)
+
+
+## Handle item sold signal from a sell card
+func _on_item_sold(item: Item, quantity: int, currency_type: PlayerStats.CurrencyType, earnings: int) -> void:
+if not item or quantity <= 0:
+push_warning("ShopUI: Invalid sell transaction")
+return
+
+# Remove item from inventory
+var removed = PlayerStats.remove_item(item, quantity)
+if not removed:
+push_warning("ShopUI: Failed to remove sold item from inventory")
+return
+
+# Add currency to player
+PlayerStats.add_currency(earnings, currency_type)
+
+# Emit signal for external listeners
+item_sold.emit(item, quantity, earnings)
+
+# Refresh the sell grid
+_refresh_sell_grid()
+_update_currency_display()
+
+
+## Refresh the sell grid after a sale
+func _refresh_sell_grid() -> void:
+_clear_all_cards()
+_setup_sell_grid()
+
+
+# ============================================================================
+# === TALK TAB FUNCTIONALITY ===
+# ============================================================================
+
+func _on_talk_tab_pressed() -> void:
+if current_mode == "talk":
+return
+current_mode = "talk"
+_clear_all_cards()
+_setup_talk_ui()
+_update_button_states()
+
+
+## Setup the talk UI with dialogue buttons
+func _setup_talk_ui() -> void:
+# Clear previous dialogue
+_stop_typing()
+dialogue_label.text = ""
+
+# Clear existing buttons
+_clear_talk_buttons()
+
+# Check if question_container exists
+if not question_container:
+push_error("ShopUI: question_container not found - cannot setup talk UI")
+return
+
+# Generate buttons from talk_responses Dictionary
+if talk_responses.is_empty():
+_show_default_talk_option()
+return
+
+for key in talk_responses.keys():
+var button = _create_talk_button(key)
+if button:
+talk_option_buttons.append(button)
+question_container.add_child(button)
+
+
+## Create a single talk button
+func _create_talk_button(option_key: String) -> Button:
+var button = Button.new()
+button.text = option_key
+button.pressed.connect(_on_talk_option_selected.bind(option_key))
+button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+button.custom_minimum_size.x = 200
+return button
+
+
+## Show a default talk option if none are configured
+func _show_default_talk_option() -> void:
+var button = Button.new()
+button.text = "Talk"
+button.pressed.connect(_on_talk_option_selected.bind("default"))
+button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+question_container.add_child(button)
+talk_option_buttons.append(button)
+
+
+## Clear all talk buttons
+func _clear_talk_buttons() -> void:
+for button in talk_option_buttons:
+if is_instance_valid(button):
+button.queue_free()
+talk_option_buttons.clear()
+
+
+## Handle talk option selection
+func _on_talk_option_selected(option_key: String) -> void:
+if input_blocked or is_typing:
+return  # Prevent rapid clicking during typing
+
+# Disable input during typing
+input_blocked = true
+
+# Get the response text
+var response_text: String = ""
+if option_key == "default":
+response_text = default_response
+elif talk_responses.has(option_key):
+response_text = talk_responses[option_key]
+else:
+response_text = default_response
+push_warning("ShopUI: Missing dialogue response for key: %s" % option_key)
+
+# Clear buttons after selection (optional - can be kept if you want persistent options)
+# _clear_talk_buttons()
+
+# Start typewriter effect
+_start_typewriter(response_text)
+
+
+## Start the typewriter effect
+func _start_typewriter(text: String) -> void:
+full_dialogue_text = text
+current_char_index = 0
+dialogue_label.text = ""
+is_typing = true
+type_timer.start()
+
+
+## Timer tick for typewriter effect
+func _on_type_tick() -> void:
+if current_char_index < full_dialogue_text.length():
+dialogue_label.text += full_dialogue_text[current_char_index]
+current_char_index += 1
+else:
+_finish_typing()
+
+
+## Finish typing and re-enable input
+func _finish_typing() -> void:
+is_typing = false
+input_blocked = false
+type_timer.stop()
+dialogue_label.text = full_dialogue_text
+
+
+## Stop typing immediately (used when switching tabs)
+func _stop_typing() -> void:
+is_typing = false
+input_blocked = false
+type_timer.stop()
+
+
+# ============================================================================
+# === UTILITY FUNCTIONS ===
+# ============================================================================
+
+## Clear all item cards (both buy and sell)
+func _clear_all_cards() -> void:
+# Clear buy cards
+for card in item_cards:
+if is_instance_valid(card):
+card.queue_free()
+item_cards.clear()
+
+# Clear sell cards
+for card in sell_cards:
+if is_instance_valid(card):
+card.queue_free()
+sell_cards.clear()
+
+# Clear talk buttons
+_clear_talk_buttons()
+
+# Stop any active typing
+_stop_typing()
+
+
+## Update button states based on current mode
+func _update_button_states() -> void:
+if buy_button:
+buy_button.button_pressed = (current_mode == "buy")
+if talk_button:
+talk_button.button_pressed = (current_mode == "talk")
+if sell_button:
+sell_button.button_pressed = (current_mode == "sell")
