@@ -35,7 +35,7 @@ func _on_item_pressed() -> void:
 
 func _on_delete_pressed() -> void:
 	amount -= 1
-	Global.remove_item(item)
+	PlayerStats.remove_item(item)
 	redisplay()
 
 func redisplay_equip():

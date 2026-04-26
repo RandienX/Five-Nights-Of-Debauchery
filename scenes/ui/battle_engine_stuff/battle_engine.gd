@@ -2,7 +2,7 @@ extends Node2D
 class_name BattleEngine
 
 @export var battle: Battle
-var party: Array = Global.party
+var party: Array[Object] = PlayerStats.party
 var battle_start_position: Vector2 = Vector2.ZERO
 var initiative: Array[Object]
 var enemy_instances: Array[Enemy] = []  # Runtime enemy instances from BattleEnemySlot
@@ -28,7 +28,7 @@ var initiative_who: int = -1
 
 # === SETUP ===
 func _ready() -> void:
-	battle_start_position = Global.player_position
+	battle_start_position = PlayerStats.player_position
 	battle = Global.battle_current.duplicate(true)
 	Global.battle_ref = self
 	
@@ -126,7 +126,7 @@ func setup_initiative() -> Array[Object]:
 
 func setup_party():
 	for p in initiative:
-		if p in party:
+		if p in PlayerStats.party:
 			var ui = preload("res://scenes/ui/battle_engine_stuff/partyBattleFace.tscn").instantiate()
 			ui.setup(p)
 			$Control/gui/HBoxContainer2/party.add_child(ui)
@@ -337,7 +337,7 @@ func undo_last_action():
 		var atk = attack_executor.attack_array[last][1]
 		if atk.attack_type == 3 and atk.item_reference:
 			var used_item = atk.item_reference
-			Global.add_item(used_item, 1)  # Restore item
+			PlayerStats.add_item(used_item, 1)  # Restore item
 		attack_executor.attack_array.erase(last)
 	current_attacker = last
 	state = states.OnAction
@@ -402,12 +402,7 @@ func add_enemy_attack(e: Enemy):
 	if not e or e.hp <= 0: return
 	if e.attacks.is_empty(): 
 		# Use default attack if no attacks defined
-		var default_atk = Skill.new()
-		default_atk.skill_name = "Attack"
-		default_atk.attack_type = 0
-		default_atk.target_type = 0
-		default_atk.accuracy = 1.0
-		attack_executor.attack_array[e] = [[party[randi_range(0, party.size()-1)]], default_atk]
+		attack_executor.attack_array.merge({e: [[party[randi_range(0, party.size()-1)]], e.default_attack]})
 		return
 	
 	var atk: Skill = e.attacks[randi_range(0, e.attacks.size()-1)]
@@ -509,7 +504,7 @@ func _on_run_button_pressed() -> void:
 		chance += p.max_stats["ai"] if p.max_stats.has("ai") else p.base_stats.get("speed", 10)
 	var diff = clampf(counter - chance + 10, 0, 30)
 	if randi_range(1, 20) > diff:
-		Global.player_position = battle_start_position
+		PlayerStats.player_position = battle_start_position
 		Global.loading = true
 		get_tree().change_scene_to_file(Global.current_scene)
 		Global.loading = false

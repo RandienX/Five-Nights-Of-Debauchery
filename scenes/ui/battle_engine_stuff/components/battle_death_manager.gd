@@ -61,7 +61,7 @@ func check_enemy_death_and_xp():
 
 func end_battle_victory() -> void:
 	await root.get_tree().create_timer(1.0).timeout
-	Global.player_position = root.battle_start_position
+	PlayerStats.player_position = root.battle_start_position
 	Global.loading = true
 	root.get_tree().change_scene_to_file(Global.current_scene)
 	Global.loading = false
@@ -118,7 +118,7 @@ func death(obj):
 
 func check_party_wipe() -> void:
 	var alive = false
-	for p in Global.party:
+	for p in PlayerStats.party:
 		if p.hp > 0:
 			alive = true
 			break

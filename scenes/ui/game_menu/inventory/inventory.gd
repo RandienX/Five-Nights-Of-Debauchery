@@ -17,10 +17,10 @@ func init_children():
 	for c in item_box.get_children():
 		c.queue_free()
 	
-	for i in range(len(Global.inventory)):
-		if Global.inventory.keys()[i] is Item:
-			if Global.inventory.keys()[i].type == item_type:
-				items.merge({Global.inventory.keys()[i]: Global.inventory[Global.inventory.keys()[i]]})
+	for i in range(len(PlayerStats.inventory)):
+		if PlayerStats.inventory.keys()[i] is Item:
+			if PlayerStats.inventory.keys()[i].type == item_type:
+				items.merge({PlayerStats.inventory.keys()[i]: PlayerStats.inventory[PlayerStats.inventory.keys()[i]]})
 			
 	for i in range(len(items)):
 		var kid = load("res://scenes/ui/game_menu/inventory/inventory_item.tscn").instantiate()

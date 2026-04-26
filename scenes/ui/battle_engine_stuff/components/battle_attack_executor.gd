@@ -19,11 +19,13 @@ func setup(broot, d_mgr, e_mgr, l_mgr, batt):
 func do_attacks() -> void:
 	for actor in root.initiative:
 		if attack_array.has(actor):
-			if actor is Party:
-				root.current_attacker = actor
-				await execute_single_attack(actor)
-				await death_manager.check_enemy_death_and_xp()
+			root.current_attacker = actor
+			await execute_single_attack(actor)
+			await death_manager.check_enemy_death_and_xp()
+			if root:
 				await root.get_tree().create_timer(0.5).timeout
+			else:
+				pass
 	root.start_round()
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -121,7 +123,7 @@ func _handle_item_usage(attacker: Object, targets: Array, atk: Skill) -> void:
 	
 	if used_item and targets.size() > 0:
 		var target = targets[0]
-		var success = Global.use_item(used_item, target)
+		var success = PlayerStats.use_item(used_item, target)
 		
 		if success:
 			var item_log = "[color=#FFD700]━━━ ITEM ━━━[/color]"
@@ -148,7 +150,7 @@ func _handle_multi_attack(attacker: Object, alive: Array, atk: Skill) -> void:
 		return
 	
 	var multi_log = "[color=#FFD700]━━━ MULTI-ATTACK ━━━[/color]"
-	multi_log += "\n[color=#4CAF50]" + attacker.name + "[/color] used [color=#2196F3]" + atk.name + "[/color] on [color=#FF5722]" + target.name + "[/color]"
+	multi_log += "\n[color=#4CAF50]" + attacker.name + "[/color] used [color=#2196F3]" + atk.skill_name + "[/color] on [color=#FF5722]" + target.name + "[/color]"
 	
 	for i in range(atk.hit_count):
 		await root.get_tree().create_timer(0.15).timeout
@@ -290,12 +292,10 @@ func _handle_buff_skill(attacker: Object, atk: Skill) -> void:
 		effect_manager.apply_effects(attacker, atk)
 		effect_manager.update_effect_ui(attacker)
 		buff_log += "\n[color=#4CAF50]" + attacker.name + "[/color] buffed self"
-		if atk.effects:
-			for effect in atk.effects.keys():
-				var level = atk.effects[effect][0]
-				var duration = atk.effects[effect][1]
-				effects_applied.append([effect, level])
-				buff_log += " [color=#E91E63]" + effect_manager.get_effect_name_with_level(effect, level) + " (" + str(duration) + "t)[/color]"
+		if atk.on_use_effects:
+			for effect in atk.on_use_effects:
+				effects_applied.append(effect)
+				buff_log += " [color=#E91E63]" + effect_manager.get_effect_name_with_level(effect.status_effect, effect.status_level) + " (" + str(effect.status_duration) + "t)[/color]"
 		if atk.mana_cost > 0:
 			buff_log += " [color=#9C27B0](" + str(atk.mana_cost) + " MP)[/color]"
 		log_manager.add_to_battle_log(buff_log)
@@ -308,12 +308,10 @@ func _handle_buff_skill(attacker: Object, atk: Skill) -> void:
 				effect_manager.apply_effects(p, atk)
 				effect_manager.update_effect_ui(p)
 		if atk.effects:
-			for effect in atk.effects.keys():
-				var level = atk.effects[effect][0]
-				var duration = atk.effects[effect][1]
+			for effect in atk.on_use_effects:
 				if not effects_applied.any(func(e): return e[0] == effect):
-					effects_applied.append([effect, level])
-				buff_log += " [color=#E91E63]" + effect_manager.get_effect_name_with_level(effect, level) + " (" + str(duration) + "t)[/color]"
+					effects_applied.append(effect)
+				buff_log += " [color=#E91E63]" + effect_manager.get_effect_name_with_level(effect.status_effect, effect.status_level) + " (" + str(effect.status_duration) + "t)[/color]"
 		if atk.mana_cost > 0:
 			buff_log += " [color=#9C27B0](" + str(atk.mana_cost) + " MP)[/color]"
 		log_manager.add_to_battle_log(buff_log)

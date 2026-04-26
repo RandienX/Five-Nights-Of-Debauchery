@@ -1,6 +1,6 @@
 extends Control
 
-var party = Global.party
+var party = PlayerStats.party
 @onready var party_members_box = $CenterContainer/party
 @onready var menu = $"../../../.."
 var unlocked_buttons = [true, false, false, false]
@@ -37,5 +37,5 @@ func party_member_clicked(party_member) -> void:
 		menu.layer_down = 2
 		
 	if menu.layer_down == 2 and special_mode == special_modes.ITEM:
-		Global.use_item(selected_item, party_member)
+		PlayerStats.use_item(selected_item, party_member)
 		

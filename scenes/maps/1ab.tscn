@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=4 uid="uid://d0ffrrya75s2a"]
+[gd_scene load_steps=49 format=4 uid="uid://d0ffrrya75s2a"]
 
 [ext_resource type="Texture2D" uid="uid://tpsaxglf4u38" path="res://assets/tilemaps/Walls.png" id="1_jsqxa"]
 [ext_resource type="Script" uid="uid://duek0uk444kjf" path="res://code/root_script.gd" id="1_py0w6"]
@@ -12,8 +12,13 @@
 [ext_resource type="Script" uid="uid://d0nafiufwuqos" path="res://code/tests/battle_test.gd" id="8_aolqo"]
 [ext_resource type="Script" uid="uid://bjs86ij5fvwmn" path="res://code/tests/item_add_test.gd" id="9_kx7qs"]
 [ext_resource type="Texture2D" uid="uid://dexwxvdtim46r" path="res://assets/ui/button_pressed.png" id="10_wb4m8"]
-[ext_resource type="Resource" uid="uid://bk1e767ye1wq8" path="res://resources/textbox/Pizzeria_Dining_Hall/new_start.tres" id="13_aolqo"]
-[ext_resource type="Resource" uid="uid://gv2hunt1dmf" path="res://resources/textbox/Pizzeria_Dining_Hall/test/test.tres" id="14_6w4eh"]
+[ext_resource type="Script" uid="uid://dag3ualk0velp" path="res://code/textbox/DialogueNode.gd" id="13_aolqo"]
+[ext_resource type="Script" uid="uid://nfr8xstn6iuk" path="res://code/textbox/DialogueData.gd" id="14_6w4eh"]
+[ext_resource type="Script" uid="uid://q863dboya0u8" path="res://code/textbox/DialogueBranch.gd" id="14_b8cxy"]
+[ext_resource type="Script" uid="uid://cns0ts3txlu6v" path="res://code/textbox/DialogueChoice.gd" id="15_e2jjj"]
+[ext_resource type="Script" uid="uid://t5qfe8igpeg3" path="res://code/textbox/DialogueEffect.gd" id="16_bdh5l"]
+[ext_resource type="Texture2D" uid="uid://ok0s30ywbc5e" path="res://assets/party/Classics+Swag.png" id="17_57aqu"]
+[ext_resource type="Texture2D" uid="uid://d2f8bgy630i5y" path="res://assets/battlesprites/unknown_face.png" id="18_e2jjj"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7jnge"]
 texture = ExtResource("1_jsqxa")
@@ -465,11 +470,147 @@ sources/1 = SubResource("TileSetAtlasSource_6w4eh")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_b8cxy"]
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_6j8ev"]
+atlas = ExtResource("17_57aqu")
+region = Rect2(0, 0, 96, 96)
+
+[sub_resource type="Resource" id="Resource_rv3ip"]
+script = ExtResource("13_aolqo")
+label = "freddy_monologue_1"
+text = "fuck it."
+speaker = "Freddy"
+portrait = SubResource("AtlasTexture_6j8ev")
+next_label = "freddy_monologue_2"
+metadata/_custom_type_script = "uid://dag3ualk0velp"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b8cxy"]
+atlas = ExtResource("17_57aqu")
+region = Rect2(0, 0, 96, 96)
+
+[sub_resource type="Resource" id="Resource_haaxq"]
+script = ExtResource("13_aolqo")
+label = "freddy_monologue_2"
+text = "i'm bored."
+speaker = "Freddy"
+portrait = SubResource("AtlasTexture_b8cxy")
+next_label = "freddy_monologue_3"
+metadata/_custom_type_script = "uid://dag3ualk0velp"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e2jjj"]
+atlas = ExtResource("17_57aqu")
+region = Rect2(0, 0, 96, 96)
+
+[sub_resource type="Resource" id="Resource_uf0ra"]
+script = ExtResource("13_aolqo")
+label = "freddy_monologue_3"
+text = "time to do some debauchery."
+speaker = "Freddy"
+portrait = SubResource("AtlasTexture_e2jjj")
+next_label = "freddy_monologue_4"
+metadata/_custom_type_script = "uid://dag3ualk0velp"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bdh5l"]
+atlas = ExtResource("17_57aqu")
+region = Rect2(0, 0, 96, 96)
+
+[sub_resource type="Resource" id="Resource_dqpnd"]
+script = ExtResource("13_aolqo")
+label = "freddy_monologue_4"
+text = "Are you ready for Freddy?"
+speaker = "Freddy"
+portrait = SubResource("AtlasTexture_bdh5l")
+metadata/_custom_type_script = "uid://dag3ualk0velp"
+
+[sub_resource type="Resource" id="Resource_kx7qs"]
+script = ExtResource("14_6w4eh")
+nodes = Array[ExtResource("13_aolqo")]([SubResource("Resource_rv3ip"), SubResource("Resource_haaxq"), SubResource("Resource_uf0ra"), SubResource("Resource_dqpnd")])
+start_label = "freddy_monologue_1"
+metadata/_custom_type_script = "uid://nfr8xstn6iuk"
+
+[sub_resource type="Resource" id="Resource_6j8ev"]
+script = ExtResource("14_b8cxy")
+param_string = "res://resources/items/consumables/attack_item.tres"
+target_label = "has_item"
+param_string = "res://resources/items/consumables/attack_item.tres"
+metadata/_custom_type_script = "uid://q863dboya0u8"
+
+[sub_resource type="Resource" id="Resource_v61lw"]
+script = ExtResource("13_aolqo")
+label = "start"
+text = "u might have item"
+speaker = "god"
+portrait = ExtResource("18_e2jjj")
+next_label = "not_has_item"
+branches = Array[ExtResource("14_b8cxy")]([SubResource("Resource_6j8ev")])
+metadata/_custom_type_script = "uid://dag3ualk0velp"
+
+[sub_resource type="Resource" id="Resource_op5xx"]
+script = ExtResource("13_aolqo")
+label = "not_has_item"
+text = "u not have item"
+speaker = "god"
+portrait = ExtResource("18_e2jjj")
+metadata/_custom_type_script = "uid://dag3ualk0velp"
+
+[sub_resource type="Resource" id="Resource_cyj86"]
+script = ExtResource("15_e2jjj")
+text = "Yes"
+target_label = "gib_item"
+metadata/_custom_type_script = "uid://cns0ts3txlu6v"
+
+[sub_resource type="Resource" id="Resource_vnief"]
+script = ExtResource("15_e2jjj")
+text = "Naw"
+target_label = "not_gib_item"
+metadata/_custom_type_script = "uid://cns0ts3txlu6v"
+
+[sub_resource type="Resource" id="Resource_p7n5o"]
+script = ExtResource("13_aolqo")
+label = "has_item"
+text = "u has item. gib item?"
+speaker = "god"
+portrait = ExtResource("18_e2jjj")
+choices = Array[ExtResource("15_e2jjj")]([SubResource("Resource_cyj86"), SubResource("Resource_vnief")])
+metadata/_custom_type_script = "uid://dag3ualk0velp"
+
+[sub_resource type="Resource" id="Resource_4ontn"]
+script = ExtResource("16_bdh5l")
+effect_type = 2
+param_string = "res://resources/items/consumables/attack_item.tres"
+param_value = 1.0
+wait_seconds = 0.2
+item_id = null
+param_value = 1.0
+metadata/_custom_type_script = "uid://t5qfe8igpeg3"
+
+[sub_resource type="Resource" id="Resource_pf416"]
+script = ExtResource("13_aolqo")
+label = "gib_item"
+text = "yippie"
+speaker = "god"
+portrait = ExtResource("18_e2jjj")
+on_exit_effects = Array[ExtResource("16_bdh5l")]([SubResource("Resource_4ontn")])
+metadata/_custom_type_script = "uid://dag3ualk0velp"
+
+[sub_resource type="Resource" id="Resource_qwy8c"]
+script = ExtResource("13_aolqo")
+label = "not_gib_item"
+text = "awwwww"
+speaker = "god"
+portrait = ExtResource("18_e2jjj")
+metadata/_custom_type_script = "uid://dag3ualk0velp"
+
+[sub_resource type="Resource" id="Resource_b8cxy"]
+script = ExtResource("14_6w4eh")
+nodes = Array[ExtResource("13_aolqo")]([SubResource("Resource_v61lw"), SubResource("Resource_op5xx"), SubResource("Resource_p7n5o"), SubResource("Resource_pf416"), SubResource("Resource_qwy8c")])
+metadata/_custom_type_script = "uid://nfr8xstn6iuk"
+
 [node name="Dining Hall" type="Node2D"]
 script = ExtResource("1_py0w6")
 room_name = "Pizzeria - Dining Hall"
 possible_battles = Array[ExtResource("2_1yfuh")]([ExtResource("3_aolqo"), ExtResource("4_6w4eh"), ExtResource("5_kx7qs")])
 enemy_intensity = 100
+enemy_population = 20
 enemy_agressiveness = 70
 
 [node name="walls" type="TileMapLayer" parent="."]
@@ -507,26 +648,30 @@ position = Vector2(400, 16)
 scale = Vector2(1.0000005, 1)
 texture = ExtResource("10_wb4m8")
 
-[node name="player" parent="." instance=ExtResource("3_06hi5")]
-position = Vector2(255, -83)
-
 [node name="Textboxes" type="Node2D" parent="."]
 
-[node name="begin" parent="Textboxes" instance=ExtResource("6_u3laq")]
+[node name="begin" parent="Textboxes" node_paths=PackedStringArray("textbox_node") instance=ExtResource("6_u3laq")]
 position = Vector2(256, -63)
-textbox_data = ExtResource("13_aolqo")
-id = "NewStart"
+dialogue_data = SubResource("Resource_kx7qs")
+textbox_node = NodePath("../../Dialogue")
+player_node_path = NodePath("../../player")
 
-[node name="test_item" parent="Textboxes" instance=ExtResource("6_u3laq")]
+[node name="test_item" parent="Textboxes" node_paths=PackedStringArray("textbox_node") instance=ExtResource("6_u3laq")]
 position = Vector2(399, 17)
-textbox_data = ExtResource("14_6w4eh")
-id = "ItemAdd"
-one_time = false
+dialogue_data = SubResource("Resource_b8cxy")
+textbox_node = NodePath("../../Dialogue")
+once_per_session = false
+player_node_path = NodePath("../../player")
+
+[node name="player" parent="." instance=ExtResource("3_06hi5")]
+position = Vector2(255, -83)
 
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="StaticBody2D"]
 polygon = PackedVector2Array(-1, 0, -27, 6, -16, 451, 548, 452, 545, -2, 581, -2, 594, 469, -66, 493, -73, -35, -22, -29)
+
+[node name="Dialogue" type="CanvasLayer" parent="."]
 
 [connection signal="body_entered" from="objects/battleTest" to="objects/battleTest" method="_on_body_entered"]
 [connection signal="body_entered" from="objects/item_add_test" to="objects/item_add_test" method="_on_body_entered"]

@@ -85,9 +85,9 @@ func open_items_menu():
 	item_amounts.clear()
 
 	# Get items from Global inventory
-	for item in Global.inventory.keys():
+	for item in PlayerStats.inventory.keys():
 		if item and item.type == 2:
-			var amount = Global.inventory[item]
+			var amount = PlayerStats.inventory[item]
 			if amount > 0:
 				available_items.append(item)
 				item_amounts.append(amount)
@@ -221,16 +221,8 @@ func confirm_item_target():
 		var target = party_in_initiative[selected_party_member]
 		
 		if target and target.hp > 0:
-			var item_attack = Skill.new()
-			item_attack.name = item.item_name
-			item_attack.attack_type = 3
-			item_attack.target_type = 1
-			item_attack.mana_cost = 0
-			item_attack.item_reference = item
 			
-			root.add_attack(root.current_attacker, [target], item_attack)
-			
-			root.get_node("WhoMoves.visible = true")
+			root.get_node("WhoMoves").visible = true
 			root.move_who_moves(saved_party_plan_index)
 			
 			root.action_history.append(root.current_attacker)
@@ -239,7 +231,7 @@ func confirm_item_target():
 
 func close_items_menu():
 	items_container.visible = false
-	root.get_node("Control/gui/HBoxContainer2/party.visible = true")
-	root.get_node("WhoMoves.visible = true")
+	root.get_node("Control/gui/HBoxContainer2/party").visible = true
+	root.get_node("WhoMoves").visible = true
 	root.move_who_moves(saved_party_plan_index)
 	root.state = root.states.OnAction
