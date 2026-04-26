@@ -7,20 +7,18 @@ const SAVE_PATH = "user://saves/"
 const MAX_SLOTS = 10
 
 # Reference to AutoSaveManager if available
-var _auto_save_manager: Node = null
-
+var _save_manager: Node = null
 
 func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(SAVE_PATH)
 	# Try to get reference to AutoSaveManager
 	if has_node("/root/AutoSaveManager"):
-		_auto_save_manager = get_node("/root/AutoSaveManager")
-
+		_save_manager = get_node("/root/AutoSaveManager")
 
 func save_game(slot: int, save_name: String) -> bool:
 	# Use AutoSaveManager if available
-	if _auto_save_manager:
-		return _auto_save_manager.save_game(slot, save_name)
+	if _save_manager:
+		return _save_manager.save_game(slot, save_name)
 	
 	# Fallback to legacy implementation
 	if slot < 0 or slot >= MAX_SLOTS: return false
@@ -37,11 +35,10 @@ func save_game(slot: int, save_name: String) -> bool:
 	file.close()
 	return true
 
-
 func load_game(slot: int) -> bool:
 	# Use AutoSaveManager if available
-	if _auto_save_manager:
-		return _auto_save_manager.load_game(slot)
+	if _save_manager:
+		return _save_manager.load_game(slot)
 	
 	# Fallback to legacy implementation
 	if slot < 0 or slot >= MAX_SLOTS: return false
@@ -56,11 +53,10 @@ func load_game(slot: int) -> bool:
 	Global.load_save_data(json.get("global_data", {}), json.get("scenes_data", {}))
 	return true
 
-
 func get_slot_info(slot: int) -> Dictionary:
 	# Use AutoSaveManager if available
-	if _auto_save_manager:
-		return _auto_save_manager.get_slot_info(slot)
+	if _save_manager:
+		return _save_manager.get_slot_info(slot)
 	
 	# Fallback to legacy implementation
 	var path = SAVE_PATH + "slot_%d.json" % slot
@@ -78,41 +74,35 @@ func get_slot_info(slot: int) -> Dictionary:
 		"scenes_data": Global.get_scenes_data(),
 	}
 
-
 func format_time(seconds: float) -> String:
 	var h = int(seconds) / 3600
 	var m = (int(seconds) % 3600) / 60
 	var s = int(seconds) % 60
 	return "%02d:%02d:%02d" % [h, m, s]
 
-
 # === New AutoSaveManager Integration Methods ===
-
 ## Enable autosave functionality
 func enable_autosave(interval_seconds: float = 300.0) -> void:
-	if _auto_save_manager:
-		_auto_save_manager.set_autosave_enabled(true)
+	if _save_manager:
+		_save_manager.set_autosave_enabled(true)
 		# Note: interval would need to be set via a separate method on AutoSaveManager
-
 
 ## Disable autosave functionality
 func disable_autosave() -> void:
-	if _auto_save_manager:
-		_auto_save_manager.set_autosave_enabled(false)
-
+	if _save_manager:
+		_save_manager.set_autosave_enabled(false)
 
 ## Trigger immediate autosave
 func trigger_autosave() -> void:
-	if _auto_save_manager:
-		_auto_save_manager.trigger_autosave()
+	if _save_manager:
+		_save_manager.trigger_autosave()
 	else:
 		save_game(0, "Autosave - " + Time.get_datetime_string_from_system(true, true))
 
-
 ## Delete a save slot
 func delete_slot(slot: int) -> bool:
-	if _auto_save_manager:
-		return _auto_save_manager.delete_slot(slot)
+	if _save_manager:
+		return _save_manager.delete_slot(slot)
 	
 	var path = SAVE_PATH + "slot_%d.json" % slot
 	if FileAccess.file_exists(path):

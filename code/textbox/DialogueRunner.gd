@@ -11,7 +11,7 @@ signal choice_available(choice: DialogueChoice)
 signal choice_selected(choice: DialogueChoice)
 signal dialogue_ended(last_node: Object)
 
-var data: DialogueData
+var data: Object #DialogueData
 var evaluator: DialogueConditionEvaluator
 var current_node: DialogueNode
 var current_label: String
@@ -152,17 +152,17 @@ func _effect_set_variable(var_name: String, value: float) -> void:
 	if Global.battle_ref != null:
 		if Global.battle_ref.get(var_name) != null:
 			Global.battle_ref[var_name] = value
-	for i in Global.party:
+	for i in PlayerStats.party:
 		if i.get(var_name) != null:
 			i[var_name] = value
 
 func _effect_add_item(item_res_path: String, amount: int) -> void:
 	var item = load(item_res_path)
-	Global.add_item(item, amount)
+	PlayerStats.add_item(item, amount)
 
 func _effect_remove_item(item_res_path: String, amount: int) -> void:
 	var item = load(item_res_path)
-	Global.remove_item(item, amount)
+	PlayerStats.remove_item(item, amount)
 
 func _effect_add_status(status_id: String) -> void:
 	# Hook this to your status system

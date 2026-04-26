@@ -16,8 +16,9 @@ enum CurrencyType {GOLD, SHIT, FAZTOKENS}
 
 # Generic stats dictionary for extensibility
 var stats: Dictionary[StringName, Variant] = {}
-var party: Array[Party] = [load("res://resources/party/freddy.tres").duplicate_deep(Resource.DEEP_DUPLICATE_ALL)]
+var party: Array[Object] = [load("res://resources/party/freddy.tres").duplicate_deep(), load("res://resources/party/bonnie.tres").duplicate_deep()]
 var inventory: Dictionary = {}
+var player_position: Vector2
 
 func _ready() -> void:
 	add_item(preload("res://resources/items/consumables/small_soda.tres"), 5)
@@ -80,18 +81,7 @@ func set_stat(stat_name: StringName, value: Variant) -> void:
 	stats[stat_name] = value
 	stat_changed.emit(stat_name, value)
 
-
-## Serialize stats for saving (called from Global.gd save system)
-func get_save_data() -> Dictionary:
-	return {
-		"gold": gold,
-		"shit": shit,
-		"tokens": tokens,
-		"stats": stats
-	}
-
-
-## Load stats from save data (called from Global.gd load system)
+## Load stats from save data
 func load_save_data(data: Dictionary) -> void:
 	for v in range(len(data)):
 		if self.has_meta(data.keys()[v]):

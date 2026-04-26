@@ -347,16 +347,16 @@ func execute(source: Object, targets: Array, enemies: Array, battle_context: Dic
 					source.xp += xp_amount
 			
 			EffectType.GAIN_CURRENCY:
-				if Global.has_method("add_currency"):
-					Global.add_currency(currency_amount)
+				if PlayerStats.has_method("add_currency"):
+					PlayerStats.add_currency(currency_amount, PlayerStats.CurrencyType.GOLD)
 			
 			EffectType.ADD_ITEM:
-				if item_reference and Global.has_method("add_item"):
-					Global.add_item(item_reference, item_quantity)
+				if item_reference and PlayerStats.has_method("add_item"):
+					PlayerStats.add_item(item_reference, item_quantity)
 			
 			EffectType.REMOVE_ITEM:
-				if item_reference and Global.has_method("remove_item"):
-					Global.remove_item(item_reference, item_quantity)
+				if item_reference and PlayerStats.has_method("remove_item"):
+					PlayerStats.remove_item(item_reference, item_quantity)
 			
 			EffectType.PLAY_ANIMATION:
 				if battle_context.has("battle_root") and animation_name != "":

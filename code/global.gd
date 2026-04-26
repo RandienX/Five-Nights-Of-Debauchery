@@ -11,7 +11,6 @@ var battle_current = null
 var time_played: float = 0.0
 var current_scene: String = "res://scenes/maps/1ab.tscn"
 var scene_data: Dictionary = {}
-var player_position: Vector2
 
 var loading = false
 
@@ -55,7 +54,7 @@ func deserialize_value(value: Variant) -> Variant:
 	return value
 
 func get_save_data() -> Dictionary:
-	var data = {"inventory": {}, "current_scene": current_scene, "player_position": player_position}
+	var data = {"inventory": {}, "current_scene": current_scene, "player_position": PlayerStats.player_position}
 	
 	for path in PlayerStats.inventory.keys():
 		data["inventory"][path.resource_path] = PlayerStats.inventory[path]
@@ -100,7 +99,7 @@ func load_save_data(data: Dictionary, scenes_data: Dictionary) -> void:
 	loading = true
 	if data.has("current_scene"):
 		var vector = str_to_var("Vector2" + data["player_position"])
-		player_position = vector
+		PlayerStats.player_position = vector
 		get_tree().change_scene_to_file(data["current_scene"])
 	scene_data = scenes_data
 	await get_tree().create_timer(0.03).timeout
