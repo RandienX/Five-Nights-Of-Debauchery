@@ -99,17 +99,17 @@ func _get_alive_targets(targets: Array) -> Array:
 	return alive
 
 
-func _handle_check_skill(attacker: Object, targets: Array) -> void:
+func _handle_check_skill(attacker: Entity, targets: Array) -> void:
 	var desc = "[color=#2196F3]━━━ ENEMY INFO ━━━[/color]"
-	if targets.size() > 0 and targets[0] is Enemy:
+	if targets.size() > 0 and targets[0].role == Entity.Role.ENEMY:
 		var target_enemy = targets[0]
 		desc += "\n[color=#FF5722]" + target_enemy.name + "[/color]: " + target_enemy.description
-		desc += "\n[color=#4CAF50]HP: " + str(target_enemy.hp) + "/" + str(target_enemy.max_hp) + "[/color] [color=#FFC107]ATK: " + str(target_enemy.damage) + "[/color]"
+		desc += "\n[color=#4CAF50]HP: " + str(target_enemy.hp) + "/" + str(target_enemy.max_stats["hp"]) + "[/color] [color=#FFC107]ATK: " + str(target_enemy.base_stats["atk"]) + "[/color]"
 	log_manager.add_to_battle_log(desc)
 	await root.get_tree().create_timer(1.5).timeout
 
 
-func _assign_random_target(attacker: Object, atk: Skill) -> bool:
+func _assign_random_target(attacker: Entity, atk: Skill) -> bool:
 	var enemies: Array = root.get_alive_enemies()
 	if not enemies.is_empty():
 		var new_target = [enemies[randi_range(0, enemies.size()-1)]]
@@ -118,7 +118,7 @@ func _assign_random_target(attacker: Object, atk: Skill) -> bool:
 	return false
 
 
-func _handle_item_usage(attacker: Object, targets: Array, atk: Skill) -> void:
+func _handle_item_usage(attacker: Entity, targets: Array, atk: Skill) -> void:
 	var used_item = atk.item_reference
 	
 	if used_item and targets.size() > 0:
@@ -141,7 +141,7 @@ func _handle_item_usage(attacker: Object, targets: Array, atk: Skill) -> void:
 		await root.get_tree().create_timer(0.75).timeout
 
 
-func _handle_multi_attack(attacker: Object, alive: Array, atk: Skill) -> void:
+func _handle_multi_attack(attacker: Entity, alive: Array, atk: Skill) -> void:
 	var total_dmg = 0
 	var total_crits = 0
 	var total_misses = 0
@@ -165,7 +165,7 @@ func _handle_multi_attack(attacker: Object, alive: Array, atk: Skill) -> void:
 			target.hp = 0
 			multi_log += "\n[color=#FF0000]Hit " + str(i+1) + ": ★★★ INSTAKILL ★★★[/color]"
 			await root.get_tree().create_timer(0.5).timeout
-			if attacker is Party and target is Enemy:
+			if attacker.role == Entity.Role.PARTY and target.role == Entity.Role.ENEMY:
 				await death_manager.animate_enemy_death(target)
 				death_manager.death(target)
 			log_manager.add_to_battle_log(multi_log)
@@ -219,14 +219,14 @@ func _handle_multi_attack(attacker: Object, alive: Array, atk: Skill) -> void:
 	await root.get_tree().create_timer(1.5).timeout
 	
 	if target.hp <= 0:
-		if attacker is Party and target is Enemy:
+		if attacker.role == Entity.Role.PARTY and target.role == Entity.Role.ENEMY:
 			await death_manager.animate_enemy_death(target)
 			death_manager.death(target)
 
 
-func _handle_single_attack(attacker: Object, target: Object, atk: Skill) -> void:
-	var crit = randi_range(1, 10 if attacker is Enemy else 8) == 1
-	var base = (attacker.damage if attacker is Enemy else attacker.max_stats['atk']) * atk.attack_multiplier
+func _handle_single_attack(attacker: Entity, target: Entity, atk: Skill) -> void:
+	var crit = randi_range(1, 10 if attacker.role == Entity.Role.ENEMY else 8) == 1
+	var base = (attacker.base_stats["atk"] if attacker.role == Entity.Role.ENEMY else attacker.max_stats["atk"]) * atk.attack_multiplier
 	
 	var power_mult = effect_manager.get_effect_multiplier(attacker, BattleEffect.StatusEffect.Power)
 	var weak_mult = effect_manager.get_effect_multiplier(attacker, BattleEffect.StatusEffect.Weak)
@@ -234,7 +234,7 @@ func _handle_single_attack(attacker: Object, target: Object, atk: Skill) -> void
 	
 	if BattleEffect.StatusEffect.Power in attacker.effects:
 		base *= 2
-	base *= randf_range(0.86 if attacker is Enemy else 0.9, 1.16 if attacker is Enemy else 1.2)
+	base *= randf_range(0.86 if attacker.role == Entity.Role.ENEMY else 0.9, 1.16 if attacker.role == Entity.Role.ENEMY else 1.2)
 	if crit:
 		base *= 1.5
 	base += atk.attack_bonus
@@ -244,13 +244,13 @@ func _handle_single_attack(attacker: Object, target: Object, atk: Skill) -> void
 		target.hp = 0
 		attacker.mp = max(0, attacker.mp - atk.mana_cost)
 		was_instakill = true
-		if attacker is Party and target is Enemy:
+		if attacker.role == Entity.Role.PARTY and target.role == Entity.Role.ENEMY:
 			await death_manager.animate_enemy_death(target)
 			death_manager.death(target)
 	
 	var tough_mult = effect_manager.get_effect_multiplier(target, BattleEffect.StatusEffect.Tough)
 	var sick_mult = effect_manager.get_effect_multiplier(target, BattleEffect.StatusEffect.Sick)
-	var def_stat = target.max_stats["def"] if attacker is Enemy else target.defense * 2
+	var def_stat = target.max_stats["def"] if attacker.role == Entity.Role.ENEMY else target.base_stats["def"] * 2
 	var defend_mult = 1.5 if BattleEffect.StatusEffect.Defend in target.effects else 1.0
 	var def_mult = clampf(1.0 - (float(def_stat) / (100.0 / (tough_mult * sick_mult))), 0.0, 1.0)
 	def_mult /= defend_mult
@@ -273,7 +273,7 @@ func _handle_single_attack(attacker: Object, target: Object, atk: Skill) -> void
 			if randf() < (1.0 - (0.1 * sleep_level)):
 				effect_manager.remove_effect(target, BattleEffect.StatusEffect.Sleep)
 		
-		if attacker is Party and target is Enemy and target.hp <= 0:
+		if attacker.role == Entity.Role.PARTY and target.role == Entity.Role.ENEMY and target.hp <= 0:
 			await death_manager.animate_enemy_death(target)
 	
 	attacker.mp = max(0, attacker.mp - atk.mana_cost)
@@ -283,7 +283,7 @@ func _handle_single_attack(attacker: Object, target: Object, atk: Skill) -> void
 		log_manager.add_to_battle_log("[color=#FF0000]" + attacker.name + " used " + atk.name + ": ★★★ INSTAKILL ★★★[/color]")
 
 
-func _handle_buff_skill(attacker: Object, atk: Skill) -> void:
+func _handle_buff_skill(attacker: Entity, atk: Skill) -> void:
 	var buff_log = "[color=#FFD700]━━━ BUFF ━━━[/color]"
 	var effects_applied: Array = []
 	
@@ -317,7 +317,7 @@ func _handle_buff_skill(attacker: Object, atk: Skill) -> void:
 		log_manager.add_to_battle_log(buff_log)
 
 
-func _cleanup_deaths(attacker: Object, alive: Array) -> void:
+func _cleanup_deaths(attacker: Entity, alive: Array) -> void:
 	for t in alive:
 		if t.hp <= 0:
 			death_manager.death(t)
@@ -328,9 +328,9 @@ func _cleanup_deaths(attacker: Object, alive: Array) -> void:
 # Combat Calculation Helpers
 # ──────────────────────────────────────────────────────────────────────────────
 
-func _calculate_hit(attacker: Object, target: Object, atk: Skill) -> Dictionary:
-	var crit = randi_range(1, 10 if attacker is Enemy else 8) == 1
-	var base = (attacker.damage if attacker is Enemy else attacker.max_stats['atk']) * atk.attack_multiplier * atk.hit_damage_multiplier
+func _calculate_hit(attacker: Entity, target: Entity, atk: Skill) -> Dictionary:
+	var crit = randi_range(1, 10 if attacker.role == Entity.Role.ENEMY else 8) == 1
+	var base = (attacker.base_stats["atk"] if attacker.role == Entity.Role.ENEMY else attacker.max_stats["atk"]) * atk.attack_multiplier * atk.hit_damage_multiplier
 	
 	var power_mult = effect_manager.get_effect_multiplier(attacker, BattleEffect.StatusEffect.Power)
 	var weak_mult = effect_manager.get_effect_multiplier(attacker, BattleEffect.StatusEffect.Weak)
@@ -338,14 +338,14 @@ func _calculate_hit(attacker: Object, target: Object, atk: Skill) -> Dictionary:
 	
 	if BattleEffect.StatusEffect.Power in attacker.effects:
 		base *= 2
-	base *= randf_range(0.86 if attacker is Enemy else 0.9, 1.16 if attacker is Enemy else 1.2)
+	base *= randf_range(0.86 if attacker.role == Entity.Role.ENEMY else 0.9, 1.16 if attacker.role == Entity.Role.ENEMY else 1.2)
 	if crit:
 		base *= 1.5
 	base += atk.attack_bonus
 	
 	var tough_mult = effect_manager.get_effect_multiplier(target, BattleEffect.StatusEffect.Tough)
 	var sick_mult = effect_manager.get_effect_multiplier(target, BattleEffect.StatusEffect.Sick)
-	var def_stat = target.max_stats["def"] if attacker is Enemy else target.defense * 2
+	var def_stat = target.max_stats["def"] if attacker.role == Entity.Role.ENEMY else target.base_stats["def"] * 2
 	var defend_mult = 1.5 if BattleEffect.StatusEffect.Defend in target.effects else 1.0
 	var def_mult = clampf(1.0 - (float(def_stat) / (100.0 / (tough_mult * sick_mult))), 0.0, 1.0)
 	def_mult /= defend_mult

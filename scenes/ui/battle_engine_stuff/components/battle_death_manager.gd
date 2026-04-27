@@ -43,16 +43,16 @@ func check_enemy_death_and_xp():
 		if e:
 			total_xp += e.xp_reward
 	for actor in root.initiative:
-		if actor is Party:
+		if actor.role == Entity.Role.PARTY:
 			actor.xp += total_xp
 			root.get_node("Control/enemy_ui/CenterContainer/output").text = actor.name + " gained " + str(total_xp) + " XP! "
 			while actor.xp >= actor.xp_to_level_up:
 				actor.xp -= actor.xp_to_level_up
 				actor.level += 1
-				actor.xp_to_level_up = ceil(actor.xp_to_level_up * actor.level_up_xp_multilpier)
-				for stat in ["hp", "mp", "atk", "def", "ai"]:
-					actor.max_stats[stat] += int(actor.level_up[stat] * actor.level)
-					actor.base_stats[stat] += int(actor.level_up[stat] * actor.level)
+				actor.xp_to_level_up = ceil(actor.xp_to_level_up * actor.level_up_xp_multiplier)
+				for stat in ["hp", "mp", "atk", "def", "speed"]:
+					actor.max_stats[stat] += int(actor.level_up_gains[stat] if actor.level_up_gains.has(stat) else 1)
+					actor.base_stats[stat] += int(actor.level_up_gains[stat] if actor.level_up_gains.has(stat) else 1)
 				actor.hp = actor.max_stats["hp"]
 				actor.mp = actor.max_stats["mp"]
 				root.get_node("Control/enemy_ui/CenterContainer/output").text = actor.name + " leveled up to " + str(actor.level) + "! "
@@ -66,7 +66,7 @@ func end_battle_victory() -> void:
 	root.get_tree().change_scene_to_file(Global.current_scene)
 	Global.loading = false
 
-func animate_enemy_death(e: Enemy) -> void:
+func animate_enemy_death(e: Entity) -> void:
 	if is_animating_death: return
 	is_animating_death = true
 	var slot = root.get_enemy_index(e)
@@ -107,12 +107,12 @@ func move_flash_to_next_enemy(slot: int):
 			return
 	root.selected_enemy = -1
 
-func death(obj):
+func death(obj: Entity):
 	for i in range(root.initiative.size()-1, -1, -1):
 		if root.initiative[i] == obj:
 			root.initiative.remove_at(i)
 			if root.attack_array.has(obj): root.attack_array.erase(obj)
-			if obj is Party and root.planning_phase and root.action_history.has(obj):
+			if obj.role == Entity.Role.PARTY and root.planning_phase and root.action_history.has(obj):
 				root.action_history.erase(obj)
 				root.current_party_plan_index -= 1
 

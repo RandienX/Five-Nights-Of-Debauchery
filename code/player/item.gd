@@ -67,7 +67,9 @@ func get_total_atk_bonus() -> int:
 func get_total_def_bonus() -> int:
 	return get_bonus("def")
 
-func can_equip(character: Party) -> bool:
+func can_equip(character: Entity) -> bool:
+	if character.role != Entity.Role.PARTY:
+		return false
 	if required_level > 0 and character.level < required_level:
 		return false
 	if not required_class.is_empty():

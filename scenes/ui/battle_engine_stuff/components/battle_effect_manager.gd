@@ -55,7 +55,7 @@ func remove_effect(target: Object, effect: BattleEffect.StatusEffect):
 		effect_durations[target].erase(effect)
 	
 	var party_container = root.get_node("Control/gui/HBoxContainer2/party")
-	if target is Party:
+	if target.role == Entity.Role.PARTY:
 		for i in range(party_container.get_child_count()):
 			var ui = party_container.get_child(i)
 			if ui.has_method("update_effects_ui"):
@@ -176,9 +176,9 @@ func update_effects():
 		if is_instance_valid(actor):
 			update_effect_ui(actor)
 
-func update_effect_ui(actor: Object) -> void:
+func update_effect_ui(actor: Entity) -> void:
 	var container: GridContainer = null
-	if actor is Party:
+	if actor.role == Entity.Role.PARTY:
 		var party_container = root.get_node("Control/gui/HBoxContainer2/party")
 		for i in range(party_container.get_child_count()):
 			var ui = party_container.get_child(i)
@@ -240,7 +240,7 @@ func apply_damage_over_time():
 func check_instakill(attacker: Object, target: Object) -> bool:
 	var kill_level = get_effect_level(attacker, BattleEffect.StatusEffect.Kill)
 	if kill_level > 0:
-		if target is Enemy and target.is_boss:
+		if target.role == Entity.Role.ENEMY and target.is_boss:
 			return false
 	var kill_chance = 0.01 * kill_level  # 1% per level
 	if randf() < kill_chance:

@@ -86,32 +86,32 @@ class BattleActor:
 		sprite = sprite_node
 		
 		# Extract data based on resource type
-		if res is Party:
-			var p: Party = res as Party
+		if res.role == Entity.Role.PARTY:
+			var p: Entity = res as Entity
 			id = p.name if p.name != "" else "party_" + str(p.get_instance_id())
 			name = p.name
 			max_hp = p.max_stats.get("hp", 100)
 			current_hp = p.hp
 			max_mp = p.max_stats.get("mp", 50)
 			current_mp = p.mp
-			speed = p.base_stats.get("ai", 10)  # Using 'ai' stat as speed
+			speed = p.base_stats.get("speed", 10)  # Using 'ai' stat as speed
 			attack = p.base_stats.get("atk", 10)
 			defense = p.base_stats.get("def", 5)
 			magic = p.base_stats.get("atk", 10)  # Fallback
 			spirit = p.base_stats.get("def", 5)  # Fallback
-		elif res is Enemy:
-			var e: Enemy = res as Enemy
+		elif res.role == Entity.Role.ENEMY:
+			var e: Entity = res as Entity
 			id = e.name if e.name != "" else "enemy_" + str(e.get_instance_id())
 			name = e.name
-			max_hp = e.max_hp
+			max_hp = e.max_stats.get("hp", 100)
 			current_hp = e.hp
-			max_mp = e.max_mp
+			max_mp = e.max_stats.get("mp", 50)
 			current_mp = e.mp
-			speed = e.ai
-			attack = e.damage
-			defense = e.defense
-			magic = e.damage  # Fallback
-			spirit = e.defense  # Fallback
+			speed = e.base_stats.get("speed", 10)
+			attack = e.base_stats.get("atk", 10)
+			defense = e.base_stats.get("def", 5)
+			magic = e.base_stats.get("atk", 10)  # Fallback
+			spirit = e.base_stats.get("def", 5)  # Fallback
 			
 	func take_damage(amount: int):
 		current_hp = max(0, current_hp - amount)

@@ -1,7 +1,7 @@
 extends Control
 
 @onready var member_display_top = $VBoxContainer/PartyMember
-@export var party_member: Party
+@export var party_member: Entity
 
 func _ready() -> void:
 	member_display_top.party_member = party_member 

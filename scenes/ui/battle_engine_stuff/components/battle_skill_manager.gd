@@ -56,7 +56,7 @@ func open_skills_menu():
 	skill_affordable.clear()
 	
 	# Add ALL party member's skills (show all, gray out unaffordable)
-	if root.current_attacker is Party and root.current_attacker.skills:
+	if root.current_attacker.role == Entity.Role.PARTY and root.current_attacker.skills:
 		var levels = root.current_attacker.skills.keys()
 		levels.sort()
 		
