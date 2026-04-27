@@ -9,9 +9,9 @@ class_name Skill
 @export_multiline var description: String = ""
 @export var icon: Texture2D
 
-@export_group("Type & Targeting")
-@export_enum("Attack", "Buff", "Debuff", "Heal", "Multiattack", "Item", "Custom") var attack_type: int = 0
+@export_group("Targeting")
 @export_enum("SingleEnemy", "Self", "Party", "AllEnemies", "SingleAlly", "RandomEnemy") var target_type: int = 0
+@export var level_to_unlock: int = 0
 
 @export_group("Cost & Accuracy")
 @export var mana_cost: int = 0

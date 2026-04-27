@@ -4,7 +4,6 @@
 
 [resource]
 script = ExtResource("1_mdiom")
-attack_type = 1
 target_type = 2
 mana_cost = 20
 name = "Party Favors"

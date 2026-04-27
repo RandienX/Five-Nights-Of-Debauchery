@@ -4,7 +4,6 @@
 
 [resource]
 script = ExtResource("1_y8bik")
-attack_type = 2
 target_type = 0
 mana_cost = 20
 name = "Torreador's March"

@@ -44,10 +44,12 @@ level_up_xp_multilpier = 1.45
 path_to = "res://resources/party/freddy.tres"
 overview = "Freddy is a debaucherous mothafucka, friends are family type of guy. If dude gets bored he will do anything to stop that. Founder of nights of debauchery. Y'all know who it is, cmon."
 overview_model = ExtResource("2_qob36")
-skills = Dictionary[int, ExtResource("2_e3el0")]({
-0: ExtResource("3_e3el0"),
-1: ExtResource("3_aucps"),
-3: ExtResource("7_7yxmh"),
-5: ExtResource("7_ara7a")
+skills = Dictionary[int, Array[ExtResource("2_e3el0\")]({
+0: [
+ExtResource("3_e3el0"),
+ExtResource("3_aucps"),
+ExtResource("7_7yxmh"),
+ExtResource("7_ara7a")
+]
 })
 metadata/_custom_type_script = "uid://bs1ldyhqd8o1t"

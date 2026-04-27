@@ -4,7 +4,6 @@
 
 [resource]
 script = ExtResource("1_bepge")
-attack_type = 0
 target_type = 0
 mana_cost = 5
 name = "Mic Toss"

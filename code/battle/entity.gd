@@ -58,7 +58,7 @@ enum AIType { Dumb, Casual, Violent, Defensive, Intelligent, Flexible }
 
 # ==================== COMBAT ====================
 @export_group("Combat")
-@export var skills: Dictionary[int, Skill] = {}
+@export var skills: Dictionary[int, Array[Skill]] = {}
 @export var default_attack: Skill
 @export var passive_effects: Array[BattleEffect] = []
 @export var effects_on_spawn: Array[BattleEffect] = []
@@ -211,13 +211,15 @@ func level_up():
 	hp = max_stats.get("hp", hp)
 	mp = max_stats.get("mp", mp)
 	
+	# Check if any new skills are unlocked at this level
 	if skills.has(level):
-		pass  # Learn new skill
+		pass  # Learn new skills from skills[level] array
 
 
 func can_learn_skill(skill: Skill) -> bool:
-	for s in skills.values():
-		if s == skill:
+	# Check if skill is already learned at any level
+	for level_skills in skills.values():
+		if skill in level_skills:
 			return false
 	return true
 

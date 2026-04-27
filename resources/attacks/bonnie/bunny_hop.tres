@@ -4,7 +4,6 @@
 
 [resource]
 script = ExtResource("1_okuf6")
-attack_type = 2
 target_type = 0
 mana_cost = 15
 name = "Bunny Hop"

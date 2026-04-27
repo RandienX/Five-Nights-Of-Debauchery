@@ -3,66 +3,33 @@
 *.import
 *.remap
 export_presets.cfg
-.autoload_singleton_nodes
+.autoload.gd
 .editor/
-.scn_editor_plugin_data
-.shader_include_cache
 
-# Compiled and build artifacts
+# Build artifacts
 *.exe
 *.dll
 *.so
 *.dylib
-*.class
-*.o
-*.obj
-*.out
-*.pyc
-*.class
-*.jar
-*.war
-*.zip
-*.tar.gz
-*.tar.xz
-*.tar.bz2
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Environment
+.env
+.env.local
+.env.*
 
 # Dependencies
 node_modules/
 venv/
 .venv/
 __pycache__/
-dist/
-build/
-target/
-.gradle/
-.mypy_cache/
-.pytest_cache/
-coverage/
-htmlcov/
-.nyc_output/
+*.egg-info/
 
-# Logs and temp files
-*.log
-*.tmp
-*.swp
-*.swo
-*.bak
-*.~*
+# OS generated files
 .DS_Store
 Thumbs.db
-
-# Environment
-.env
-.env.local
-*.env.*
-
-# Editors
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Coverage
-.coverage
-coverage.xml
 ```

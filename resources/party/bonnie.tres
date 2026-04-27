@@ -43,9 +43,11 @@ level_up_xp_multilpier = 1.33
 path_to = "res://resources/party/bonnie.tres"
 overview = "This bunny is a chill buddy. He doesn't have fucks to give, unless it's about his face or toilets. In spare time dude chills in the dark and sometimes goons with Foxy. Although aloof in nature, he will do debauchery with friends."
 overview_model = ExtResource("2_7ddu4")
-skills = Dictionary[int, ExtResource("2_2vo3l")]({
-0: ExtResource("3_2vo3l"),
-1: ExtResource("4_2lmmp"),
-2: ExtResource("7_ohk4t")
+skills = Dictionary[int, Array[ExtResource("2_2vo3l\")]({
+0: [
+ExtResource("3_2vo3l"),
+ExtResource("4_2lmmp"),
+ExtResource("7_ohk4t")
+]
 })
 metadata/_custom_type_script = "uid://bs1ldyhqd8o1t"
