@@ -87,7 +87,7 @@ func load_save_data(data: Dictionary, scenes_data: Dictionary) -> void:
 		PlayerStats.inventory.merge({item: int(amount)})
 	PlayerStats.party.clear()
 	for p_dict in data.get("party", []):
-		var resource: Party = load(p_dict["resource_path"]).duplicate_deep()
+		var resource: Entity = load(p_dict["resource_path"]).duplicate_deep()
 		if resource:
 			resource = resource.duplicate(true)
 			for prop_name in p_dict["properties"].keys():
@@ -156,10 +156,10 @@ func use_item(item: Resource, target: Object) -> bool:
 				if target.hp <= 0:
 					target.hp = 1
 				elif target.hp > 0:
-					if target is Party:
+					if target.role == Entity.Role.PARTY:
 						target.hp = target.max_stats["hp"]
-					elif target is Enemy:
-						target.hp = target.max_hp
+					elif target.role == Entity.Role.ENEMY:
+						target.hp = target.max_stats["hp"]
 			if effect_data is Array and effect_data.size() >= 2:
 				var level = effect_data[0]
 				var duration = effect_data[1]

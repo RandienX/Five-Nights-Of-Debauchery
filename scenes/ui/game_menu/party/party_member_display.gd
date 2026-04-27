@@ -1,6 +1,6 @@
 extends NinePatchRect
 
-var party_member: Party
+var party_member: Entity
 @export var party_name: String
 
 @onready var hp = $MarginContainer/HSplitContainer/VBoxContainer/Health

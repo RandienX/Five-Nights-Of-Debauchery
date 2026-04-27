@@ -343,7 +343,7 @@ func execute(source: Object, targets: Array, enemies: Array, battle_context: Dic
 				target.extra_turn = true
 			
 			EffectType.GAIN_XP:
-				if source is Party:
+				if source.role == Entity.Role.PARTY:
 					source.xp += xp_amount
 			
 			EffectType.GAIN_CURRENCY:

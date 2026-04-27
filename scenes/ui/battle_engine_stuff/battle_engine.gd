@@ -2,10 +2,10 @@ extends Node2D
 class_name BattleEngine
 
 @export var battle: Battle
-var party: Array[Object] = PlayerStats.party
+var party: Array[Entity] = PlayerStats.party
 var battle_start_position: Vector2 = Vector2.ZERO
-var initiative: Array[Object]
-var enemy_instances: Array[Enemy] = []  # Runtime enemy instances from BattleEnemySlot
+var initiative: Array[Entity]
+var enemy_instances: Array[Entity] = []  # Runtime entity instances from BattleEnemySlot
 
 enum states { OnAction, OnEnemy, OnSkills, OnSkillSelect, OnItems, OnItemSelect, Waiting, OnRun}
 var state: states = states.OnAction
@@ -19,8 +19,8 @@ var log_manager: LogManager
 var attack_executor: AttackExecutor
 
 var planning_phase: bool = true
-var action_history: Array[Object] = []
-var current_attacker: Object
+var action_history: Array[Entity] = []
+var current_attacker: Entity
 var current_party_plan_index: int = 0
 var selected_enemy: int = 0  # Index into enemy_instances array
 var previous_enemy: int = 0
@@ -97,15 +97,15 @@ func setup_enemies():
 			if prog: prog.visible = false
 			if node: node.texture = null
 
-func setup_initiative() -> Array[Object]:
-	var speed: Dictionary[int, Object] = {}
+func setup_initiative() -> Array[Entity]:
+	var speed: Dictionary[int, Entity] = {}
 	# Add enemies to initiative
 	for e in enemy_instances:
 		if e and e.hp > 0:
 			var speed_mult = effect_manager.get_effect_multiplier(e, BattleEffect.StatusEffect.Speed)
 			var slow_mult = effect_manager.get_effect_multiplier(e, BattleEffect.StatusEffect.Slow)
 			var total_mult = speed_mult * slow_mult
-			var rng = randi_range(ceili(e.speed * 0.75 * total_mult), floori(e.speed * 1.25 * total_mult))
+			var rng = randi_range(ceili(e.base_stats["speed"] * 0.75 * total_mult), floori(e.base_stats["speed"] * 1.25 * total_mult))
 			while rng in speed: rng += 1
 			speed[rng] = e
 	# Add party members to initiative
@@ -119,7 +119,7 @@ func setup_initiative() -> Array[Object]:
 		speed[rng] = p
 	var keys = speed.keys()
 	keys.sort()
-	var rev: Array[Object] = []
+	var rev: Array[Entity] = []
 	for k in range(keys.size()-1, -1, -1):
 		rev.append(speed[keys[k]])
 	return rev
@@ -134,7 +134,7 @@ func setup_party():
 	
 func setup_current_attacker():
 	for o in initiative:
-		if o is Party:
+		if o.role == Entity.Role.PARTY:
 			current_attacker = o
 			break
 			
@@ -287,10 +287,10 @@ func update_flash():
 			var enemy_index = int(c.name.replace("enemy", "")) - 1
 			c.material.set("shader_parameter/is_flashing", enemy_index == selected_enemy and enemy_index < enemy_instances.size())
 
-func get_party_members_from_initiative() -> Array[Object]:
-	var party_members: Array[Object] = []
+func get_party_members_from_initiative() -> Array[Entity]:
+	var party_members: Array[Entity] = []
 	for actor in initiative:
-		if actor is Party:
+		if actor.role == Entity.Role.PARTY:
 			party_members.append(actor)
 	return party_members
 
@@ -305,19 +305,19 @@ func update_party_ui():
 func add_attack(attacker: Object, attacked: Array, attack: Skill):
 	attack_executor.attack_array[attacker] = [attacked, attack]
 
-func get_enemy(index: int) -> Enemy:
+func get_enemy(index: int) -> Entity:
 	if index >= 0 and index < enemy_instances.size():
 		return enemy_instances[index]
 	return null
 
-func get_enemy_index(enemy: Enemy) -> int:
+func get_enemy_index(enemy: Entity) -> int:
 	for i in range(enemy_instances.size()):
 		if enemy_instances[i] == enemy:
 			return i
 	return -1
 
-func get_alive_enemies() -> Array[Enemy]:
-	var alive: Array[Enemy] = []
+func get_alive_enemies() -> Array[Entity]:
+	var alive: Array[Entity] = []
 	for e in enemy_instances:
 		if e and e.hp > 0:
 			alive.append(e)
@@ -350,7 +350,7 @@ func advance_planning():
 	for i in range(initiative.size()):
 		var idx = (start + i) % initiative.size()
 		var actor = initiative[idx]
-		if actor is Party and not attack_executor.attack_array.has(actor):
+		if actor.role == Entity.Role.PARTY and not attack_executor.attack_array.has(actor):
 			initiative_who = idx
 			current_attacker = actor
 			state = states.OnAction
@@ -368,7 +368,7 @@ func start_resolution_phase():
 	state = states.Waiting
 	$WhoMoves.visible = false
 	for actor in initiative:
-		if actor is Enemy:
+		if actor.role == Entity.Role.ENEMY:
 			add_enemy_attack(actor)
 	initiative_who = -1
 	await get_tree().create_timer(0.4).timeout
@@ -394,22 +394,22 @@ func advance_initiative():
 	if not attack_executor.attack_array.has(current):
 		advance_initiative()
 		return
-	if current is Party:
+	if current.role == Entity.Role.PARTY:
 		current_attacker = current
 	advance_initiative()
 
-func add_enemy_attack(e: Enemy):
+func add_enemy_attack(e: Entity):
 	if not e or e.hp <= 0: return
-	if e.attacks.is_empty(): 
+	if e.skills.is_empty(): 
 		# Use default attack if no attacks defined
 		attack_executor.attack_array.merge({e: [[party[randi_range(0, party.size()-1)]], e.default_attack]})
 		return
 	
-	var atk: Skill = e.attacks[randi_range(0, e.attacks.size()-1)]
+	var atk: Skill = e.skills.values()[randi_range(0, e.skills.values().size()-1)]
 	# Find affordable attack
 	var attempts = 0
 	while atk.mana_cost > e.mp and attempts < 10:
-		atk = e.attacks[randi_range(0, e.attacks.size()-1)]
+		atk = e.skills.values()[randi_range(0, e.skills.values().size()-1)]
 		attempts += 1
 	
 	var prob: Array[int] = []
@@ -434,7 +434,7 @@ func add_enemy_attack(e: Enemy):
 	
 	for i in range(party.size()):
 		if BattleEffect.StatusEffect.Focus in party[i].effects:
-			prob[i] += 5 if e.ai_type != Enemy.AI.Intelligent else 1
+			prob[i] += 5 if e.ai_type != Entity.AIType.Intelligent else 1
 	
 	var target = null
 	if atk.target_type == 0:  # SingleEnemy

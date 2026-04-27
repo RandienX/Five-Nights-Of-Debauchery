@@ -2,9 +2,9 @@ extends Control
 
 ## Party Battle Face UI Component
 ## Displays a party member's battle stats using the partyBattleFace.tscn scene
-## Supports both direct Party resource and BattleTypes.BattleActor wrapper
+## Supports both direct Entity resource and BattleTypes.BattleActor wrapper
 
-var party_member: Party
+var party_member: Entity
 var battle_actor: BattleTypes.BattleActor  # Optional reference to battle actor
 var effect_container: GridContainer
 var hp_label: Label
@@ -32,8 +32,8 @@ func _ready() -> void:
 	else:
 		effect_container = $EffectContainer
 
-## Setup with a Party resource directly
-func setup(data: Party) -> void:
+## Setup with an Entity resource directly
+func setup(data: Entity) -> void:
 	party_member = data
 	$Sprite2D.texture = load(data.face_path)
 	$Sprite2D.region_rect = data.face_part_rect
@@ -41,8 +41,8 @@ func setup(data: Party) -> void:
 ## Setup with a BattleTypes.BattleActor (for battle engine integration)
 func setup_from_actor(actor: BattleTypes.BattleActor) -> void:
 	battle_actor = actor
-	if actor and actor.resource is Party:
-		party_member = actor.resource as Party
+	if actor and actor.resource.role == Entity.Role.PARTY:
+		party_member = actor.resource as Entity
 		$Sprite2D.texture = load(party_member.face_path)
 		$Sprite2D.region_rect = party_member.face_part_rect
 

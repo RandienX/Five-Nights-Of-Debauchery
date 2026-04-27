@@ -837,12 +837,12 @@ func _restore_party_array(player_stats: Node, party_data: Array) -> void:
 		if member_data is Dictionary and member_data.has("_resource_type"):
 			# Deep-serialized Party resource
 			var party_member = _deserialize_resource_from_dict(member_data)
-			if party_member and party_member is Party:
+			if party_member and party_member.role == Entity.Role.PARTY:
 				new_party.append(party_member)
 		elif member_data is String:
 			# Resource path
 			var party_member = load(member_data)
-			if party_member and party_member is Party:
+			if party_member and party_member.role == Entity.Role.PARTY:
 				new_party.append(party_member.duplicate())
 	
 	if new_party.size() > 0:

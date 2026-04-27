@@ -9,7 +9,7 @@ extends Control
 enum itemBox_types {Null, Equip}
 var itemBox_type = itemBox_types.Null
 var item_type: String
-var party_member: Party
+var party_member: Entity
 
 func _ready() -> void:
 	if itemBox_type == itemBox_types.Null:

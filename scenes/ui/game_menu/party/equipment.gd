@@ -1,7 +1,7 @@
 extends Control
 
 @onready var eq_items = $Eq_Items
-@onready var party_member: Party = $"../../../../../..".party_member
+@onready var party_member: Entity = $"../../../../../..".party_member
 
 func change_item_slot(type):
 	var item_type

@@ -1,18 +1,68 @@
 ```
-# Build artifacts
+# Godot-specific ignores
 *.import
-*.import*
+*.remap
 export_presets.cfg
-godot_settings.cfg
+.autoload_singleton_nodes
+.editor/
+.scn_editor_plugin_data
+.shader_include_cache
+
+# Compiled and build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+*.class
+*.o
+*.obj
+*.out
+*.pyc
+*.class
+*.jar
+*.war
+*.zip
+*.tar.gz
+*.tar.xz
+*.tar.bz2
 
 # Dependencies
-*.import
-*.import*
+node_modules/
+venv/
+.venv/
+__pycache__/
+dist/
+build/
+target/
+.gradle/
+.mypy_cache/
+.pytest_cache/
+coverage/
+htmlcov/
+.nyc_output/
 
-# Editor
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+*.~*
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# Logs
-*.log
+# Coverage
+.coverage
+coverage.xml
 ```

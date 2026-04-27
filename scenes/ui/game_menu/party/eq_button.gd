@@ -1,7 +1,7 @@
 extends TextureRect
 
 @export_enum("head", "body", "legs", "weapon_left", "weapon_right", "shield") var type
-@onready var party_member: Party = $"../../../../../../../..".party_member
+@onready var party_member: Entity = $"../../../../../../../..".party_member
 var item_type
 
 func _on_button_pressed() -> void:
