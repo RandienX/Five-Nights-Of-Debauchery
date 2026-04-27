@@ -4,7 +4,6 @@
 
 [resource]
 script = ExtResource("1_bgllm")
-attack_type = 1
 target_type = 2
 mana_cost = 25
 name = "Guitarist Inspiration"

@@ -335,7 +335,7 @@ func undo_last_action():
 	var last = action_history.pop_back()
 	if attack_executor.attack_array.has(last):
 		var atk = attack_executor.attack_array[last][1]
-		if atk.attack_type == 3 and atk.item_reference:
+		if atk.item_reference:
 			var used_item = atk.item_reference
 			PlayerStats.add_item(used_item, 1)  # Restore item
 		attack_executor.attack_array.erase(last)
@@ -479,7 +479,6 @@ func _on_skills_button_pressed() -> void:
 func _on_defend_button_pressed() -> void:
 	var defend_skill = Skill.new()
 	defend_skill.skill_name = "Defend"
-	defend_skill.attack_type = 1  # Buff
 	defend_skill.target_type = 1  # Self
 	defend_skill.on_use_effects.resize(1)
 	var defend_effect = BattleEffect.new()

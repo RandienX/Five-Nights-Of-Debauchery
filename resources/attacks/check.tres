@@ -4,7 +4,6 @@
 
 [resource]
 script = ExtResource("1_wg5p0")
-attack_type = 0
 target_type = 0
 name = "Check"
 desc = "Checks enemy hp and may tell you something about them."

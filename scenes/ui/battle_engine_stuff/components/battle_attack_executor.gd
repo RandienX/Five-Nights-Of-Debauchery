@@ -61,30 +61,23 @@ func execute_single_attack(attacker: Object) -> void:
 # ──────────────────────────────────────────────────────────────────────────────
 
 func _route_attack_execution(attacker: Object, alive: Array, atk: Skill) -> void:
-	"""Routes the attack to the appropriate handler based on attack properties."""
+	"""Unified skill execution with comprehensive customization support."""
 	
-	# Item usage (attack_type == 5)
-	if atk.attack_type == 5:
+	# Step 1: Apply on_use effects
+	await _apply_on_use_effects(attacker, alive, atk)
+	
+	# Step 2: Check if this is an item-based skill
+	if atk.item_reference:
 		await _handle_item_usage(attacker, attack_array[attacker][0], atk)
 		return
 	
-	# Multi-attack skills (attack_type == 4)
-	if atk.attack_type == 4:
-		await _handle_multi_attack(attacker, alive, atk)
+	# Step 3: Handle non-damaging skills (buffs/debuffs without targeting enemies)
+	if atk.target_type in [1, 2]:  # Self or Party
+		await _handle_support_skill(attacker, alive, atk)
 		return
 	
-	# Single-target attacks (attack_type == 0, target_type == 0)
-	if atk.attack_type == 0 and atk.target_type == 0:
-		await _handle_single_attack(attacker, alive[0], atk)
-		return
-	
-	# Buff skills (attack_type == 1)
-	if atk.attack_type == 1:
-		_handle_buff_skill(attacker, atk)
-		return
-	
-	# Cleanup - check for deaths (fallback for unhandled cases)
-	await _cleanup_deaths(attacker, alive)
+	# Step 4: Execute attack logic (single or multi-hit)
+	await _execute_attack_sequence(attacker, alive, atk)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -139,6 +132,142 @@ func _handle_item_usage(attacker: Entity, targets: Array, atk: Skill) -> void:
 			log_manager.add_to_battle_log("[color=#F44336]Item use failed![/color]")
 		
 		await root.get_tree().create_timer(0.75).timeout
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# New Unified Attack Execution System
+# ──────────────────────────────────────────────────────────────────────────────
+
+func _apply_on_use_effects(attacker: Object, targets: Array, atk: Skill) -> void:
+	"""Apply effects that trigger on skill use (before attack lands)."""
+	if not atk.on_use_effects.is_empty():
+		for effect in atk.on_use_effects:
+			effect.execute(attacker, targets, root.enemy_instances, {"battle_root": root})
+
+
+func _handle_support_skill(attacker: Entity, alive: Array, atk: Skill) -> void:
+	"""Handle buffs/debuffs and other non-damaging skills."""
+	var support_log = "[color=#FFD700]━━━ SKILL ━━━[/color]"
+	
+	if atk.target_type == 1:  # Self
+		effect_manager.apply_effects(attacker, atk)
+		effect_manager.update_effect_ui(attacker)
+		support_log += "\n[color=#4CAF50]" + attacker.name + "[/color] used [color=#2196F3]" + atk.skill_name + "[/color] on self"
+	elif atk.target_type == 2:  # Party
+		support_log += "\n[color=#4CAF50]" + attacker.name + "[/color] used [color=#2196F3]" + atk.skill_name + "[/color] on party"
+		for p in root.party:
+			if p.hp > 0:
+				effect_manager.apply_effects(p, atk)
+				effect_manager.update_effect_ui(p)
+	
+	if atk.mana_cost > 0:
+		support_log += " [color=#9C27B0](" + str(atk.mana_cost) + " MP)[/color]"
+	
+	log_manager.add_to_battle_log(support_log)
+	attacker.mp = max(0, attacker.mp - atk.mana_cost)
+	await root.get_tree().create_timer(1.0).timeout
+
+
+func _execute_attack_sequence(attacker: Entity, alive: Array, atk: Skill) -> void:
+	"""Unified attack execution handling both single and multi-hit attacks."""
+	if alive.is_empty():
+		return
+	
+	var target = alive[0]
+	var total_dmg = 0
+	var total_crits = 0
+	var total_misses = 0
+	var hit_count = max(1, atk.hit_count)
+	
+	var attack_log = "[color=#FFD700]━━━ ATTACK ━━━[/color]"
+	attack_log += "\n[color=#4CAF50]" + attacker.name + "[/color] used [color=#2196F3]" + atk.skill_name + "[/color] on [color=#FF5722]" + target.name + "[/color]"
+	
+	for i in range(hit_count):
+		await root.get_tree().create_timer(0.15).timeout
+		
+		# Step 1: Calculate accuracy and determine hit/miss
+		var hit_result = _calculate_hit(attacker, target, atk)
+		var dmg = hit_result.dmg
+		var crit = hit_result.crit
+		var hit = hit_result.hit
+		
+		# Step 2: Check for instakill
+		if effect_manager.check_instakill(attacker, target):
+			target.hp = 0
+			attack_log += "\n[color=#FF0000]Hit " + str(i+1) + ": ★★★ INSTAKILL ★★★[/color]"
+			await root.get_tree().create_timer(0.5).timeout
+			if attacker.role == Entity.Role.PARTY and target.role == Entity.Role.ENEMY:
+				await death_manager.animate_enemy_death(target)
+				death_manager.death(target)
+			log_manager.add_to_battle_log(attack_log)
+			await root.get_tree().create_timer(1.0).timeout
+			return
+		
+		# Step 3: Process hit or miss
+		if hit:
+			await _process_hit(attacker, target, atk, dmg, crit, attack_log)
+			total_dmg += dmg
+			if crit:
+				total_crits += 1
+		else:
+			await _process_miss(attacker, target, atk, attack_log, i)
+			total_misses += 1
+		
+		# Deduct mana cost per hit (optional design choice)
+		if i == 0:
+			attacker.mp = max(0, attacker.mp - atk.mana_cost)
+	
+	# Step 4: Log final results
+	attack_log += "\n[color=#03A9F4]Total: " + str(total_dmg) + " DMG | "
+	attack_log += str(hit_count - total_misses) + "/" + str(hit_count) + " hits"
+	if total_crits > 0:
+		attack_log += " | " + str(total_crits) + " CRITs"
+	if atk.mana_cost > 0:
+		attack_log += " | " + str(atk.mana_cost) + " MP"
+	attack_log += "[/color]"
+	
+	log_manager.add_to_battle_log(attack_log)
+	await root.get_tree().create_timer(1.5).timeout
+	
+	# Step 5: Check for death
+	if target.hp <= 0:
+		if attacker.role == Entity.Role.PARTY and target.role == Entity.Role.ENEMY:
+			await death_manager.animate_enemy_death(target)
+			death_manager.death(target)
+
+
+func _process_hit(attacker: Entity, target: Entity, atk: Skill, dmg: int, crit: bool, attack_log: String) -> void:
+	"""Process a successful hit: apply damage, effects, and wake from sleep."""
+	root.get_node("AnimationPlayer").play("move_around_screen")
+	await root.get_node("AnimationPlayer").animation_finished
+	target.hp -= dmg
+	
+	# Apply on-hit effects
+	effect_manager.apply_effects(target, atk)
+	
+	# Check for sleep wake
+	if target.effects.has(BattleEffect.StatusEffect.Sleep):
+		var sleep_level = target.effects[BattleEffect.StatusEffect.Sleep][0]
+		if randf() < (1.0 - (0.1 * sleep_level)):
+			effect_manager.remove_effect(target, BattleEffect.StatusEffect.Sleep)
+			attack_log += "\n[color=#FFD700]" + target.name + " woke up![/color]"
+	
+	# Update enemy UI
+	for e in root.enemy_instances:
+		if e and e.hp > 0:
+			var idx = root.get_enemy_index(e)
+			if idx >= 0:
+				var node = get_node_or_null("Control/enemy_ui/enemies/enemy"+str(idx+1))
+				if node:
+					node.hp = max(0, e.hp)
+
+
+func _process_miss(attacker: Entity, target: Entity, atk: Skill, attack_log: String, hit_index: int) -> void:
+	"""Process a missed attack: apply on-miss effects."""
+	# Apply on-miss effects if any
+	if not atk.on_miss_effects.is_empty():
+		for effect in atk.on_miss_effects:
+			effect.execute(attacker, [target], root.enemy_instances, {"battle_root": root})
 
 
 func _handle_multi_attack(attacker: Entity, alive: Array, atk: Skill) -> void:

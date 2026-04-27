@@ -5,7 +5,6 @@
 
 [resource]
 script = ExtResource("1_1kbci")
-attack_type = 0
 target_type = 0
 name = "Attack"
 attack_multiplier = 1.0
