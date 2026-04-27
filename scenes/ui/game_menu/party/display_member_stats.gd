@@ -27,15 +27,17 @@ func skills():
 	for c in skill_box.get_children():
 		c.queue_free()
 	
-	for s in range(party_member.skills.size()):
+	# Collect all skills from all levels
+	var all_skills: Array[Skill] = []
+	for level_skills in party_member.skills.values():
+		all_skills.append_array(level_skills)
+	
+	for s in range(all_skills.size()):
 		var skill = load("res://scenes/ui/battle_engine_stuff/skill_box.tscn").instantiate()
 		skill.party_mode = true
 		skill_box.scale = Vector2(0.36, 0.36)
 		skill_box.add_child(skill)
-		if party_member.level >= s:
-			skill.setup(party_member.skills[s], s, true)
-		else:
-			skill.setup(party_member.skills[s], s, false)
+		skill.setup(all_skills[s], s, true)
 func equipment():
 	clear(3)
 

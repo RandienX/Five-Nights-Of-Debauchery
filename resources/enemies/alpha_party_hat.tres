@@ -16,7 +16,9 @@ ai = 2
 ai_type = 0
 name = "Alpha Party Hat"
 description = "Weakest of the pack, tries to appear strong whilst whining from being screamed at."
-attacks = Array[ExtResource("1_u28qh")]([ExtResource("2_kqhyf")])
+skills = Dictionary[int, Array[ExtResource("1_u28qh")]({
+0: [ExtResource("2_kqhyf")]
+})
 xp_reward = 25
 battleSprite = ExtResource("2_ktqw3")
 metadata/_custom_type_script = "uid://cwh5eo0yj74pf"

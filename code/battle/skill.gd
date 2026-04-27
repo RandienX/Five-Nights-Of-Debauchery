@@ -11,6 +11,7 @@ class_name Skill
 
 @export_group("Targeting")
 @export_enum("SingleEnemy", "Self", "Party", "AllEnemies", "SingleAlly", "RandomEnemy") var target_type: int = 0
+@export var level_to_unlock: int = 0
 
 @export_group("Cost & Accuracy")
 @export var mana_cost: int = 0

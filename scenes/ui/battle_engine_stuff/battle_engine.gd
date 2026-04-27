@@ -405,11 +405,21 @@ func add_enemy_attack(e: Entity):
 		attack_executor.attack_array.merge({e: [[party[randi_range(0, party.size()-1)]], e.default_attack]})
 		return
 	
-	var atk: Skill = e.skills.values()[randi_range(0, e.skills.values().size()-1)]
+	# Collect all skills from all levels
+	var all_skills: Array[Skill] = []
+	for level_skills in e.skills.values():
+		all_skills.append_array(level_skills)
+	
+	if all_skills.is_empty():
+		# Fallback to default attack if skills dictionary has no skills
+		attack_executor.attack_array.merge({e: [[party[randi_range(0, party.size()-1)]], e.default_attack]})
+		return
+	
+	var atk: Skill = all_skills[randi_range(0, all_skills.size()-1)]
 	# Find affordable attack
 	var attempts = 0
 	while atk.mana_cost > e.mp and attempts < 10:
-		atk = e.skills.values()[randi_range(0, e.skills.values().size()-1)]
+		atk = all_skills[randi_range(0, all_skills.size()-1)]
 		attempts += 1
 	
 	var prob: Array[int] = []

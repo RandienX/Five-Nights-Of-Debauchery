@@ -56,13 +56,14 @@ func open_skills_menu():
 	skill_affordable.clear()
 	
 	# Add ALL party member's skills (show all, gray out unaffordable)
-	if root.current_attacker.role == Entity.Role.PARTY and root.current_attacker.skills:
-		var levels = root.current_attacker.skills.keys()
-		levels.sort()
+	if root.current_attacker.role == Entity.Role.PARTY and not root.current_attacker.skills.is_empty():
+		# Collect all skills from all levels
+		var all_skills: Array[Skill] = []
+		for level_skills in root.current_attacker.skills.values():
+			all_skills.append_array(level_skills)
 		
-		for level in levels:
-			var skill = root.current_attacker.skills[level]
-			if skill and root.current_attacker.level >= level:
+		for skill in all_skills:
+			if skill:
 				available_skills.append(skill)
 				skill_affordable.append(root.current_attacker.mp >= skill.mana_cost)
 	

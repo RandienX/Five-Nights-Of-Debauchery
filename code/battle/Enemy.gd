@@ -31,7 +31,7 @@ enum AI {Dumb, Casual, Violent, Defensive, Intelligent, Flexible}
 @export var target_priority: int = 0           # 0=random, 1=lowest HP, 2=highest threat
 
 @export_group("Combat")
-@export var attacks: Array[Skill] = []
+@export var skills: Dictionary[int, Array[Skill]] = {}
 @export var default_attack: Skill
 @export var effects_on_spawn: Array[BattleEffect] = []
 @export var effects_on_death: Array[BattleEffect] = []
