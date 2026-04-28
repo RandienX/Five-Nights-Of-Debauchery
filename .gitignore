@@ -1,35 +1,30 @@
 ```
 # Godot-specific ignores
 *.import
-*.remap
+*.uid
 export_presets.cfg
-.autoload.gd
-.editor/
+.autosave/
 
 # Build artifacts
-*.exe
-*.dll
 *.so
 *.dylib
-
-# Temporary files
-*.tmp
-*.temp
-*.log
-
-# Environment
-.env
-.env.local
-.env.*
+*.dll
+*.exe
+*.bin
 
 # Dependencies
-node_modules/
-venv/
-.venv/
-__pycache__/
-*.egg-info/
+modules/
+addons/
 
-# OS generated files
-.DS_Store
-Thumbs.db
+# Temp files
+*.tmp
+*.temp
+*~
+
+# Logs
+*.log
+
+# User-specific settings
+.user
+*.user
 ```

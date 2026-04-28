@@ -113,3 +113,57 @@ func get_item_amount(item: Resource) -> int:
 
 func clear_inventory():
 	inventory.clear()
+
+# === Item Usage ===
+func use_item(item: Item, target: Entity) -> bool:
+	if not item or not target or not is_instance_valid(target):
+		return false
+	if item.type != 2:  # Not a consumable
+		return false
+	if not has_item(item):
+		return false
+
+	# Apply heal effects
+	if item.heal_amount > 0 and target.hp < target.max_stats["hp"] and target.hp > 0:
+		target.hp = min(target.hp + item.heal_amount, target.max_stats["hp"])
+	
+	# Apply mana restore
+	if item.mana_amount > 0 and target.mp < target.max_stats["mp"]:
+		target.mp = min(target.mp + item.mana_amount, target.max_stats["mp"])
+	
+	# Apply revive effect
+	if item.revive_amount > 0 and target.hp <= 0:
+		target.hp = min(item.revive_amount, target.max_stats["hp"])
+	
+	# Remove status effects (heals_effects is Array[int] of effect enum values)
+	if item.heals_effects:
+		for effect_key in item.heals_effects:
+			if target.effects.has(effect_key):
+				target.effects.erase(effect_key)
+	
+	# Apply consume effects from legacy dictionary if present
+	if item.legacy_consume_effects:
+		for effect_key in item.legacy_consume_effects.keys():
+			var effect_data = item.legacy_consume_effects[effect_key]
+			if effect_key == BattleEffect.StatusEffect.Revive:
+				if target.hp <= 0:
+					target.hp = 1
+			if effect_data is Array and effect_data.size() >= 2:
+				var level = effect_data[0]
+				var duration = effect_data[1]
+				if target.effects.has(effect_key):
+					target.effects[effect_key][0] = max(target.effects[effect_key][0], level)
+					target.effects[effect_key][1] = max(target.effects[effect_key][1], duration)
+				else:
+					target.effects[effect_key] = [level, duration]
+	
+	# Apply consume effects from new array-based system
+	if item.consume_effects:
+		for effect in item.consume_effects:
+			# Process BattleEffect resources here if needed
+			pass
+	
+	# Remove the item from inventory
+	remove_item(item, 1)
+	
+	return true

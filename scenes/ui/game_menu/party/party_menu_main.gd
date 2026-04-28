@@ -11,14 +11,23 @@ var special_mode = special_modes.NONE
 var selected_item: Item
 
 func _ready() -> void:
+	# First hide all party member displays
+	for c in range(len(party_members_box.get_children())):
+		if party_members_box.get_children()[c] is NinePatchRect:
+			party_members_box.get_children()[c].visible = false
+			unlocked_buttons[c] = false
+	
+	# Then show and configure only the ones that match party members
 	for p in party:
 		for c in range(len(party_members_box.get_children())):
-			
-			if p.name == party_members_box.get_children()[c].party_name and party_members_box.get_children()[c] is NinePatchRect:
-				
-				party_members_box.get_children()[c].party_member = p
-				unlocked_buttons[c] = true
-				break
+			var display = party_members_box.get_children()[c]
+			if display is NinePatchRect:
+				var display_name = display.party_name
+				if p.name == display_name:
+					display.party_member = p
+					display.visible = true
+					unlocked_buttons[c] = true
+					break
 				
 func _input(event: InputEvent) -> void:
 	if Input.is_action_just_pressed("back"):

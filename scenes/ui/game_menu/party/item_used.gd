@@ -8,7 +8,8 @@ func _ready() -> void:
 		queue_free()
 
 func _process(delta: float) -> void:
-	if item:
+	if item and PlayerStats.inventory.has(item):
 		$"NameAmount".text = item.item_name + ": " + str(PlayerStats.inventory[item]) 
-		$Describtion.text = item.desc
-		texture = item.texture
+		$Describtion.text = item.description
+		if item.texture:
+			texture = item.texture
