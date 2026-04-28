@@ -9,11 +9,11 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	#$VBoxContainer/HSplitContainer/StatChanges/VBoxContainer/LV.text = "LV: " + str(party_member.level) + " -> " + str(party_member.level+1)
-	#$VBoxContainer/HSplitContainer/StatChanges/VBoxContainer/HP.text = "HP: " + str(party_member.max_stats["hp"]) + " -> " + str(int(party_member.max_stats["hp"] + party_member.level_up["hp"]))
-	#$VBoxContainer/HSplitContainer/StatChanges/VBoxContainer/MP.text = "MP: " + str(party_member.max_stats["mp"]) + " -> " + str(int(party_member.max_stats["mp"] + party_member.level_up["mp"]))
-	#$VBoxContainer/HSplitContainer/StatChanges/VBoxContainer/STR.text = "STR: " + str(party_member.max_stats["atk"]) + " -> " + str(int(party_member.max_stats["atk"] + party_member.level_up["atk"]))
-	#$VBoxContainer/HSplitContainer/StatChanges/VBoxContainer/DEF.text = "DEF: " + str(party_member.max_stats["def"]) + " -> " + str(int(party_member.max_stats["def"] + party_member.level_up["def"]))
-	#$VBoxContainer/HSplitContainer/StatChanges/VBoxContainer/SPD.text = "SPD: " + str(party_member.max_stats["ai"]) + " -> " + str(int(party_member.max_stats["ai"] + party_member.level_up["ai"]))
+	#$VBoxContainer/HSplitContainer/StatChanges/VBoxContainer/HP.text = "HP: " + str(party_member.max_stats["hp"]) + " -> " + str(int(party_member.max_stats["hp"] + party_member.level_up_gains["hp"]))
+	#$VBoxContainer/HSplitContainer/StatChanges/VBoxContainer/MP.text = "MP: " + str(party_member.max_stats["mp"]) + " -> " + str(int(party_member.max_stats["mp"] + party_member.level_up_gains["mp"]))
+	#$VBoxContainer/HSplitContainer/StatChanges/VBoxContainer/STR.text = "STR: " + str(party_member.max_stats["atk"]) + " -> " + str(int(party_member.max_stats["atk"] + party_member.level_up_gains["atk"]))
+	#$VBoxContainer/HSplitContainer/StatChanges/VBoxContainer/DEF.text = "DEF: " + str(party_member.max_stats["def"]) + " -> " + str(int(party_member.max_stats["def"] + party_member.level_up_gains["def"]))
+	#$VBoxContainer/HSplitContainer/StatChanges/VBoxContainer/SPD.text = "SPD: " + str(party_member.max_stats["speed"]) + " -> " + str(int(party_member.max_stats["speed"] + party_member.level_up_gains["speed"]))
 	pass
 	
 func overview():

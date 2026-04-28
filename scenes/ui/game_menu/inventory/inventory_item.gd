@@ -26,10 +26,12 @@ func redisplay():
 		queue_free()
 
 func _on_item_pressed() -> void:
-	if itemBox_type == itemBox_types.Null and item.type != 3:
-		$"../../../..".is_visible = false
-		$"../../../..".selected_item = item
-		$"../../../..".display_party(item)
+	if itemBox_type == itemBox_types.Null and item != null and item.type != 3:  # Not Key type
+		var parent_menu = $"../../../.."
+		if parent_menu and parent_menu.has_method("display_party"):
+			parent_menu.is_visible = false
+			parent_menu.selected_item = item
+			parent_menu.display_party(item)
 	elif itemBox_type == itemBox_types.Equip:
 		$"../..".equip_item(item, item_type)
 
@@ -43,28 +45,28 @@ func redisplay_equip():
 		$HBoxContainer/Delete.queue_free()
 		
 	item_display_name.text = item.item_name
-	item_display_texture.texture = item.texture
-	if item.type == 0:
-		var atk_bonus: int
-		if party_member.equipped[item_type] == null:
-			atk_bonus = 0
-		else:
-			atk_bonus = party_member.equipped[item_type].item_bonuses["atk"]
+	if item.texture:
+		item_display_texture.texture = item.texture
+	
+	if item.type == 0:  # Weapon
+		var atk_bonus: int = 0
+		if party_member.equipped.get(item_type) != null:
+			atk_bonus = party_member.equipped[item_type].get_bonus("atk")
 			
-		if item.item_bonuses["atk"] >= atk_bonus:
-			item_display_amount.text = "+" + str(item.item_bonuses["atk"] - atk_bonus)
+		var diff = item.get_bonus("atk") - atk_bonus
+		if diff >= 0:
+			item_display_amount.text = "+" + str(diff)
 		else:
-			item_display_amount.text = str(item.item_bonuses["atk"] - atk_bonus)
-	elif item.type == 1:
-		var def_bonus: int
-		if party_member.equipped[item_type] == null:
-			def_bonus = 0
-		else:
-			def_bonus = party_member.equipped[item_type].item_bonuses["def"]
+			item_display_amount.text = str(diff)
+	elif item.type == 1:  # Armor
+		var def_bonus: int = 0
+		if party_member.equipped.get(item_type) != null:
+			def_bonus = party_member.equipped[item_type].get_bonus("def")
 			
-		if item.item_bonuses["def"] >= def_bonus:
-			item_display_amount.text = "+" + str(item.item_bonuses["def"] - def_bonus)
+		var diff = item.get_bonus("def") - def_bonus
+		if diff >= 0:
+			item_display_amount.text = "+" + str(diff)
 		else:
-			item_display_amount.text = str(item.item_bonuses["def"] - def_bonus)
+			item_display_amount.text = str(diff)
 	
 	

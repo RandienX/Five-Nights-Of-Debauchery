@@ -22,31 +22,31 @@ func change_item_slot(type):
 func add_item_boxes(item_type):
 	if item_type in ["weapon_left", "weapon_right"]:
 		for i: Item in PlayerStats.inventory.keys():
-			if i is Item:
-				if i.type == 0:
+			if i is Item and i.type == 0:  # Weapon type
+				var kid = load("res://scenes/ui/game_menu/inventory/inventory_item.tscn").instantiate()
+				kid.itemBox_type = 1
+				kid.item_type = item_type
+				kid.party_member = party_member
+				eq_items.add_child(kid)
+	else:
+		# Armor types
+		var armor_slot_map = {
+			"head": 0,
+			"body": 1,
+			"legs": 2,
+			"shield": 3
+		}
+		
+		if item_type in armor_slot_map:
+			var target_armor_type = armor_slot_map[item_type]
+			for i: Item in PlayerStats.inventory.keys():
+				if i is Item and i.type == 1 and i.armor_type == target_armor_type:
 					var kid = load("res://scenes/ui/game_menu/inventory/inventory_item.tscn").instantiate()
 					kid.itemBox_type = 1
 					kid.item_type = item_type
+					kid.item = i
 					kid.party_member = party_member
 					eq_items.add_child(kid)
-	else:
-		for i: Item in PlayerStats.inventory.keys():
-			if i is Item:
-				if i.type == 1:
-					var type: String
-					match i.type:
-						0: type = "head"
-						1: type = "body"
-						2: type = "legs"
-						3: type = "shield"
-						
-					if type == item_type:
-						var kid = load("res://scenes/ui/game_menu/inventory/inventory_item.tscn").instantiate()
-						kid.itemBox_type = 1
-						kid.item_type = item_type
-						kid.item = i
-						kid.party_member = party_member
-						eq_items.add_child(kid)
 				
 
 func equip_item(item, item_type):
@@ -54,14 +54,16 @@ func equip_item(item, item_type):
 		c.queue_free()
 		
 	if item_type:
-		if party_member.equipped[item_type] != null:
-			party_member.equipped[item_type] = item
-			PlayerStats.remove_item(item)
-		else:
-			var temp = party_member.equipped[item_type]
-			party_member.equipped[item_type] = item
-			PlayerStats.add_item(temp)
-			PlayerStats.remove_item(item)
+		var old_item = party_member.equipped[item_type]
+		
+		# If there's an old item, add it back to inventory
+		if old_item != null:
+			PlayerStats.add_item(old_item, 1)
+		
+		# Equip the new item and remove from inventory
+		party_member.equipped[item_type] = item
+		PlayerStats.remove_item(item, 1)
+		
 		party_member.equip_stats_change()
 		
 
