@@ -1,170 +1,139 @@
-[gd_scene load_steps=4 format=3 uid="uid://42ixsrxwwi7k"]
+[gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" uid="uid://7n0d7skk6nvj" path="res://scenes/ui/game_menu/inventory/inventory.gd" id="1_h7dxn"]
-[ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="1_nlqht"]
+[ext_resource type="Script" path="res://scenes/ui/game_menu/inventory/inventory_new.gd" id="1_inventory"]
 
-[sub_resource type="GDScript" id="GDScript_h7dxn"]
-script/source = "extends Button
-
-@export_enum(\"Weapon\",\"Armor\",\"Consumable\",\"Key\") var item_type
-
-func _on_pressed() -> void:
-	$\"../../../..\".change_category(item_type)
-"
-
-[node name="inventory" type="Control"]
-custom_minimum_size = Vector2(640, 0)
+[node name="Inventory" type="Control"]
 layout_mode = 3
-anchor_left = 0.259
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 0.22399902
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_h7dxn")
+script = ExtResource("1_inventory")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
-anchors_preset = -1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 12
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
-custom_minimum_size = Vector2(616, 0)
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 16
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 48
+theme_override_font_sizes/font_size = 32
 text = "Inventory"
 horizontal_alignment = 1
-vertical_alignment = 1
 
-[node name="categories" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="CategoryTabs" type="TabContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="WeaponsTab" type="Control" parent="MarginContainer/VBoxContainer/CategoryTabs"]
 layout_mode = 2
 
-[node name="Weapon" type="Button" parent="MarginContainer/VBoxContainer/categories"]
-custom_minimum_size = Vector2(154, 48)
+[node name="ArmorTab" type="Control" parent="MarginContainer/VBoxContainer/CategoryTabs"]
 layout_mode = 2
-script = SubResource("GDScript_h7dxn")
-item_type = 0
 
-[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/VBoxContainer/categories/Weapon"]
-custom_minimum_size = Vector2(154, 48)
-layout_mode = 0
-offset_right = 154.0
-offset_bottom = 48.0
-texture = ExtResource("1_nlqht")
-patch_margin_left = 5
-patch_margin_top = 5
-patch_margin_right = 5
-patch_margin_bottom = 5
+[node name="ConsumablesTab" type="Control" parent="MarginContainer/VBoxContainer/CategoryTabs"]
+layout_mode = 2
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/categories/Weapon/NinePatchRect"]
-layout_mode = 1
-anchors_preset = -1
+[node name="KeyItemsTab" type="Control" parent="MarginContainer/VBoxContainer/CategoryTabs"]
+layout_mode = 2
+
+[node name="AccessoriesTab" type="Control" parent="MarginContainer/VBoxContainer/CategoryTabs"]
+layout_mode = 2
+
+[node name="HSplitContainer" type="HSplitContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ItemsPanel" type="Panel" parent="MarginContainer/VBoxContainer/HSplitContainer"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+
+[node name="ItemsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/ItemsPanel"]
+layout_mode = 2
+anchors_preset = 15
 anchor_right = 1.0
-anchor_bottom = 0.92700005
-offset_bottom = 3.5039978
-theme_override_font_sizes/font_size = 24
-text = "Weapon"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Armor" type="Button" parent="MarginContainer/VBoxContainer/categories"]
-custom_minimum_size = Vector2(154, 48)
-layout_mode = 2
-script = SubResource("GDScript_h7dxn")
-item_type = 1
-
-[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/VBoxContainer/categories/Armor"]
-custom_minimum_size = Vector2(154, 48)
-layout_mode = 0
-offset_right = 154.0
-offset_bottom = 48.0
-texture = ExtResource("1_nlqht")
-patch_margin_left = 5
-patch_margin_top = 5
-patch_margin_right = 5
-patch_margin_bottom = 5
-
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/categories/Armor/NinePatchRect"]
-layout_mode = 1
-anchors_preset = -1
-anchor_right = 1.0
-anchor_bottom = 0.92700005
-offset_bottom = 3.5039978
-theme_override_font_sizes/font_size = 24
-text = "Armor"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Consumable" type="Button" parent="MarginContainer/VBoxContainer/categories"]
-custom_minimum_size = Vector2(154, 48)
-layout_mode = 2
-script = SubResource("GDScript_h7dxn")
-item_type = 2
-
-[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/VBoxContainer/categories/Consumable"]
-custom_minimum_size = Vector2(154, 48)
-layout_mode = 0
-offset_right = 154.0
-offset_bottom = 48.0
-texture = ExtResource("1_nlqht")
-patch_margin_left = 5
-patch_margin_top = 5
-patch_margin_right = 5
-patch_margin_bottom = 5
-
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/categories/Consumable/NinePatchRect"]
-layout_mode = 1
-anchors_preset = -1
-anchor_right = 1.0
-anchor_bottom = 0.92700005
-offset_bottom = 3.5039978
-theme_override_font_sizes/font_size = 22
-text = "Consumable"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Key" type="Button" parent="MarginContainer/VBoxContainer/categories"]
-custom_minimum_size = Vector2(154, 48)
-layout_mode = 2
-script = SubResource("GDScript_h7dxn")
-item_type = 3
-
-[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/VBoxContainer/categories/Key"]
-custom_minimum_size = Vector2(154, 48)
-layout_mode = 0
-offset_right = 154.0
-offset_bottom = 48.0
-texture = ExtResource("1_nlqht")
-patch_margin_left = 5
-patch_margin_top = 5
-patch_margin_right = 5
-patch_margin_bottom = 5
-
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/categories/Key/NinePatchRect"]
-layout_mode = 1
-anchors_preset = -1
-anchor_right = 1.0
-anchor_bottom = 0.92700005
-offset_bottom = 3.5039978
-theme_override_font_sizes/font_size = 24
-text = "Key"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="GridContainer" type="GridContainer" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
+anchor_bottom = 1.0
 columns = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
 
-[connection signal="pressed" from="MarginContainer/VBoxContainer/categories/Weapon" to="MarginContainer/VBoxContainer/categories/Weapon" method="_on_pressed"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer/categories/Armor" to="MarginContainer/VBoxContainer/categories/Armor" method="_on_pressed"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer/categories/Consumable" to="MarginContainer/VBoxContainer/categories/Consumable" method="_on_pressed"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer/categories/Key" to="MarginContainer/VBoxContainer/categories/Key" method="_on_pressed"]
+[node name="DetailPanel" type="Panel" parent="MarginContainer/VBoxContainer/HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/DetailPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+theme_override_constants/separation = 12
+
+[node name="NoItemLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/DetailPanel/VBoxContainer"]
+layout_mode = 2
+text = "Select an item to view details"
+horizontal_alignment = 1
+
+[node name="ItemIcon" type="TextureRect" parent="MarginContainer/VBoxContainer/HSplitContainer/DetailPanel/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+stretch_mode = 5
+
+[node name="ItemNameLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/DetailPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Item Name"
+horizontal_alignment = 1
+
+[node name="ItemTypeLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/DetailPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+text = "Type"
+horizontal_alignment = 1
+
+[node name="ItemDescription" type="TextEdit" parent="MarginContainer/VBoxContainer/HSplitContainer/DetailPanel/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+size_flags_vertical = 2
+editable = false
+text = "Item description goes here."
+
+[node name="ItemAmountLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/DetailPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+text = "Quantity: x1"
+
+[node name="ItemStatsLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/DetailPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+text = "Stats"
+
+[node name="UseButton" type="Button" parent="MarginContainer/VBoxContainer/HSplitContainer/DetailPanel/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Use"
+
+[node name="BackButton" type="Button" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+text = "Back"
+horizontal_alignment = 1
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/HSplitContainer/DetailPanel/VBoxContainer/UseButton" to="." method="_on_use_button_pressed"]

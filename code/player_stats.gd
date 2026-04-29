@@ -20,6 +20,28 @@ var party: Array[Object] = [load("res://resources/party/freddy.tres").duplicate_
 var inventory: Dictionary = {}
 var player_position: Vector2
 
+# === Party Management ===
+func get_party_members() -> Array[Resource]:
+	var members: Array[Resource] = []
+	for p in party:
+		if is_instance_valid(p):
+			members.append(p)
+	return members
+
+func add_party_member(member: Resource) -> void:
+	if member and not party.has(member):
+		party.append(member)
+		if member.has_method("equip_stats_change"):
+			member.equip_stats_change()
+
+func remove_party_member(member: Resource) -> void:
+	if party.has(member):
+		party.erase(member)
+
+# === Inventory Accessors ===
+func get_inventory() -> Dictionary:
+	return inventory.duplicate()
+
 func _ready() -> void:
 	add_item(preload("res://resources/items/consumables/small_soda.tres"), 5)
 	add_item(preload("res://resources/items/consumables/small_pizza.tres"), 5)
@@ -167,3 +189,33 @@ func use_item(item: Item, target: Entity) -> bool:
 	remove_item(item, 1)
 	
 	return true
+
+# === Item Usage on Party ===
+func use_item_on_party(item: Item) -> bool:
+	if not item or item.type != 2:  # Not a consumable
+		return false
+	if not has_item(item):
+		return false
+	
+	# Apply to first alive party member with low HP or who needs it
+	for p in party:
+		if is_instance_valid(p) and p.hp > 0:
+			# Check if this item would be useful
+			if item.heal_amount > 0 and p.hp < p.max_stats.get("hp", 100):
+				return use_item(item, p)
+			elif item.mana_amount > 0 and p.mp < p.max_stats.get("mp", 50):
+				return use_item(item, p)
+			elif item.revive_amount > 0:
+				# Revive items should target dead members specifically
+				continue
+			else:
+				# For other items, just use on first member
+				return use_item(item, p)
+	
+	# If no living member needed it, try to revive someone
+	if item.revive_amount > 0:
+		for p in party:
+			if is_instance_valid(p) and p.hp <= 0:
+				return use_item(item, p)
+	
+	return false
