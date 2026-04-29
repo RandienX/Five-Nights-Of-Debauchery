@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="1_xk8b8"]
 [ext_resource type="Texture2D" uid="uid://dgypba5b83iod" path="res://assets/ui/delete_button.png" id="2_escoi"]
 [ext_resource type="Texture2D" uid="uid://dexwxvdtim46r" path="res://assets/ui/button_pressed.png" id="3_d5aqj"]
+[ext_resource type="Resource" uid="uid://invitemcfg001" path="res://resources/items/inventory_item.tres" id="1_invitemcfg"]
 
 [node name="inventory_item" type="Control"]
 custom_minimum_size = Vector2(300, 40)
@@ -15,6 +16,7 @@ offset_bottom = -0.1760025
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_escoi")
+config = ExtResource("1_invitemcfg")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 0

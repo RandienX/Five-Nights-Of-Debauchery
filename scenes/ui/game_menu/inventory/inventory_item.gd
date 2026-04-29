@@ -1,5 +1,6 @@
 extends Control
 
+@export var config: InventoryItemConfig
 @export var item: Item
 @export var amount: int
 @onready var item_display_name = $HBoxContainer/Item/NinePatchRect/ItemName
@@ -12,6 +13,14 @@ var item_type: String
 var party_member: Entity
 
 func _ready() -> void:
+	# Apply config settings if available
+	if config:
+		custom_minimum_size = config.min_size
+		if item_display_name:
+			item_display_name.add_theme_font_size_override("font_size", config.name_font_size)
+		if item_display_amount:
+			item_display_amount.add_theme_font_size_override("font_size", config.amount_font_size)
+	
 	if itemBox_type == itemBox_types.Null:
 		redisplay()
 	else:
