@@ -1,0 +1,322 @@
+[gd_scene load_steps=8 format=3 uid="uid://settings123abc"]
+
+[ext_resource type="Script" path="res://scenes/ui/game_menu/settings/settings.gd" id="1_settings"]
+[ext_resource type="Texture2D" path="res://assets/ui/button.png" id="2_button"]
+[ext_resource type="FontFile" path="res://assets/courbd.ttf" id="3_font"]
+[ext_resource type="Shader" path="res://resources/battles/white_flash.tres" id="4_shader"]
+
+[sub_resource type="ShaderMaterial" id="mat_audio"]
+shader = ExtResource("4_shader")
+shader_parameter/is_flashing = false
+shader_parameter/FlashColor = Color(1, 1, 1, 1)
+shader_parameter/FlashSpeed = 1.0
+shader_parameter/FlashIntensity = 1.0
+
+[sub_resource type="ShaderMaterial" id="mat_controls"]
+shader = ExtResource("4_shader")
+shader_parameter/is_flashing = false
+shader_parameter/FlashColor = Color(1, 1, 1, 1)
+shader_parameter/FlashSpeed = 1.0
+shader_parameter/FlashIntensity = 1.0
+
+[sub_resource type="ShaderMaterial" id="mat_gameplay"]
+shader = ExtResource("4_shader")
+shader_parameter/is_flashing = false
+shader_parameter/FlashColor = Color(1, 1, 1, 1)
+shader_parameter/FlashSpeed = 1.0
+shader_parameter/FlashIntensity = 1.0
+
+[node name="settings" type="Control"]
+custom_minimum_size = Vector2(640, 0)
+layout_mode = 3
+anchor_left = 0.259
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.22399902
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_settings")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 12
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+custom_minimum_size = Vector2(616, 0)
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "Settings"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TabContainer" type="TabContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 24
+
+[node name="Audio" type="VBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="MasterVolume" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Audio"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Audio/MasterVolume"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Master Volume"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Audio/MasterVolume"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Slider" type="HSlider" parent="MarginContainer/VBoxContainer/TabContainer/Audio/MasterVolume"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 1.0
+name = "MasterSlider"
+
+[node name="MusicVolume" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Audio"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Audio/MusicVolume"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Music Volume"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Audio/MusicVolume"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Slider" type="HSlider" parent="MarginContainer/VBoxContainer/TabContainer/Audio/MusicVolume"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 1.0
+name = "MusicSlider"
+
+[node name="SFXVolume" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Audio"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Audio/SFXVolume"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "SFX Volume"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Audio/SFXVolume"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Slider" type="HSlider" parent="MarginContainer/VBoxContainer/TabContainer/Audio/SFXVolume"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 1.0
+name = "SFXSlider"
+
+[node name="VoiceVolume" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Audio"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Audio/VoiceVolume"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Voice Volume"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Audio/VoiceVolume"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Slider" type="HSlider" parent="MarginContainer/VBoxContainer/TabContainer/Audio/VoiceVolume"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 1.0
+name = "VoiceSlider"
+
+[node name="Controls" type="ScrollContainer" parent="MarginContainer/VBoxContainer/TabContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Controls"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Controls/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Control mappings will be implemented here."
+horizontal_alignment = 1
+
+[node name="Gameplay" type="VBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="BattleSpeed" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/BattleSpeed"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Battle Speed"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/BattleSpeed"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Slider" type="HSlider" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/BattleSpeed"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 0.5
+max_value = 3.0
+step = 0.1
+value = 1.0
+name = "BattleSpeedSlider"
+
+[node name="TextSpeed" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/TextSpeed"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Text Speed"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/TextSpeed"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Slider" type="HSlider" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/TextSpeed"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 0.5
+max_value = 5.0
+step = 0.1
+value = 1.0
+name = "TextSpeedSlider"
+
+[node name="EncounterRate" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/EncounterRate"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Encounter Rate"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/EncounterRate"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Slider" type="HSlider" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/EncounterRate"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 0.0
+max_value = 2.0
+step = 0.1
+value = 1.0
+name = "EncounterRateSlider"
+
+[node name="ShowDamageNumbers" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/ShowDamageNumbers"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Show Damage Numbers"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/ShowDamageNumbers"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CheckBox" type="CheckBox" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/ShowDamageNumbers"]
+layout_mode = 2
+button_pressed = true
+name = "ShowDamageCheckBox"
+
+[node name="BattleAnimations" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/BattleAnimations"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Battle Animations"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/BattleAnimations"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CheckBox" type="CheckBox" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/BattleAnimations"]
+layout_mode = 2
+button_pressed = true
+name = "BattleAnimCheckBox"
+
+[node name="SkipCutscenes" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/SkipCutscenes"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Skip Cutscenes"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/SkipCutscenes"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CheckBox" type="CheckBox" parent="MarginContainer/VBoxContainer/TabContainer/Gameplay/SkipCutscenes"]
+layout_mode = 2
+button_pressed = false
+name = "SkipCutscenesCheckBox"
+
+[node name="SaveButton" type="Button" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 24
+text = "Save Settings"
+flat = false
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/VBoxContainer/SaveButton"]
+z_index = -1
+layout_mode = 0
+offset_right = 200.0
+offset_bottom = 48.0
+texture = ExtResource("2_button")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[connection signal="value_changed" from="MarginContainer/VBoxContainer/TabContainer/Audio/MasterVolume/Slider" to="." method="_on_master_volume_changed"]
+[connection signal="value_changed" from="MarginContainer/VBoxContainer/TabContainer/Audio/MusicVolume/Slider" to="." method="_on_music_volume_changed"]
+[connection signal="value_changed" from="MarginContainer/VBoxContainer/TabContainer/Audio/SFXVolume/Slider" to="." method="_on_sfx_volume_changed"]
+[connection signal="value_changed" from="MarginContainer/VBoxContainer/TabContainer/Audio/VoiceVolume/Slider" to="." method="_on_voice_volume_changed"]
+[connection signal="value_changed" from="MarginContainer/VBoxContainer/TabContainer/Gameplay/BattleSpeed/Slider" to="." method="_on_battle_speed_changed"]
+[connection signal="value_changed" from="MarginContainer/VBoxContainer/TabContainer/Gameplay/TextSpeed/Slider" to="." method="_on_text_speed_changed"]
+[connection signal="value_changed" from="MarginContainer/VBoxContainer/TabContainer/Gameplay/EncounterRate/Slider" to="." method="_on_encounter_rate_changed"]
+[connection signal="toggled" from="MarginContainer/VBoxContainer/TabContainer/Gameplay/ShowDamageNumbers/CheckBox" to="." method="_on_show_damage_toggled"]
+[connection signal="toggled" from="MarginContainer/VBoxContainer/TabContainer/Gameplay/BattleAnimations/CheckBox" to="." method="_on_battle_animations_toggled"]
+[connection signal="toggled" from="MarginContainer/VBoxContainer/TabContainer/Gameplay/SkipCutscenes/CheckBox" to="." method="_on_skip_cutscenes_toggled"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/SaveButton" to="." method="_on_save_pressed"]

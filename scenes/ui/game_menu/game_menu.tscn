@@ -145,18 +145,19 @@ patch_margin_top = 5
 patch_margin_right = 5
 patch_margin_bottom = 5
 
-[node name="quests" type="Button" parent="MarginContainer/HSplitContainer/categories"]
+[node name="extras" type="Button" parent="MarginContainer/HSplitContainer/categories"]
 material = SubResource("ShaderMaterial_ex2pj")
 custom_minimum_size = Vector2(180, 87)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("3_n4xiy")
 theme_override_font_sizes/font_size = 28
-text = "Quests"
+text = "Extras"
 flat = true
 script = ExtResource("4_45a32")
+menu_path = "res://scenes/ui/game_menu/extras/extras.tscn"
 id = 2
 
-[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/HSplitContainer/categories/quests"]
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/HSplitContainer/categories/extras"]
 z_index = -1
 use_parent_material = true
 layout_mode = 0
@@ -177,6 +178,7 @@ theme_override_font_sizes/font_size = 28
 text = "Settings"
 flat = true
 script = ExtResource("4_45a32")
+menu_path = "res://scenes/ui/game_menu/settings/settings.tscn"
 id = 3
 
 [node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/HSplitContainer/categories/settings"]
@@ -244,7 +246,7 @@ mouse_filter = 2
 
 [connection signal="pressed" from="MarginContainer/HSplitContainer/categories/party" to="MarginContainer/HSplitContainer/categories/party" method="change_menu"]
 [connection signal="pressed" from="MarginContainer/HSplitContainer/categories/inventory" to="MarginContainer/HSplitContainer/categories/inventory" method="change_menu"]
-[connection signal="pressed" from="MarginContainer/HSplitContainer/categories/quests" to="MarginContainer/HSplitContainer/categories/quests" method="change_menu"]
+[connection signal="pressed" from="MarginContainer/HSplitContainer/categories/extras" to="MarginContainer/HSplitContainer/categories/extras" method="change_menu"]
 [connection signal="pressed" from="MarginContainer/HSplitContainer/categories/settings" to="MarginContainer/HSplitContainer/categories/settings" method="change_menu"]
 [connection signal="pressed" from="MarginContainer/HSplitContainer/categories/save" to="MarginContainer/HSplitContainer/categories/save" method="change_menu"]
 [connection signal="pressed" from="MarginContainer/HSplitContainer/categories/back" to="MarginContainer/HSplitContainer/categories/back" method="back"]

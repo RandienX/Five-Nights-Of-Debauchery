@@ -1,0 +1,163 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/game_menu/party/party_menu.gd" id="1_party"]
+
+[node name="PartyMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_party")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Party"
+horizontal_alignment = 1
+
+[node name="HSplitContainer" type="HSplitContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MembersContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MemberDetailPanel" type="Panel" parent="MarginContainer/VBoxContainer/HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+theme_override_constants/separation = 12
+
+[node name="NoMemberLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer"]
+layout_mode = 2
+text = "Select a party member to view details"
+horizontal_alignment = 1
+
+[node name="MemberNameLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Member Name"
+horizontal_alignment = 1
+
+[node name="MemberLevelLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+text = "Level 1"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="MemberPortrait" type="TextureRect" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(96, 96)
+layout_mode = 2
+stretch_mode = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="HPProgress" type="ProgressBar" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/HBoxContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+custom_minimum_size = Vector2(200, 24)
+max_value = 100.0
+value = 100.0
+
+[node name="MPProgress" type="ProgressBar" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/HBoxContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+custom_minimum_size = Vector2(200, 24)
+max_value = 100.0
+value = 100.0
+
+[node name="HPLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/HBoxContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+text = "100/100"
+
+[node name="MPLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/HBoxContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+text = "50/50"
+
+[node name="StatsLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Stats"
+
+[node name="StatsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+columns = 2
+theme_override_constants/separation = 8
+
+[node name="EquipmentLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Equipment"
+
+[node name="EquipmentContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EquipmentSlots" type="GridContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/EquipmentContainer"]
+layout_mode = 2
+columns = 2
+theme_override_constants/separation = 8
+
+[node name="EquipButton" type="Button" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/EquipmentContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
+text = "Change Equipment"
+
+[node name="SkillsLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Skills"
+
+[node name="SkillsList" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="BackButton" type="Button" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+text = "Back"
+horizontal_alignment = 1
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/EquipmentContainer/EquipButton" to="." method="_on_equip_button_pressed"]
