@@ -54,62 +54,31 @@ func deserialize_value(value: Variant) -> Variant:
 	return value
 
 func get_save_data() -> Dictionary:
-	var data = {"inventory": {}, "current_scene": current_scene, "player_position": PlayerStats.player_position}
-	
-	for path in PlayerStats.inventory.keys():
-		data["inventory"][path.resource_path] = PlayerStats.inventory[path]
-	var p_data = []
-	for p in PlayerStats.party:
-		if p is Resource:
-			var resource_path = p.path_to
-			var p_dict = {"resource_path": resource_path, "properties": {}}
-			for prop in p.get_property_list():
-				if prop.usage & PROPERTY_USAGE_STORAGE and prop in Entity.new().get_script().get_script_property_list():
-					var prop_name = prop.name
-					var prop_value = p.get(prop_name)
-					p_dict["properties"][prop_name] = serialize_value(prop_value)
-			p_data.append(p_dict)
-	
-	data["party"] = p_data
-	
-	# Include PlayerStats data if available
+	# Delegate to PlayerStats for comprehensive save data
 	if Engine.has_singleton("PlayerStats"):
 		var stats = Engine.get_singleton("PlayerStats")
-		data["player_stats"] = stats.get_save_data()
+		return stats.get_save_data()
 	
-	return data
+	# Fallback if PlayerStats is not available
+	return {"inventory": {}, "current_scene": current_scene, "player_position": PlayerStats.player_position}
 
 func load_save_data(data: Dictionary, scenes_data: Dictionary) -> void:
-	var inv_data = data.get("inventory", {})
-	PlayerStats.inventory.clear()
-	for path in inv_data.keys():
-		var item = deserialize_value(path)
-		var amount = inv_data[path]
-		PlayerStats.inventory.merge({item: int(amount)})
-		PlayerStats.party.clear()
-	for p_dict in data.get("party", []):
-		var base_entity: Entity = load(p_dict["resource_path"])
-		if base_entity:
-			var resource: Entity = base_entity.duplicate_deep()
-			for prop_name in p_dict["properties"].keys():
-				var prop_value = deserialize_value(p_dict["properties"][prop_name])
-				if prop_name in resource:
-					resource.set(prop_name, prop_value)
-			PlayerStats.party.append(resource)
-					
 	loading = true
+	
+	# Load PlayerStats data (inventory, party, currency, stats, position)
+	if data.has("player_stats") or data.has("inventory") or data.has("party"):
+		PlayerStats.load_save_data(data)
+	
+	# Load current scene and player position if specified
 	if data.has("current_scene"):
 		var vector = str_to_var("Vector2" + data["player_position"])
 		PlayerStats.player_position = vector
 		get_tree().change_scene_to_file(data["current_scene"])
 		scene_data = scenes_data
-	await get_tree().create_timer(0.03).timeout
+		await get_tree().create_timer(0.03).timeout
+	
 	loading = false
 
-	# Load PlayerStats data if available
-	if data.has("player_stats") and PlayerStats:
-		var stats = PlayerStats
-		stats.load_save_data(data["player_stats"])
 
 func set_scene_data(data: Object):
 	var is_room = scene_data.find_key(data.room_name)
