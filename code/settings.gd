@@ -18,7 +18,6 @@ var screen_resolution: Vector2i = Vector2i(864, 648)
 # === Gameplay Settings ===
 var battle_speed: float = 1.0
 var text_speed: float = 1.0
-var encounter_rate: float = 1.0
 var show_damage_numbers: bool = true
 var battle_animations: bool = true
 var skip_cutscenes: bool = false
@@ -120,11 +119,6 @@ func set_text_speed(value: float) -> void:
 	text_speed = clamp(value, 0.5, 5.0)
 	settings_changed.emit("gameplay", "text_speed", text_speed)
 
-## Set encounter rate multiplier
-func set_encounter_rate(value: float) -> void:
-	encounter_rate = clamp(value, 0.0, 2.0)
-	settings_changed.emit("gameplay", "encounter_rate", encounter_rate)
-
 ## Toggle damage numbers display
 func set_show_damage_numbers(value: bool) -> void:
 	show_damage_numbers = value
@@ -162,7 +156,6 @@ func get_save_data() -> Dictionary:
 		"gameplay": {
 			"battle_speed": battle_speed,
 			"text_speed": text_speed,
-			"encounter_rate": encounter_rate,
 			"show_damage_numbers": show_damage_numbers,
 			"battle_animations": battle_animations,
 			"skip_cutscenes": skip_cutscenes
@@ -190,7 +183,6 @@ func load_from_data(data: Dictionary) -> void:
 		var gameplay = data["gameplay"]
 		battle_speed = gameplay.get("battle_speed", battle_speed)
 		text_speed = gameplay.get("text_speed", text_speed)
-		encounter_rate = gameplay.get("encounter_rate", encounter_rate)
 		show_damage_numbers = gameplay.get("show_damage_numbers", show_damage_numbers)
 		battle_animations = gameplay.get("battle_animations", battle_animations)
 		skip_cutscenes = gameplay.get("skip_cutscenes", skip_cutscenes)
@@ -248,7 +240,6 @@ func reset_to_defaults() -> void:
 	screen_resolution = Vector2i(864, 648)
 	battle_speed = 1.0
 	text_speed = 1.0
-	encounter_rate = 1.0
 	show_damage_numbers = true
 	battle_animations = true
 	skip_cutscenes = false
