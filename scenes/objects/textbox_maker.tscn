@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://cgs08pp0l2gmg"]
+
+[ext_resource type="Script" uid="uid://nq6it5wf4ixi" path="res://code/textbox/DialogueTrigger.gd" id="1_lfdya"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wxhxg"]
+size = Vector2(32, 32)
+
+[node name="TextboxMaker" type="Area2D"]
+script = ExtResource("1_lfdya")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_wxhxg")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

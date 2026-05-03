@@ -1,0 +1,34 @@
+[gd_scene load_steps=2 format=3 uid="uid://b7tp6kp41pkew"]
+
+[ext_resource type="FontFile" uid="uid://bbkqbneky7jdt" path="res://assets/courbd.ttf" id="1_sc6rk"]
+
+[node name="Button" type="Button"]
+custom_minimum_size = Vector2(200, 40)
+focus_mode = 0
+flat = true
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="ActLabel" type="Label" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.70796657, 0.7079665, 0.7079665, 1)
+theme_override_fonts/font = ExtResource("1_sc6rk")
+theme_override_font_sizes/font_size = 24
+text = "ACTION"
+
+[node name="Space" type="Control" parent="MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+
+[node name="KeyLabel" type="Label" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.70796657, 0.7079665, 0.7079665, 1)
+theme_override_fonts/font = ExtResource("1_sc6rk")
+theme_override_font_sizes/font_size = 24
+text = "INPUT"
