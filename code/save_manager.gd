@@ -417,7 +417,11 @@ func _serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	if value is Array:
 		var result: Array = []
 		for item in value:
-			result.append(_serialize_value(item, TYPE_NIL))
+			# Check if array item is a Resource that needs deep serialization
+			if item is Resource:
+				result.append(_serialize_object_deep(item))
+			else:
+				result.append(_serialize_value(item, TYPE_NIL))
 		return result
 	
 	# Handle Dictionaries
@@ -425,7 +429,22 @@ func _serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 		var result: Dictionary = {}
 		for key in value.keys():
 			var serialized_key = _serialize_value(key, TYPE_NIL)
-			var serialized_value = _serialize_value(value[key], TYPE_NIL)
+			var dict_value = value[key]
+			var serialized_value: Variant
+			# Check if dictionary value is a Resource that needs deep serialization
+			if dict_value is Resource:
+				serialized_value = _serialize_object_deep(dict_value)
+			elif dict_value is Array:
+				# Handle arrays within dictionaries (like skills[level] = [Skill, Skill])
+				var array_result: Array = []
+				for arr_item in dict_value:
+					if arr_item is Resource:
+						array_result.append(_serialize_object_deep(arr_item))
+					else:
+						array_result.append(_serialize_value(arr_item, TYPE_NIL))
+				serialized_value = array_result
+			else:
+				serialized_value = _serialize_value(dict_value, TYPE_NIL)
 			if serialized_key != null:
 				result[serialized_key] = serialized_value
 		return result
@@ -433,7 +452,7 @@ func _serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	# Handle Objects with properties
 	if value is Object:
 		if value is Resource:
-			# Handle Resources that are inside arrays/dictionaries
+			# Handle Resources that are direct property values
 			if value.has_meta("_runtime_modified") or not value.resource_path or value is Item or value is Entity or value is Skill:
 				return _serialize_object_deep(value)
 			else:
@@ -476,7 +495,11 @@ func _deserialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	if value is Array:
 		var result: Array = []
 		for item in value:
-			result.append(_deserialize_value(item, TYPE_NIL))
+			# Check if array item is a deep-serialized Resource
+			if item is Dictionary and item.has("_resource_type"):
+				result.append(_deserialize_resource_from_dict(item))
+			else:
+				result.append(_deserialize_value(item, TYPE_NIL))
 		return result
 	
 	# Handle Dictionaries - check if it's a deep-serialized Resource
@@ -488,7 +511,22 @@ func _deserialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 		var result: Dictionary = {}
 		for key in value.keys():
 			var deserialized_key = _deserialize_value(key, TYPE_NIL)
-			var deserialized_value = _deserialize_value(value[key], TYPE_NIL)
+			var dict_val = value[key]
+			var deserialized_value: Variant
+			# Check if dictionary value is a deep-serialized Resource
+			if dict_val is Dictionary and dict_val.has("_resource_type"):
+				deserialized_value = _deserialize_resource_from_dict(dict_val)
+			elif dict_val is Array:
+				# Handle arrays within dictionaries (like skills[level] = [Skill, Skill])
+				var array_result: Array = []
+				for arr_item in dict_val:
+					if arr_item is Dictionary and arr_item.has("_resource_type"):
+						array_result.append(_deserialize_resource_from_dict(arr_item))
+					else:
+						array_result.append(_deserialize_value(arr_item, TYPE_NIL))
+				deserialized_value = array_result
+			else:
+				deserialized_value = _deserialize_value(dict_val, TYPE_NIL)
 			result[deserialized_key] = deserialized_value
 		return result
 	
@@ -504,18 +542,29 @@ func _deserialize_resource_from_dict(data: Dictionary) -> Resource:
 	
 	var new_resource: Resource
 	
-	# Try to load from path first if available
+	# Try to load from path first if available (for Entity, Item, Skill resources)
 	if resource_path and ResourceLoader.exists(resource_path):
 		new_resource = load(resource_path).duplicate()
 	else:
-		# Create a new instance of the resource type
-		var class_type = ClassDB.class_exists(resource_type)
-		if class_type:
-			new_resource = ClassDB.instantiate(resource_type)
+		# Create a new instance of the resource type using class_name
+		# Try known custom resource classes first
+		if resource_type == "Entity":
+			new_resource = Entity.new()
+		elif resource_type == "Skill":
+			new_resource = Skill.new()
+		elif resource_type == "Item":
+			new_resource = Item.new()
+		elif resource_type == "BattleEffect":
+			new_resource = BattleEffect.new()
 		else:
-			# Fallback: try to find script class
-			push_warning("[AutoSaveManager] Could not instantiate resource type: %s" % resource_type)
-			return null
+			# Try ClassDB for built-in types
+			var class_type = ClassDB.class_exists(resource_type)
+			if class_type:
+				new_resource = ClassDB.instantiate(resource_type)
+			else:
+				# Fallback: try to find script class
+				push_warning("[AutoSaveManager] Could not instantiate resource type: %s" % resource_type)
+				return null
 	
 	# Apply all saved properties
 	_copy_resource_properties(new_resource, _dict_to_resource(data))
@@ -656,7 +705,29 @@ func _copy_resource_properties(target: Resource, source: Resource) -> void:
 		if prop_name in source:
 			var value = source.get(prop_name)
 			if prop_name in target:
-				target.set(prop_name, value)
+				# Handle nested Resources in properties (skills array, equipped items dict, etc.)
+				if value is Dictionary and value.has("_resource_type"):
+					target.set(prop_name, _deserialize_resource_from_dict(value))
+				elif value is Array:
+					var new_array: Array = []
+					for item in value:
+						if item is Dictionary and item.has("_resource_type"):
+							new_array.append(_deserialize_resource_from_dict(item))
+						else:
+							new_array.append(item)
+					target.set(prop_name, new_array)
+				elif value is Dictionary:
+					# Handle dictionaries with Resource values (like equipped: Dictionary[String, Item])
+					var new_dict: Dictionary = {}
+					for key in value.keys():
+						var dict_val = value[key]
+						if dict_val is Dictionary and dict_val.has("_resource_type"):
+							new_dict[key] = _deserialize_resource_from_dict(dict_val)
+						else:
+							new_dict[key] = dict_val
+					target.set(prop_name, new_dict)
+				else:
+					target.set(prop_name, value)
 
 # ============================================================================
 # UTILITY FUNCTIONS

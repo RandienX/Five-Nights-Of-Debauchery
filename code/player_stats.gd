@@ -45,21 +45,8 @@ func get_save_data() -> Dictionary:
 	# Serialize party members with their properties using SaveManager's serialization
 	for p in party:
 		if p is Resource:
-			var p_dict: Dictionary = {
-				"resource_path": p.resource_path if p.resource_path else "",
-				"properties": {}
-			}
-			# Serialize all storage properties
-			for prop in p.get_property_list():
-				if prop.usage & PROPERTY_USAGE_STORAGE:
-					var prop_name: String = prop.name
-					# Skip internal/resource management properties
-					if prop_name in ["script", "resource_local_to_scene", "resource_name"]:
-						continue
-					if p.has_method("get") or prop_name in p:
-						var prop_value = p.get(prop_name)
-						# Use SaveManager's serialization for consistency
-						p_dict["properties"][prop_name] = SaveManager.serialize_value(prop_value, prop.type)
+			# Use SaveManager's deep serialization to capture all nested Resources properly
+			var p_dict: Dictionary = SaveManager._serialize_object_deep(p)
 			data["party"].append(p_dict)
 	
 	return data
@@ -93,13 +80,21 @@ func load_save_data(data: Dictionary) -> void:
 	if data.has("party"):
 		party.clear()
 		for p_dict in data["party"]:
-			var base_entity: Entity = load(p_dict["resource_path"])
-			if base_entity:
-				var resource: Entity = base_entity.duplicate_deep()
-				for prop_name in p_dict["properties"].keys():
-					var prop_value = SaveManager.deserialize_value(p_dict["properties"][prop_name])
-					if prop_name in resource:
-						resource.set(prop_name, prop_value)
+			var resource: Entity
+			# Check if this is a deep-serialized party member (new format)
+			if p_dict is Dictionary and p_dict.has("_resource_type"):
+				resource = SaveManager._deserialize_resource_from_dict(p_dict) as Entity
+			else:
+				# Legacy format - load from path and apply properties
+				var base_entity: Entity = load(p_dict["resource_path"])
+				if base_entity:
+					resource = base_entity.duplicate_deep()
+					for prop_name in p_dict["properties"].keys():
+						var prop_value = SaveManager.deserialize_value(p_dict["properties"][prop_name])
+						if prop_name in resource:
+							resource.set(prop_name, prop_value)
+			
+			if resource:
 				# Re-initialize equipment effects after loading
 				resource.equip_stats_change()
 				party.append(resource)
