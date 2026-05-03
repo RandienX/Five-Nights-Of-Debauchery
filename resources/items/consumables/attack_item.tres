@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="Item" load_steps=4 format=3 uid="uid://dy5hdajulpjwh"]
+
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="1_ceosw"]
+[ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_rgr1x"]
+
+[sub_resource type="Resource" id="Resource_tm5u1"]
+script = ExtResource("1_rgr1x")
+attack_type = 0
+target_type = 0
+attack_multiplier = 2.5
+attack_bonus = 5
+metadata/_custom_type_script = "uid://o74imedfcjis"
+
+[resource]
+script = ExtResource("1_ceosw")
+type = 2
+item_name = "TEST_ATTACK_ITEM"
+desc = "ATTACK FOR DMG"
+weapon_type = null
+armor_type = null
+is_item_attack = true
+item_attack = SubResource("Resource_tm5u1")
+metadata/_custom_type_script = "uid://dn31qme1ukrys"

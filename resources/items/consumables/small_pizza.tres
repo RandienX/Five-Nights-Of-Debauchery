@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="Item" load_steps=4 format=3 uid="uid://dlxeylilwh1gg"]
+
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="1_4xfe2"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_htsio"]
+[ext_resource type="Texture2D" uid="uid://cn5hpouiu2idk" path="res://assets/item_textures/pizza.png" id="2_eqju6"]
+
+[resource]
+script = ExtResource("1_4xfe2")
+item_name = "XS Pizza"
+description = "Plasticey, mediocre, cheap Freddy's pizza. Good if you are hungry, never in any other circumstances. The size of this pizza is so puny even Chica sometimes refuses to eat it."
+texture = ExtResource("2_eqju6")
+icon = ExtResource("2_eqju6")
+type = 2
+item_bonuses = Dictionary[String, int]({
+"atk": 0,
+"def": 0,
+"hp": 25,
+"magic": 0,
+"mp": 0,
+"speed": 0
+})
+heal_amount = 25
+metadata/_custom_type_script = "uid://dn31qme1ukrys"

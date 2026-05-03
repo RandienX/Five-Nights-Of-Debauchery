@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="Battle" load_steps=13 format=3 uid="uid://d0alullmmxp3b"]
+
+[ext_resource type="Texture2D" uid="uid://cfoscxh3td7hk" path="res://assets/battleui/backgrounds/FNaF 1 - Dining Area.png" id="1_k1x70"]
+[ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="2_en6lr"]
+[ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="2_i5mks"]
+[ext_resource type="Script" uid="uid://tjsyf20orwjt" path="res://code/battle/battle_end_condition.gd" id="3_blyey"]
+[ext_resource type="Script" uid="uid://cpuojkdrhbref" path="res://code/battle/battle_enemy_slot.gd" id="4_ajw6j"]
+[ext_resource type="AudioStream" uid="uid://bnajx4f37io4r" path="res://assets/sound/battle/1-81.mp3" id="4_blyey"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="5_ajw6j"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="5_sjmib"]
+[ext_resource type="Resource" uid="uid://jacdqq8darrf" path="res://resources/enemies/a_party_hat.tres" id="6_ajw6j"]
+[ext_resource type="Script" uid="uid://c87a82v6g8ug3" path="res://code/battle/battle_phase.gd" id="6_sjmib"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="7_ajw6j"]
+
+[sub_resource type="Resource" id="Resource_3q3bk"]
+script = ExtResource("4_ajw6j")
+enemy = ExtResource("6_ajw6j")
+position_index = 2
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[resource]
+script = ExtResource("2_en6lr")
+battle_name = "Alpha Battle Hat 1"
+enemies = Array[ExtResource("4_ajw6j")]([SubResource("Resource_3q3bk")])
+background = ExtResource("1_k1x70")
+music = ExtResource("4_blyey")
+metadata/_custom_type_script = "uid://s2os42vdwf6y"

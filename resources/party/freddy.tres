@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="Entity" load_steps=12 format=3 uid="uid://duffo612fmit0"]
+
+[ext_resource type="Texture2D" uid="uid://ok0s30ywbc5e" path="res://assets/party/Classics+Swag.png" id="1_283g5"]
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="1_qob36"]
+[ext_resource type="Resource" uid="uid://bm2swlibbpbh4" path="res://resources/attacks/attack.tres" id="2_33eqg"]
+[ext_resource type="Texture2D" uid="uid://b0ggm1lu70ah7" path="res://assets/party/freddy_overlay.jpeg" id="2_qob36"]
+[ext_resource type="Resource" uid="uid://dn2gyrpdrrwdk" path="res://resources/attacks/freddy/mic_toss.tres" id="3_aucps"]
+[ext_resource type="Resource" uid="uid://cq600ldyq2j8g" path="res://resources/attacks/check.tres" id="3_e3el0"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="3_mcf6k"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="5_p2itg"]
+[ext_resource type="Resource" uid="uid://dglgbjt53w88p" path="res://resources/attacks/freddy/party_favors.tres" id="7_7yxmh"]
+[ext_resource type="Resource" uid="uid://ccoqwn1j6sjps" path="res://resources/attacks/freddy/torreadors_march.tres" id="7_ara7a"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="7_l0tq2"]
+
+[resource]
+script = ExtResource("7_l0tq2")
+name = "Freddy"
+description = "Freddy is a debaucherous mothafucka, friends are family type of guy. If dude gets bored he will do anything to stop that. Founder of nights of debauchery. Y'all know who it is, cmon."
+portrait = ExtResource("1_283g5")
+portrait_rect = Rect2(0, 0, 96, 96)
+battle_sprite = ExtResource("2_qob36")
+back_sprite = ExtResource("2_qob36")
+path_to = "res://resources/party/freddy.tres"
+base_stats = Dictionary[String, int]({
+"atk": 5,
+"def": 5,
+"hp": 100,
+"magic": 2,
+"mp": 25,
+"speed": 3
+})
+max_stats = Dictionary[String, int]({
+"atk": 5,
+"def": 5,
+"hp": 100,
+"magic": 2,
+"mp": 25,
+"speed": 3
+})
+level_up_gains = Dictionary[String, int]({
+"atk": 1,
+"def": 2,
+"hp": 15,
+"magic": 1,
+"mp": 5,
+"speed": 1
+})
+mp = 25
+skills = Dictionary[int, Array]({
+0: [ExtResource("3_e3el0"), ExtResource("3_aucps")],
+2: [ExtResource("7_7yxmh")],
+4: [ExtResource("7_ara7a")]
+})
+default_attack = ExtResource("2_33eqg")
+metadata/_custom_type_script = "uid://c2cret7fy87bn"
