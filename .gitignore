@@ -1,1 +1,26 @@
-Nothing should be ignored since only source code files (.gd files) were modified and no build artifacts, dependencies, or temporary files are present in the changes.
+```
+# Godot-specific ignores
+*.import
+*.pid
+*.tmp
+*.log
+export_presets.cfg
+.user
+*.user
+.autoload.gd
+.godot/
+
+# Dependencies
+res://addons/
+.addons/
+
+# Build artifacts
+*.import
+*.scn
+*.tres
+*.res
+
+# System files
+.DS_Store
+Thumbs.db
+```
