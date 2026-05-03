@@ -12,67 +12,21 @@ var _save_manager: Node = null
 func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(SAVE_PATH)
 	# Try to get reference to AutoSaveManager
-	if has_node("/root/AutoSaveManager"):
-		_save_manager = get_node("/root/AutoSaveManager")
+	if has_node("/root/SaveManager"):
+		_save_manager = get_node("/root/SaveManager")
 
-func save_game(slot: int, save_name: String) -> bool:
+func save_game(slot: int, save_name: String):
 	# Use AutoSaveManager if available
-	if _save_manager:
-		return _save_manager.save_game(slot, save_name)
-	
-	# Fallback to legacy implementation
-	if slot < 0 or slot >= MAX_SLOTS: return false
-	var data = {
-		"slot": slot,
-		"save_name": save_name,
-		"time_played": Global.time_played,
-		"global_data": Global.get_save_data(),
-		"scenes_data": Global.get_scenes_data(),
-	}
-	var file = FileAccess.open(SAVE_PATH + "slot_%d.json" % slot, FileAccess.WRITE)
-	if not file: return false
-	file.store_string(JSON.stringify(data, "  "))
-	file.close()
-	return true
+	_save_manager.save_game(slot, save_name)
 
-func load_game(slot: int) -> bool:
+func load_game(slot: int):
 	# Use AutoSaveManager if available
-	if _save_manager:
-		return _save_manager.load_game(slot)
+	_save_manager.load_game(slot)
 	
-	# Fallback to legacy implementation
-	if slot < 0 or slot >= MAX_SLOTS: return false
-	var path = SAVE_PATH + "slot_%d.json" % slot
-	if not FileAccess.file_exists(path): return false
-	var file = FileAccess.open(path, FileAccess.READ)
-	var json = JSON.parse_string(file.get_as_text())
-	file.close()
-	if not json or not json is Dictionary: return false
-	
-	Global.time_played = json.get("time_played", 0)
-	Global.load_save_data(json.get("global_data", {}), json.get("scenes_data", {}))
-	return true
 
 func get_slot_info(slot: int) -> Dictionary:
 	# Use AutoSaveManager if available
-	if _save_manager:
-		return _save_manager.get_slot_info(slot)
-	
-	# Fallback to legacy implementation
-	var path = SAVE_PATH + "slot_%d.json" % slot
-	if not FileAccess.file_exists(path):
-		return {"exists": false}
-	var file = FileAccess.open(path, FileAccess.READ)
-	var json = JSON.parse_string(file.get_as_text())
-	file.close()
-	if not json: return {"exists": false}
-	return {
-		"exists": true,
-		"name": json.get("save_name", "Empty"),
-		"time": json.get("time_played", 0),
-		"global_data": json.get("global_data", Global.get_save_data()),
-		"scenes_data": Global.get_scenes_data(),
-	}
+	return _save_manager.get_slot_info(slot)
 
 func format_time(seconds: float) -> String:
 	var h = int(seconds) / 3600
