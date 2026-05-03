@@ -14,6 +14,7 @@ extends Node
 ## - Error handling for missing/corrupted files
 ## - Support for runtime-spawned objects via unique IDs
 ## - Manual save/load and autosave functionality
+## - Resources are saved as paths when possible to avoid duplication
 
 signal save_completed(success: bool, slot: int)
 signal load_completed(success: bool, slot: int)
@@ -185,75 +186,37 @@ func delete_slot(slot: int) -> bool:
 # ============================================================================
 # NODE REGISTRATION & TRACKING
 # ============================================================================
+# Note: Node registration has been removed. We no longer automatically save/restore
+# individual node states. Nodes should handle their own persistence via get_save_data()
+# and set_save_data() methods in their scripts.
+# ============================================================================
 
-## Register a node for automatic state tracking
-## Returns a unique ID for the node
+var _registered_nodes: Dictionary = {}  # Kept for backward compatibility, but unused
+
+## Register a node for automatic state tracking (DEPRECATED - no longer does anything)
+## Returns empty string as node registration is disabled
 func register_node(node: Node) -> String:
-	if not node:
-		return ""
-	
-	# Check if already registered
-	for uid in _registered_nodes:
-		if is_instance_valid(_registered_nodes[uid]) and _registered_nodes[uid] == node:
-			return uid
-	
-	# Generate unique ID
-	var uid := _generate_node_id(node)
-	_registered_nodes[uid] = node
-	
-	# Connect to node's tree_exited to clean up
-	if not node.tree_exited.is_connected(_on_node_removed.bind(uid)):
-		node.tree_exited.connect(_on_node_removed.bind(uid))
-	
-	return uid
+	return ""
 
-## Unregister a node from tracking
+## Unregister a node from tracking (DEPRECATED - no longer does anything)
 func unregister_node(node: Node) -> void:
-	for uid in _registered_nodes:
-		if is_instance_valid(_registered_nodes[uid]) and _registered_nodes[uid] == node:
-			_unregister_node_by_id(uid)
-			break
+	pass
 
 func _unregister_node_by_id(uid: String) -> void:
-	if _registered_nodes.has(uid):
-		var node = _registered_nodes[uid]
-		if is_instance_valid(node) and node.tree_exited.is_connected(_on_node_removed.bind(uid)):
-			node.tree_exited.disconnect(_on_node_removed.bind(uid))
-		_registered_nodes.erase(uid)
+	pass
 
 func _on_node_removed(uid: String) -> void:
-	_unregister_node_by_id(uid)
+	pass
 
-## Register all nodes in a scene recursively
+## Register all nodes in a scene recursively (DEPRECATED - no longer does anything)
 func _register_scene_nodes(root: Node) -> void:
-	if not root:
-		return
-	
-	_register_node_recursive(root)
+	pass
 
 func _register_node_recursive(node: Node) -> void:
-	# Register nodes that have an @export or custom state worth saving
-	if _should_register_node(node):
-		register_node(node)
-	
-	# Recurse through children
-	for child in node.get_children():
-		_register_node_recursive(child)
+	pass
 
 func _should_register_node(node: Node) -> bool:
-	# Skip editor-only nodes
-	if Engine.is_editor_hint():
-		return false
-	
-	# Register nodes with scripts that have exportable properties
-	if node.get_script() and node.get_script().get_script_property_list().size() > 0:
-		return true
-	
-	# Register specific node types that commonly have state
-	var node_type := node.get_class()
-	return node_type in ["CharacterBody2D", "CharacterBody3D", "RigidBody2D", 
-		"RigidBody3D", "Area2D", "Area3D", "Sprite2D", "Sprite3D", 
-		"Label", "TextureRect", "ProgressBar", "AnimationPlayer"]
+	return false
 
 # ============================================================================
 # DATA CREATION & SERIALIZATION
@@ -395,12 +358,8 @@ func _capture_all_scenes_data() -> Dictionary:
 
 func _capture_scene_state(scene_root: Node) -> Dictionary:
 	var state := {
-		"nodes": {},
 		"custom_data": {}
 	}
-	
-	# Capture all relevant node states
-	_capture_node_state_recursive(scene_root, state.nodes, scene_root)
 	
 	# Capture any scene-level custom data
 	if scene_root.has_method("get_custom_scene_data"):
@@ -408,47 +367,21 @@ func _capture_scene_state(scene_root: Node) -> Dictionary:
 	
 	return state
 
-func _capture_node_state_recursive(node: Node, state_dict: Dictionary, root: Node, path_prefix: String = "") -> void:
-	# Create a unique path for this node
-	var node_path: String = str(path_prefix, node.name) if path_prefix else node.name
-	var node_uid: String = register_node(node)
-	
-	# Capture node state
-	var node_state := _serialize_node(node)
-	if node_state.size() > 0:
-		state_dict[node_path] = node_state
-		state_dict[node_path]["_uid"] = node_uid
-	
-	# Recurse through children
-	for child in node.get_children():
-		# Skip editor-only or internal nodes
-		if child.owner == null and child != root:
-			continue
-		_capture_node_state_recursive(child, state_dict, root, node_path + "/")
+# Removed node state serialization - we only save custom scene data now
+# Individual node variables should be handled by their scripts' get_save_data() methods
 
+# Deprecated: _serialize_node is no longer used
 func _serialize_node(node: Node) -> Dictionary:
-	var state: Dictionary= {}
-	
-	# Serialize transform for spatial nodes
-	if node is Node2D:
-		state["position"] = var_to_str(node.position)
-		state["rotation"] = node.rotation
-		state["scale"] = var_to_str(node.scale)
-	elif node is Node3D:
-		state["position"] = var_to_str(node.position)
-		state["rotation"] = var_to_str(node.rotation_degrees)
-		state["scale"] = var_to_str(node.scale)
-	
-	# Serialize properties
-	var props: Dictionary = _serialize_object_properties(node)
-	for key in props:
-		if key not in state:
-			state[key] = props[key]
-	
-	# Serialize component-like data (e.g., CollisionShape2D shape)
-	_serialize_components(node, state)
-	
-	return state
+	return {}
+
+# Deprecated: _serialize_components is no longer used  
+func _serialize_components(node: Node, state: Dictionary) -> void:
+	pass
+
+# Deprecated: _restore_collision_shape is no longer used
+func _restore_collision_shape(node: Node, shape_data: Dictionary) -> void:
+	pass
+
 
 func _serialize_object_properties(obj: Object) -> Dictionary:
 	var data: Dictionary = {}
@@ -489,6 +422,13 @@ func _serialize_object_properties(obj: Object) -> Dictionary:
 func _is_default_value(obj: Object, prop_name: String, value: Variant) -> bool:
 	"""Check if a property has its default value for this object type"""
 	var default_value: Variant = _get_property_default_value(obj, prop_name)
+	
+	# Special handling for 'equipped' dictionary - check if all values are null
+	if prop_name == "equipped" and value is Dictionary:
+		for slot_value in value.values():
+			if slot_value != null:
+				return false  # At least one slot has an item, so it's not default
+		return true  # All slots are null, this is default
 	
 	# If we can't determine the default, be safe and save it
 	if default_value == null and value != null:
@@ -557,31 +497,38 @@ func _get_property_default_value(obj: Object, prop_name: String) -> Variant:
 	
 	return null
 
+# Deprecated: Component serialization is no longer used
 func _serialize_components(node: Node, state: Dictionary) -> void:
-	# Handle special component data
-	if node is CollisionShape2D and node.shape:
-		state["_collision_shape"] = {
-			"type": node.shape.get_class(),
-			"data": _serialize_shape(node.shape)
-		}
-	elif node is CollisionShape3D and node.shape:
-		state["_collision_shape"] = {
-			"type": node.shape.get_class(),
-			"data": _serialize_shape(node.shape)
-	}
+	pass
 
+# Deprecated: Shape serialization is no longer used
 func _serialize_shape(shape: Shape2D) -> Dictionary:
-	var data := {"class": shape.get_class()}
+	return {}
+
+func _has_non_default_properties(resource: Resource) -> bool:
+	"""Check if a resource has any properties that differ from their default values"""
+	if not resource:
+		return false
 	
-	if shape is RectangleShape2D:
-		data["size"] = var_to_str(shape.size)
-	elif shape is CircleShape2D:
-		data["radius"] = shape.radius
-	elif shape is CapsuleShape2D:
-		data["radius"] = shape.radius
-		data["height"] = shape.height
+	var prop_list: Array[Dictionary] = resource.get_property_list()
+	for prop in prop_list:
+		var prop_name: String = prop["name"]
+		var usage: int = prop["usage"]
+		
+		# Skip non-storage properties and internal ones
+		if not (usage & PROPERTY_USAGE_STORAGE):
+			continue
+		if prop_name in SKIP_PROPERTIES or prop_name.begins_with("_"):
+			continue
+		
+		# Get current value
+		var current_value = resource.get(prop_name) if prop_name in resource else null
+		
+		# Check if it differs from default
+		if not _is_default_value(resource, prop_name, current_value):
+			return true
 	
-	return data
+	return false
 
 # ============================================================================
 # VALUE SERIALIZATION - PUBLIC API
@@ -609,13 +556,32 @@ func _serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	
 	# Handle Resources - serialize as path for external resources, deep serialize for runtime-modified ones
 	if value is Resource:
-		# For Resources that have been modified at runtime (like Party), we need to save their state
-		# Check if it's a custom resource with runtime modifications OR if it's an Item/Entity with equipment
-		if value.has_meta("_runtime_modified") or not value.resource_path or value is Item or value is Entity:
-			return _serialize_object_deep(value)
+		var resource: Resource = value as Resource
+		
+		# Check if resource has non-default values that need deep serialization
+		var needs_deep_save := false
+		
+		# Always deep-save if no resource path (runtime-created)
+		if not resource.resource_path:
+			needs_deep_save = true
+		# Deep-save if marked as runtime modified
+		elif resource.has_meta("_runtime_modified"):
+			needs_deep_save = true
+		# Deep-save Entity resources (like Party members) if they have equipped items or modified stats
+		elif resource is Entity and _has_non_default_properties(resource):
+			needs_deep_save = true
+		# Deep-save InventoryItemConfig resources if they have modified properties
+		elif resource is InventoryItemConfig and _has_non_default_properties(resource):
+			needs_deep_save = true
+		# Deep-save Item resources if they have modified properties
+		elif resource is Item and _has_non_default_properties(resource):
+			needs_deep_save = true
+		
+		if needs_deep_save:
+			return _serialize_object_deep(resource)
 		else:
-			# External resource file - just save the path
-			return value.resource_path if value.resource_path else null
+			# External resource file with no modifications - just save the path
+			return resource.resource_path if resource.resource_path else null
 	
 	# Handle Arrays
 	if value is Array:
@@ -807,88 +773,16 @@ func _apply_scenes_data(scenes_data: Dictionary) -> void:
 			Global.scene_data[key] = scenes_data[key]
 
 func _apply_scene_state(scene_root: Node, state: Dictionary) -> void:
-	if state.has("nodes"):
-		_apply_node_states(scene_root, state["nodes"])
-	
+	# Only apply custom scene data - node states are no longer saved
 	if state.has("custom_data") and scene_root.has_method("set_custom_scene_data"):
 		scene_root.set_custom_scene_data(state["custom_data"])
 
-
-func _apply_node_states(root: Node, states: Dictionary) -> void:
-	for node_path in states:
-		var node_state: Dictionary = states[node_path]
-		
-		# Skip internal metadata
-		if node_path.begins_with("_"):
-			continue
-		
-		# Try to find the node
-		var node: Node = root.get_node_or_null(node_path)
-		if not node:
-			# Node might be runtime-spawned, try to find by UID
-			node = _find_node_by_uid(node_state.get("_uid", ""))
-		
-		if node:
-			_apply_node_state(node, node_state)
-		else:
-			push_warning("[AutoSaveManager] Could not find node at path: %s" % node_path)
-
-func _apply_node_state(node: Node, state: Dictionary) -> void:
-	# Restore transform
-	if node is Node2D:
-		if state.has("position"):
-			node.position = str_to_var(state["position"])
-		if state.has("rotation"):
-			node.rotation = state["rotation"]
-		if state.has("scale"):
-			node.scale = str_to_var(state["scale"])
-	elif node is Node3D:
-		if state.has("position"):
-			node.position = str_to_var(state["position"])
-		if state.has("rotation"):
-			node.rotation_degrees = str_to_var(state["rotation"])
-		if state.has("scale"):
-			node.scale = str_to_var(state["scale"])
-	
-	# Restore properties
-	_deserialize_into_object(node, state)
-	
-	# Restore components
-	if state.has("_collision_shape"):
-		_restore_collision_shape(node, state["_collision_shape"])
+# Removed _apply_node_states and _apply_node_state - we no longer save/restore individual node states
+# Individual node variables should be handled by their scripts' set_save_data() methods
 
 func _restore_collision_shape(node: Node, shape_data: Dictionary) -> void:
-	if not (node is CollisionShape2D or node is CollisionShape3D):
-		return
-	
-	var shape_type = shape_data.get("class", "")
-	var shape: Shape2D = null
-	
-	match shape_type:
-		"RectangleShape2D":
-			shape = RectangleShape2D.new()
-			if shape_data.has("size"):
-				shape.size = str_to_var(shape_data["size"])
-		"CircleShape2D":
-			shape = CircleShape2D.new()
-			if shape_data.has("radius"):
-				shape.radius = shape_data["radius"]
-		"CapsuleShape2D":
-			shape = CapsuleShape2D.new()
-			if shape_data.has("radius"):
-				shape.radius = shape_data["radius"]
-			if shape_data.has("height"):
-				shape.height = shape_data["height"]
-	
-	if shape:
-		if node is CollisionShape2D:
-			node.shape = shape
-		elif node is CollisionShape3D:
-			# Would need 3D equivalent
-			pass
+	pass
 
-func _deserialize_into_object(obj: Object, data: Dictionary) -> void:
-	if not obj or not data:
 		return
 	
 	for key in data:
@@ -959,51 +853,29 @@ func _copy_resource_properties(target: Resource, source: Resource) -> void:
 				target.set(prop_name, value)
 
 func _capture_registered_nodes() -> Dictionary:
-	var captured := {}
-	
-	for uid in _registered_nodes:
-		var node = _registered_nodes[uid]
-		if is_instance_valid(node):
-			captured[uid] = {
-				"class": node.get_class(),
-				"path": node.get_path(),
-				"state": _serialize_node(node)
-			}
-	
-	return captured
+	# No longer capturing registered nodes - individual node state saving has been removed
+	# Nodes should handle their own save data via get_save_data() methods in their scripts
+	return {}
 
 func _apply_registered_nodes(captured: Dictionary) -> void:
-	for uid in captured:
-		var node_data: Dictionary = captured[uid]
-		var node = _find_node_by_path(node_data.get("path", ""))
-		
-		if node and is_instance_valid(node):
-			_apply_node_state(node, node_data.get("state", {}))
+	# No longer applying registered nodes - individual node state loading has been removed
+	# Nodes should handle their own load data via set_save_data() methods in their scripts
+	pass
 
+# Node lookup functions are no longer needed since we don't save node states
 func _find_node_by_uid(uid: String) -> Node:
-	if _registered_nodes.has(uid):
-		var node = _registered_nodes[uid]
-		if is_instance_valid(node):
-			return node
 	return null
 
 func _find_node_by_path(path: String) -> Node:
-	if path.is_empty():
-		return null
-	
-	var current_scene := get_tree().current_scene
-	if current_scene:
-		return current_scene.get_node_or_null(path)
 	return null
 
 # ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
 
+# Node ID generation is no longer needed
 func _generate_node_id(node: Node) -> String:
-	_node_id_counter += 1
-	var base_id := "%s_%d_%d" % [node.get_class(), node.get_instance_id(), _node_id_counter]
-	return base_id.md5_text().substr(0, 12)
+	return ""
 
 func _read_json_file(path: String) -> Variant:
 	var file := FileAccess.open(path, FileAccess.READ)
