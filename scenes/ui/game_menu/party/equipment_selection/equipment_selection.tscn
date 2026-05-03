@@ -1,0 +1,129 @@
+[gd_scene load_steps=3 format=3 uid="uid://dhu0rjvcqicb7"]
+
+[ext_resource type="Script" uid="uid://dutdq7hjy6fe2" path="res://scenes/ui/game_menu/party/equipment_selection/equipment_selection.gd" id="1_equip"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wt8uq"]
+bg_color = Color(0.15686275, 0.16078432, 0.15686275, 1)
+
+[node name="EquipmentSelection" type="Control"]
+custom_minimum_size = Vector2(648, 0)
+layout_mode = 3
+anchor_right = 0.75000006
+anchor_bottom = 1.0
+offset_right = -6.1035156e-05
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_equip")
+
+[node name="Panel" type="Panel" parent="."]
+custom_minimum_size = Vector2(616, 616)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -308.0
+offset_top = -308.0
+offset_right = 308.0
+offset_bottom = 308.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_wt8uq")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Select Equipment"
+horizontal_alignment = 1
+
+[node name="MemberNameLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Member Name"
+horizontal_alignment = 1
+
+[node name="SlotLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Slot: Weapon (L)"
+horizontal_alignment = 1
+
+[node name="HSplitContainer" type="HSplitContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ItemsPanel" type="Panel" parent="MarginContainer/VBoxContainer/HSplitContainer"]
+custom_minimum_size = Vector2(262, 0)
+layout_mode = 2
+
+[node name="ItemsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/ItemsPanel"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="CurrentEquipPanel" type="Panel" parent="MarginContainer/VBoxContainer/HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/CurrentEquipPanel"]
+layout_mode = 0
+offset_right = 262.0
+offset_bottom = 54.0
+theme_override_constants/separation = 12
+
+[node name="CurrentLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/CurrentEquipPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 20
+text = "Currently Equipped"
+horizontal_alignment = 1
+
+[node name="CurrentItemName" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/CurrentEquipPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 16
+text = "None"
+horizontal_alignment = 1
+
+[node name="CurrentItemStats" type="TextEdit" parent="MarginContainer/VBoxContainer/HSplitContainer/CurrentEquipPanel/VBoxContainer"]
+custom_minimum_size = Vector2(260, 150)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 2
+text = "Stats"
+editable = false
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="UnequipButton" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(150, 45)
+layout_mode = 2
+text = "Unequip"
+
+[node name="CancelButton" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(150, 45)
+layout_mode = 2
+text = "Cancel"
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/UnequipButton" to="." method="_on_unequip_button_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/CancelButton" to="." method="_on_cancel_button_pressed"]

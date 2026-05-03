@@ -1,0 +1,94 @@
+extends Control
+
+## Party Battle Face UI Component
+## Displays a party member's battle stats using the partyBattleFace.tscn scene
+## Supports both direct Entity resource and BattleTypes.BattleActor wrapper
+
+var party_member: Entity
+var effect_container: GridContainer
+var hp_label: Label
+var mp_label: Label
+var hp_bar: ProgressBar
+var mp_bar: ProgressBar
+const EFFECT_ATLAS_PATH = "res://assets/battleui/status_effects.png"
+const EFFECT_TILE_SIZE = 64
+const EFFECT_COLS = 4
+
+func _ready() -> void:
+	hp_label = $MarginContainer/GridContainer/HPAMOUNT
+	mp_label = $MarginContainer/GridContainer/MPAMOUNT
+	hp_bar = $MarginContainer/GridContainer/HPAMOUNT/ProgressBar
+	mp_bar = $MarginContainer/GridContainer/MPAMOUNT/ProgressBar
+	
+	if get_node_or_null("EffectContainer") != null:
+		effect_container = GridContainer.new()
+		effect_container.name = "EffectContainer"
+		effect_container.columns = 4
+		effect_container.add_theme_constant_override("h_separation", 4)
+		effect_container.add_theme_constant_override("v_separation", 4)
+		effect_container.custom_minimum_size = Vector2(128, 64)
+		$MarginContainer/GridContainer.add_child(effect_container)
+	else:
+		effect_container = $EffectContainer
+
+## Setup with an Entity resource directly
+func setup(data: Entity) -> void:
+	party_member = data
+	$Sprite2D.texture = party_member.portrait
+	$Sprite2D.region_rect = party_member.portrait_rect
+
+func _process(_delta: float) -> void:
+	if party_member:
+		# Use direct party resource data
+		hp_label.text = str(party_member.hp, "/", party_member.max_stats["hp"])
+		mp_label.text = str(party_member.mp, "/", party_member.max_stats["mp"])
+		hp_bar.max_value = party_member.max_stats["hp"]
+		mp_bar.max_value = party_member.max_stats["mp"]
+		hp_bar.value = party_member.hp
+		mp_bar.value = party_member.mp                
+		if party_member.portrait:
+			$Sprite2D.texture = party_member.portrait
+			$Sprite2D.region_rect = party_member.portrait_rect
+
+## Updates status effects display from BattleTypes.BattleActor
+func update_effects_ui() -> void:
+	for child in effect_container.get_children():
+		child.queue_free()
+	
+	if party_member and party_member.effects:
+		for effect in party_member.effects.keys():
+			var data = party_member.effects[effect]
+			if data is Array and data.size() >= 2 and data[1] > 0:
+				var icon = create_effect_icon(effect)
+				if icon:
+					effect_container.add_child(icon)
+
+## Creates an effect icon from an effect ID string
+func create_effect_icon_from_name(effect_id: String) -> TextureRect:
+	var icon = TextureRect.new()
+	icon.custom_minimum_size = Vector2(EFFECT_TILE_SIZE, EFFECT_TILE_SIZE)
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	
+	var atlas = AtlasTexture.new()
+	atlas.atlas = load(EFFECT_ATLAS_PATH)
+	
+	# Map effect ID to atlas position (simple hash-based mapping)
+	var hash_val = effect_id.hash() % 16  # Assuming 16 effects in atlas (4x4)
+	var x = (hash_val % EFFECT_COLS) * EFFECT_TILE_SIZE
+	var y = floori(hash_val / EFFECT_COLS) * EFFECT_TILE_SIZE
+	atlas.region = Rect2(x, y, EFFECT_TILE_SIZE, EFFECT_TILE_SIZE)
+	icon.texture = atlas
+	return icon
+
+func create_effect_icon(effect: int) -> TextureRect:
+	var icon = TextureRect.new()
+	icon.custom_minimum_size = Vector2(EFFECT_TILE_SIZE, EFFECT_TILE_SIZE)
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	
+	var atlas = AtlasTexture.new()
+	atlas.atlas = load(EFFECT_ATLAS_PATH)
+	var x = (effect % EFFECT_COLS) * EFFECT_TILE_SIZE
+	var y = floori(effect / EFFECT_COLS) * EFFECT_TILE_SIZE
+	atlas.region = Rect2(x, y, EFFECT_TILE_SIZE, EFFECT_TILE_SIZE)
+	icon.texture = atlas
+	return icon

@@ -1,0 +1,130 @@
+[gd_scene load_steps=9 format=3 uid="uid://extras123abc"]
+
+[ext_resource type="Script" uid="uid://b8dty2ph122sc" path="res://scenes/ui/game_menu/extras/extras.gd" id="1_extras"]
+[ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="2_button"]
+[ext_resource type="FontFile" uid="uid://bbkqbneky7jdt" path="res://assets/courbd.ttf" id="3_font"]
+[ext_resource type="Texture2D" uid="uid://dexwxvdtim46r" path="res://assets/ui/button_pressed.png" id="4_pqp4k"]
+[ext_resource type="Shader" uid="uid://78ytsnaia8ko" path="res://resources/battles/white_flash.tres" id="4_shader"]
+
+[sub_resource type="ShaderMaterial" id="mat_achievements"]
+shader = ExtResource("4_shader")
+shader_parameter/is_flashing = false
+shader_parameter/FlashColor = Color(1, 1, 1, 1)
+shader_parameter/FlashSpeed = 1.0
+shader_parameter/FlashIntensity = 1.0
+
+[sub_resource type="ShaderMaterial" id="mat_back"]
+shader = ExtResource("4_shader")
+shader_parameter/is_flashing = false
+shader_parameter/FlashColor = Color(1, 1, 1, 1)
+shader_parameter/FlashSpeed = 1.0
+shader_parameter/FlashIntensity = 1.0
+
+[sub_resource type="ShaderMaterial" id="mat_exit"]
+shader = ExtResource("4_shader")
+shader_parameter/is_flashing = false
+shader_parameter/FlashColor = Color(1, 1, 1, 1)
+shader_parameter/FlashSpeed = 1.0
+shader_parameter/FlashIntensity = 1.0
+
+[node name="extras" type="Control"]
+custom_minimum_size = Vector2(640, 0)
+layout_mode = 3
+anchor_left = 0.259
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.22399902
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_extras")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 12
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "Extras"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AchievementsButton" type="Button" parent="MarginContainer/VBoxContainer"]
+material = SubResource("mat_achievements")
+custom_minimum_size = Vector2(180, 87)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 28
+text = "Achievements"
+flat = true
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/VBoxContainer/AchievementsButton"]
+z_index = -1
+use_parent_material = true
+layout_mode = 0
+offset_left = 207.0
+offset_right = 415.0
+offset_bottom = 87.0
+texture = ExtResource("4_pqp4k")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[node name="BackButton" type="Button" parent="MarginContainer/VBoxContainer"]
+material = SubResource("mat_back")
+custom_minimum_size = Vector2(180, 87)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 28
+text = "Back"
+flat = true
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/VBoxContainer/BackButton"]
+z_index = -1
+use_parent_material = true
+layout_mode = 0
+offset_left = 207.0
+offset_right = 414.0
+offset_bottom = 87.0
+texture = ExtResource("2_button")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[node name="ExitButton" type="Button" parent="MarginContainer/VBoxContainer"]
+material = SubResource("mat_exit")
+custom_minimum_size = Vector2(180, 87)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 28
+text = "Exit"
+flat = true
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/VBoxContainer/ExitButton"]
+z_index = -1
+use_parent_material = true
+layout_mode = 0
+offset_left = 207.0
+offset_right = 413.0
+offset_bottom = 87.0
+texture = ExtResource("2_button")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/AchievementsButton" to="." method="_on_achievements_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ExitButton" to="." method="_on_exit_pressed"]
