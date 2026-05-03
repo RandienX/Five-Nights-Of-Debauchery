@@ -42,7 +42,7 @@ func get_save_data() -> Dictionary:
 		if item and item.resource_path:
 			data["inventory"][item.resource_path] = inventory[item]
 	
-	# Serialize party members with their properties
+	# Serialize party members with their properties using SaveManager's serialization
 	for p in party:
 		if p is Resource:
 			var p_dict: Dictionary = {
@@ -58,46 +58,11 @@ func get_save_data() -> Dictionary:
 						continue
 					if p.has_method("get") or prop_name in p:
 						var prop_value = p.get(prop_name)
-						p_dict["properties"][prop_name] = _serialize_value(prop_value)
+						# Use SaveManager's serialization for consistency
+						p_dict["properties"][prop_name] = SaveManager.serialize_value(prop_value, prop.type)
 			data["party"].append(p_dict)
 	
 	return data
-
-func _serialize_value(value: Variant) -> Variant:
-	if value == null:
-		return null
-	if value is Resource:
-		return value.resource_path if value.resource_path else null
-	elif value is Dictionary:
-		var new_dict: Dictionary = {}
-		for k in value.keys():
-			new_dict[_serialize_value(k)] = _serialize_value(value[k])
-		return new_dict
-	elif value is Array:
-		var new_arr: Array = []
-		for v in value:
-			new_arr.append(_serialize_value(v))
-		return new_arr
-	elif value is Vector2 or value is Color:
-		return var_to_str(value)
-	return value
-
-func _deserialize_value(value: Variant) -> Variant:
-	if value is String and value.ends_with(".tres"):
-		return load(value)
-	elif value is String and (value.begins_with("Vector2") or value.begins_with("Color")):
-		return str_to_var(value)
-	elif value is Dictionary:
-		var new_dict: Dictionary = {}
-		for k in value.keys():
-			new_dict[_deserialize_value(k)] = _deserialize_value(value[k])
-		return new_dict
-	elif value is Array:
-		var new_arr: Array = []
-		for v in value:
-			new_arr.append(_deserialize_value(v))
-		return new_arr
-	return value
 
 func load_save_data(data: Dictionary) -> void:
 	# Load currency
@@ -132,9 +97,11 @@ func load_save_data(data: Dictionary) -> void:
 			if base_entity:
 				var resource: Entity = base_entity.duplicate_deep()
 				for prop_name in p_dict["properties"].keys():
-					var prop_value = _deserialize_value(p_dict["properties"][prop_name])
+					var prop_value = SaveManager.deserialize_value(p_dict["properties"][prop_name])
 					if prop_name in resource:
 						resource.set(prop_name, prop_value)
+				# Re-initialize equipment effects after loading
+				resource.equip_stats_change()
 				party.append(resource)
 
 # === Currency Management ===
