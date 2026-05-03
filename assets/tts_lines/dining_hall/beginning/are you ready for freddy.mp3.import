@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bstv8puremnyq"
+path="res://.godot/imported/are you ready for freddy.mp3-0bffb0040ed021e59e91117118f65034.mp3str"
+
+[deps]
+
+source_file="res://assets/tts_lines/dining_hall/beginning/are you ready for freddy.mp3"
+dest_files=["res://.godot/imported/are you ready for freddy.mp3-0bffb0040ed021e59e91117118f65034.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
