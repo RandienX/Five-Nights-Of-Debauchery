@@ -609,9 +609,13 @@ func _serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	
 	# Handle Resources - serialize as path for external resources, deep serialize for runtime-modified ones
 	if value is Resource:
-		# For Resources that have been modified at runtime (like Party), we need to save their state
-		# Check if it's a custom resource with runtime modifications OR if it's an Item/Entity with equipment
-		if value.has_meta("_runtime_modified") or not value.resource_path or value is Item or value is Entity:
+		# Entity resources (party members/enemies) should be deep serialized since they have runtime state (HP, MP, level, equipment, etc.)
+		if value is Entity:
+			return _serialize_object_deep(value)
+		# For other Resources (Item, Skill, BattleEffect, BattleItemDrop, etc.), only deep serialize if:
+		# 1. They have been explicitly marked as runtime-modified, OR
+		# 2. They don't have a resource_path (created at runtime)
+		elif value.has_meta("_runtime_modified") or not value.resource_path:
 			return _serialize_object_deep(value)
 		else:
 			# External resource file - just save the path
@@ -700,7 +704,7 @@ func _deserialize_resource_from_dict(data: Dictionary) -> Resource:
 	
 	var new_resource: Resource
 	
-	# Try to load from path first if available
+	# Try to load from path first if available (for Entity and other resources that have a base file)
 	if resource_path and ResourceLoader.exists(resource_path):
 		new_resource = load(resource_path).duplicate()
 	else:
@@ -709,21 +713,45 @@ func _deserialize_resource_from_dict(data: Dictionary) -> Resource:
 		if class_type:
 			new_resource = ClassDB.instantiate(resource_type)
 		else:
-			# Fallback: try to find script class
-			push_warning("[AutoSaveManager] Could not instantiate resource type: %s" % resource_type)
-			return null
+			# Fallback: try to find script class by searching for it
+			var script_class = _find_script_class(resource_type)
+			if script_class:
+				new_resource = script_class.new()
+			else:
+				push_warning("[AutoSaveManager] Could not instantiate resource type: %s" % resource_type)
+				return null
 	
-	# Apply all saved properties
-	_copy_resource_properties(new_resource, _dict_to_resource(data))
+	# Apply all saved properties from the serialized data
+	_apply_resource_properties(new_resource, data)
 	return new_resource
 
-func _dict_to_resource(data: Dictionary) -> Resource:
-	"""Helper to create a temporary resource from dict for property copying"""
-	var temp = Resource.new()
+func _find_script_class(class_name: String) -> GDScript:
+	"""Find a script class by name from global classes"""
+	for class_info in ProjectSettings.get_global_class_list():
+		if class_info.get("class") == class_name:
+			var script_path: String = class_info.get("path", "")
+			if script_path and ResourceLoader.exists(script_path):
+				return load(script_path)
+	return null
+
+func _apply_resource_properties(target: Resource, data: Dictionary) -> void:
+	"""Apply serialized properties to a resource, handling nested resources properly"""
+	if not target or not data:
+		return
+	
 	for key in data:
-		if key != "_resource_type" and key != "_resource_path":
-			temp.set_meta(key, data[key])
-	return temp
+		# Skip metadata keys
+		if key in ["_resource_type", "_resource_path"]:
+			continue
+		
+		var value = data[key]
+		
+		# Deserialize the value (handles paths for nested resources)
+		var deserialized_value = _deserialize_value(value)
+		
+		# Set the property on the target resource
+		if key in target or target.has_meta(key):
+			target.set(key, deserialized_value)
 
 # ============================================================================
 # DATA APPLICATION (LOADING)
@@ -902,15 +930,8 @@ func _deserialize_into_object(obj: Object, data: Dictionary) -> void:
 		
 		var value = _deserialize_value(data[key])
 		
-		# Special handling for Resources - recreate from path and apply properties
-		if obj is Resource and key == "_resource_path" and value:
-			var loaded_resource = load(value as String)
-			if loaded_resource:
-				_copy_resource_properties(obj, loaded_resource)
-		elif obj is Resource and key != "_resource_type" and key != "_resource_path":
-			obj.set(key, value)
-		else:
-			obj.set(key, value)
+		# Set the property on the object
+		obj.set(key, value)
 	
 	# Special post-processing for PlayerStats to restore party array properly
 	if obj.get_class() == "Node" and obj.has_meta("party") and data.has("party"):
