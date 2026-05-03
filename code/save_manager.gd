@@ -475,12 +475,87 @@ func _serialize_object_properties(obj: Object) -> Dictionary:
 		# Get property value
 		var value = obj.get(prop_name) if obj.has_method("get") or prop_name in obj else null
 		
+		# Check if this value differs from the default for this node/script type
+		if _is_default_value(obj, prop_name, value):
+			continue  # Skip saving default values
+		
 		# Try to serialize the value
 		var serialized = _serialize_value(value, prop_type)
 		if serialized != null:
 			data[prop_name] = serialized
 	
 	return data
+
+func _is_default_value(obj: Object, prop_name: String, value: Variant) -> bool:
+	"""Check if a property has its default value for this object type"""
+	var default_value: Variant = _get_property_default_value(obj, prop_name)
+	
+	# If we can't determine the default, be safe and save it
+	if default_value == null and value != null:
+		return false
+	
+	# Compare values
+	if typeof(value) != typeof(default_value):
+		return false
+	
+	# Handle different types appropriately
+	match typeof(value):
+		TYPE_BOOL, TYPE_INT, TYPE_FLOAT, TYPE_STRING:
+			return value == default_value
+		TYPE_VECTOR2, TYPE_VECTOR3, TYPE_COLOR, TYPE_RECT2, TYPE_TRANSFORM2D:
+			return str(value) == str(default_value)
+		TYPE_ARRAY:
+			if not (value is Array) or not (default_value is Array):
+				return false
+			if value.size() != default_value.size():
+				return false
+			for i in range(value.size()):
+				if str(value[i]) != str(default_value[i]):
+					return false
+			return true
+		TYPE_DICTIONARY:
+			if not (value is Dictionary) or not (default_value is Dictionary):
+				return false
+			if value.size() != default_value.size():
+				return false
+			for key in value.keys():
+				if not default_value.has(key) or str(value[key]) != str(default_value[key]):
+					return false
+			return true
+		TYPE_NIL:
+			return value == null && default_value == null
+	
+	# For complex types, do a simple comparison
+	return value == default_value
+
+func _get_property_default_value(obj: Object, prop_name: String) -> Variant:
+	"""Get the default value for a property based on the object's class/script"""
+	# Try ClassDB for built-in node types
+	var class_name: String = obj.get_class()
+	if ClassDB.class_exists(class_name):
+		var default_val = ClassDB.class_get_property_default_value(class_name, prop_name)
+		if default_val != null:
+			return default_val
+	
+	# For script-defined properties, check if the script defines a default
+	if obj.get_script():
+		var script: Script = obj.get_script()
+		# Try to get default from script's property list
+		for prop in script.get_script_property_list():
+			if prop["name"] == prop_name:
+				# If the property has a hint_string with a default, use it
+				# Otherwise, we need to check the actual default value
+				pass
+		
+		# Alternative: Create a temporary instance to check defaults
+		# This is more reliable but slower
+		var temp_instance = script.new()
+		if temp_instance and prop_name in temp_instance:
+			var default_val = temp_instance.get(prop_name)
+			temp_instance.free()
+			return default_val
+	
+	return null
 
 func _serialize_components(node: Node, state: Dictionary) -> void:
 	# Handle special component data
