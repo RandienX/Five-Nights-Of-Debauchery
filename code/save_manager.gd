@@ -354,10 +354,14 @@ func _serialize_object_deep(obj: Object) -> Dictionary:
 			if prop_name in ["script", "resource_local_to_scene", "resource_name"]:
 				continue
 			
-			# Get and serialize the property value
+			# Skip properties without storage usage (computed/virtual properties)
+			if not (usage & PROPERTY_USAGE_STORAGE):
+				continue
+			
+			# Get and serialize the property value using DEEP serialization
 			if obj.has_meta(prop_name) or prop_name in obj:
 				var value = obj.get(prop_name)
-				var serialized = _serialize_value(value, prop_type)
+				var serialized = _serialize_value_deep(value, prop_type)
 				if serialized != null:
 					data[prop_name] = serialized
 		
@@ -466,14 +470,15 @@ func _serialize_object_properties(obj: Object) -> Dictionary:
 			continue
 		if not (usage & PROPERTY_USAGE_STORAGE):
 			continue
-		if usage & PROPERTY_USAGE_EDITOR:
+		# Skip editor-only properties but keep resource references that need deep serialization
+		if (usage & PROPERTY_USAGE_EDITOR) and not (usage & PROPERTY_USAGE_STORAGE):
 			continue
 		
 		# Get property value
 		var value = obj.get(prop_name) if obj.has_method("get") or prop_name in obj else null
 		
-		# Try to serialize the value
-		var serialized = _serialize_value(value, prop_type)
+		# Try to serialize the value using DEEP serialization for nested objects
+		var serialized = _serialize_value_deep(value, prop_type)
 		if serialized != null:
 			data[prop_name] = serialized
 	
@@ -510,6 +515,9 @@ func _serialize_shape(shape: Shape2D) -> Dictionary:
 # ============================================================================
 
 func _serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
+	return _serialize_value_deep(value, type_hint)
+
+func _serialize_value_deep(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	if value == null:
 		return null
 	
@@ -521,32 +529,36 @@ func _serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 			return var_to_str(value)
 		return value
 	
-	# Handle Resources - serialize as path for external resources, deep serialize for runtime-modified ones
+	# Handle Resources - ALWAYS deep serialize to capture runtime state (HP, MP, level, equipment, etc.)
 	if value is Resource:
-		if value.has_meta("_runtime_modified") or not value.resource_path:
-			return _serialize_object_deep(value)
-		else:
-			# External resource file - just save the path
-			return value.resource_path if value.resource_path else null
+		return _serialize_object_deep(value)
 	
-	# Handle Arrays
+	# Handle Arrays - recursively deep serialize each item
 	if value is Array:
 		var result: Array = []
 		for item in value:
-			result.append(_serialize_value(item, TYPE_NIL))
+			result.append(_serialize_value_deep(item, TYPE_NIL))
 		return result
 	
-	# Handle Dictionaries
+	# Handle Dictionaries - recursively deep serialize keys and values
 	if value is Dictionary:
 		var result: Dictionary = {}
 		for key in value.keys():
-			var serialized_key = _serialize_value(key, TYPE_NIL)
-			var serialized_value = _serialize_value(value[key], TYPE_NIL)
+			var dict_value = value[key]
+			var serialized_key = _serialize_value_deep(key, TYPE_NIL)
+			var serialized_value: Variant = null
+			
+			# Special handling for Resource values in dictionaries (e.g., equipped items)
+			if dict_value is Resource:
+				serialized_value = _serialize_object_deep(dict_value)
+			else:
+				serialized_value = _serialize_value_deep(dict_value, TYPE_NIL)
+			
 			if serialized_key != null:
 				result[serialized_key] = serialized_value
 		return result
 	
-	# Handle Objects with properties
+	# Handle Objects with properties - use deep property serialization
 	if value is Object:
 		return _serialize_object_properties(value)
 	
@@ -623,13 +635,55 @@ func _deserialize_resource_from_dict(data: Dictionary) -> Resource:
 		if class_type:
 			new_resource = ClassDB.instantiate(resource_type)
 		else:
-			# Fallback: try to find script class
-			push_warning("[AutoSaveManager] Could not instantiate resource type: %s" % resource_type)
-			return null
+			# Fallback: try to find script class by searching for scripts with matching class_name
+			new_resource = _instantiate_script_class(resource_type)
+			if not new_resource:
+				push_warning("[AutoSaveManager] Could not instantiate resource type: %s" % resource_type)
+				return null
 	
 	# Apply all saved properties
 	_copy_resource_properties(new_resource, _dict_to_resource(data))
 	return new_resource
+
+
+func _instantiate_script_class(class_name: String) -> Resource:
+	"""Find and instantiate a script class by its class_name"""
+	# Common script class paths to check - organized by class type
+	var script_paths := {
+		"Entity": "res://code/battle/entity.gd",
+		"Skill": "res://code/battle/skill.gd",
+		"BattleEffect": "res://code/battle/battle_effect.gd",
+		"Item": "res://code/player/item.gd",
+		"InventoryItemConfig": "res://code/player/inventory_item_config.gd",
+		"ShopItem": "res://code/shop/shop_item.gd",
+		"BattleItemDrop": "res://code/battle/battle_item_drop.gd",
+	}
+	
+	# Direct lookup by class_name
+	if script_paths.has(class_name):
+		var path = script_paths[class_name]
+		if ResourceLoader.exists(path):
+			var script = load(path)
+			if script and script is GDScript:
+				return script.new() as Resource
+	
+	# Fallback: iterate through all scripts if not found in map
+	for pair in script_paths:
+		var path = script_paths[pair]
+		if ResourceLoader.exists(path):
+			var script = load(path)
+			if script and script is GDScript:
+				# Use get_global_name() for accurate class_name matching
+				var global_name = script.get_global_name()
+				if global_name == class_name:
+					return script.new() as Resource
+	
+	# Alternative: try to instantiate directly using global class name
+	# This works if the class_name is registered globally
+	if ClassDB.class_exists(class_name):
+		return ClassDB.instantiate(class_name) as Resource
+	
+	return null
 
 func _dict_to_resource(data: Dictionary) -> Resource:
 	"""Helper to create a temporary resource from dict for property copying"""
@@ -862,10 +916,37 @@ func _copy_resource_properties(target: Resource, source: Resource) -> void:
 		if prop_name in ["script", "resource_local_to_scene", "resource_name"]:
 			continue
 		
-		if source.has_meta(prop_name) or prop_name in source:
-			var value = source.get(prop_name)
+		# Check if the property exists on source (via meta or direct access)
+		var has_value := false
+		var value: Variant = null
+		
+		if source.has_meta(prop_name):
+			value = source.get_meta(prop_name)
+			has_value = true
+		elif prop_name in source:
+			value = source.get(prop_name)
+			has_value = true
+		
+		if has_value:
+			# Check if target can accept this property
 			if target.has_meta(prop_name) or prop_name in target:
-				target.set(prop_name, value)
+				# For nested Resources (like equipped items), ensure deep copy
+				if value is Resource:
+					# Deep serialize and deserialize nested resources
+					var serialized = _serialize_object_deep(value)
+					if serialized.size() > 0:
+						var deserialized = _deserialize_resource_from_dict(serialized)
+						if deserialized:
+							target.set(prop_name, deserialized)
+						else:
+							target.set(prop_name, value.duplicate(true) if value.has_method("duplicate") else value)
+					else:
+						target.set(prop_name, value.duplicate(true) if value.has_method("duplicate") else value)
+				elif value is Array or value is Dictionary:
+					# Deep copy arrays and dictionaries containing resources
+					target.set(prop_name, value.duplicate(true))
+				else:
+					target.set(prop_name, value)
 
 func _capture_registered_nodes() -> Dictionary:
 	var captured := {}
