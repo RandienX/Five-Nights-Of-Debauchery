@@ -21,6 +21,7 @@ signal load_completed(success: bool)
 # === Configuration ===
 const SAVE_PATH := "user://saves/"
 const SAVE_VERSION := "1.0"
+const MAX_SLOTS := 10
 
 # === Singleton References ===
 var _global: Node = null
@@ -64,87 +65,169 @@ func _initialize_singleton_references() -> void:
 
 
 # ============================================================================
-# PUBLIC API - Save/Load Operations
+# PUBLIC API - Save/Load Operations with Slot Support
 # ============================================================================
 
-## Save all three singletons to separate files
-func save_all() -> bool:
+## Save all three singletons to separate files for a specific slot
+func save_all(slot: int = 0) -> bool:
+	if slot < 0 or slot >= MAX_SLOTS:
+		push_error("[SingletonSaveManager] Invalid slot number: %d" % slot)
+		return false
+	
 	var success = true
 	
-	# Save each singleton independently
+	# Save each singleton independently with slot-specific filenames
 	if _global:
-		success = _save_singleton(_global, "global.json") and success
+		success = _save_singleton(_global, "global_slot_%d.json" % slot) and success
 	if _player_stats:
-		success = _save_singleton(_player_stats, "player_stats.json") and success
+		success = _save_singleton(_player_stats, "player_stats_slot_%d.json" % slot) and success
 	if _settings:
-		success = _save_singleton(_settings, "settings.json") and success
+		success = _save_singleton(_settings, "settings_slot_%d.json" % slot) and success
 	
 	save_completed.emit(success)
 	return success
 
 
-## Load all three singletons from files
-func load_all() -> bool:
+## Load all three singletons from files for a specific slot
+func load_all(slot: int = 0) -> bool:
+	if slot < 0 or slot >= MAX_SLOTS:
+		push_error("[SingletonSaveManager] Invalid slot number: %d" % slot)
+		return false
+	
 	var success = true
 	
-	# Load each singleton independently
+	# Load each singleton independently with slot-specific filenames
 	if _global:
-		success = _load_singleton(_global, "global.json") and success
+		success = _load_singleton(_global, "global_slot_%d.json" % slot) and success
 	if _player_stats:
-		success = _load_singleton(_player_stats, "player_stats.json") and success
+		success = _load_singleton(_player_stats, "player_stats_slot_%d.json" % slot) and success
 	if _settings:
-		success = _load_singleton(_settings, "settings.json") and success
+		success = _load_singleton(_settings, "settings_slot_%d.json" % slot) and success
 	
 	load_completed.emit(success)
 	return success
 
 
-## Save only Global data
-func save_global() -> bool:
+## Save only Global data for a specific slot
+func save_global(slot: int = 0) -> bool:
 	if not _global:
 		push_error("[SingletonSaveManager] Global singleton not found")
 		return false
-	return _save_singleton(_global, "global.json")
+	return _save_singleton(_global, "global_slot_%d.json" % slot)
 
 
-## Load only Global data
-func load_global() -> bool:
+## Load only Global data from a specific slot
+func load_global(slot: int = 0) -> bool:
 	if not _global:
 		push_error("[SingletonSaveManager] Global singleton not found")
 		return false
-	return _load_singleton(_global, "global.json")
+	return _load_singleton(_global, "global_slot_%d.json" % slot)
 
 
-## Save only PlayerStats data
-func save_player_stats() -> bool:
+## Save only PlayerStats data for a specific slot
+func save_player_stats(slot: int = 0) -> bool:
 	if not _player_stats:
 		push_error("[SingletonSaveManager] PlayerStats singleton not found")
 		return false
-	return _save_singleton(_player_stats, "player_stats.json")
+	return _save_singleton(_player_stats, "player_stats_slot_%d.json" % slot)
 
 
-## Load only PlayerStats data
-func load_player_stats() -> bool:
+## Load only PlayerStats data from a specific slot
+func load_player_stats(slot: int = 0) -> bool:
 	if not _player_stats:
 		push_error("[SingletonSaveManager] PlayerStats singleton not found")
 		return false
-	return _load_singleton(_player_stats, "player_stats.json")
+	return _load_singleton(_player_stats, "player_stats_slot_%d.json" % slot)
 
 
-## Save only Settings data
-func save_settings() -> bool:
+## Save only Settings data for a specific slot
+func save_settings(slot: int = 0) -> bool:
 	if not _settings:
 		push_error("[SingletonSaveManager] Settings singleton not found")
 		return false
-	return _save_singleton(_settings, "settings.json")
+	return _save_singleton(_settings, "settings_slot_%d.json" % slot)
 
 
-## Load only Settings data
-func load_settings() -> bool:
+## Load only Settings data from a specific slot
+func load_settings(slot: int = 0) -> bool:
 	if not _settings:
 		push_error("[SingletonSaveManager] Settings singleton not found")
 		return false
-	return _load_singleton(_settings, "settings.json")
+	return _load_singleton(_settings, "settings_slot_%d.json" % slot)
+
+
+## Check if a save exists for a specific slot
+func has_save(slot: int = 0) -> bool:
+	if slot < 0 or slot >= MAX_SLOTS:
+		return false
+	
+	# Check if at least one singleton file exists for this slot
+	var global_path = SAVE_PATH + "global_slot_%d.json" % slot
+	var player_stats_path = SAVE_PATH + "player_stats_slot_%d.json" % slot
+	var settings_path = SAVE_PATH + "settings_slot_%d.json" % slot
+	
+	return FileAccess.file_exists(global_path) or \
+	       FileAccess.file_exists(player_stats_path) or \
+	       FileAccess.file_exists(settings_path)
+
+
+## Get save info for a specific slot
+func get_slot_info(slot: int = 0) -> Dictionary:
+	if slot < 0 or slot >= MAX_SLOTS:
+		return {"exists": false}
+	
+	# Try to load Global metadata for time_played info
+	var global_path = SAVE_PATH + "global_slot_%d.json" % slot
+	if FileAccess.file_exists(global_path):
+		var data = _read_json_file(global_path)
+		if data:
+			return {
+				"exists": true,
+				"slot": slot,
+				"timestamp": data.get("timestamp", ""),
+				"schema_version": data.get("schema_version", "unknown"),
+				"time_played": _extract_time_played(data)
+			}
+	
+	return {"exists": false}
+
+
+## Extract time_played from Global save data
+func _extract_time_played(global_data: Dictionary) -> float:
+	var properties = global_data.get("properties", {})
+	return properties.get("time_played", 0.0)
+
+
+## Delete all save files for a specific slot
+func delete_slot(slot: int = 0) -> bool:
+	if slot < 0 or slot >= MAX_SLOTS:
+		return false
+	
+	var success = true
+	var files = [
+		"global_slot_%d.json" % slot,
+		"player_stats_slot_%d.json" % slot,
+		"settings_slot_%d.json" % slot
+	]
+	
+	for filename in files:
+		var file_path = SAVE_PATH + filename
+		if FileAccess.file_exists(file_path):
+			if DirAccess.remove_absolute(file_path) != OK:
+				success = false
+	
+	return success
+
+
+## Delete all saves across all slots
+func delete_all_saves() -> bool:
+	var success = true
+	
+	for slot in range(MAX_SLOTS):
+		if not delete_slot(slot):
+			success = false
+	
+	return success
 
 
 # ============================================================================
@@ -298,8 +381,15 @@ func _serialize_resource_deep(resource: Resource) -> Dictionary:
 	if resource == null:
 		return {}
 	
+	# Get the actual script class name for scripted resources
+	var resource_type: String = ""
+	if resource.get_script():
+		resource_type = resource.get_script().get_global_name()
+	if resource_type.is_empty():
+		resource_type = resource.get_class()
+	
 	var data = {
-		"_resource_type": resource.get_class(),
+		"_resource_type": resource_type,
 		"_resource_path": resource.resource_path if resource.resource_path else ""
 	}
 	
@@ -486,7 +576,7 @@ func _deserialize_resource_from_dict(data: Dictionary) -> Resource:
 
 func _instantiate_script_class(class_name: String) -> Resource:
 	"""Find and instantiate a script class by its class_name"""
-	# Common script class paths to check
+	# Common script class paths to check - auto-discover from standard locations
 	var script_paths := {
 		"Entity": "res://code/battle/entity.gd",
 		"Skill": "res://code/battle/skill.gd",
@@ -519,11 +609,60 @@ func _instantiate_script_class(class_name: String) -> Resource:
 	if ClassDB.class_exists(class_name):
 		return ClassDB.instantiate(class_name) as Resource
 	
+	# Last resort: search all .gd files in common directories for matching class_name
+	var search_dirs = ["res://code/", "res://resources/"]
+	for search_dir in search_dirs:
+		if DirAccess.dir_exists_absolute(search_dir):
+			var found_path = _find_script_by_class_name(class_name, search_dir)
+			if found_path:
+				var script = load(found_path)
+				if script and script is GDScript:
+					return script.new() as Resource
+	
 	return null
 
 
+func _find_script_by_class_name(class_name: String, search_dir: String) -> String:
+	"""Recursively search for a script with matching class_name"""
+	var dir = DirAccess.open(search_dir)
+	if not dir:
+		return ""
+	
+	dir.list_dir_begin()
+	var file_name = dir.get_next()
+	
+	while file_name != "":
+		var full_path = search_dir.trim_suffix("/") + "/" + file_name
+		
+		if dir.current_is_dir():
+			# Recurse into subdirectory
+			var result = _find_script_by_class_name(class_name, full_path)
+			if result:
+				dir.list_dir_end()
+				return result
+		elif file_name.ends_with(".gd"):
+			# Check if this script has the matching class_name
+			var file = FileAccess.open(full_path, FileAccess.READ)
+			if file:
+				var content = file.get_as_text()
+				file.close()
+				# Look for class_name declaration (handles various formatting)
+				var pattern := "class_name " + class_name
+				if content.begins_with(pattern) or \
+				   content.find(pattern + "\n") != -1 or \
+				   content.find(pattern + "\r") != -1 or \
+				   content.find(pattern + " ") != -1:
+					dir.list_dir_end()
+					return full_path
+		
+		file_name = dir.get_next()
+	
+	dir.list_dir_end()
+	return ""
+
+
 func _apply_resource_properties(resource: Resource, data: Dictionary) -> void:
-	"""Apply saved properties to a resource, handling nested Resources"""
+	"""Apply saved properties to a resource, handling nested Resources and Dictionaries with Resource values"""
 	if not resource or not data:
 		return
 	
@@ -542,6 +681,17 @@ func _apply_resource_properties(resource: Resource, data: Dictionary) -> void:
 		if resource.get(key) is Resource and value is Resource:
 			# Copy properties from the loaded resource to the existing one
 			_copy_resource_properties(resource.get(key), value)
+		# Special handling for Dictionaries that may contain Resource values (e.g., equipment dictionary)
+		elif resource.get(key) is Dictionary and value is Dictionary:
+			var target_dict: Dictionary = resource.get(key)
+			# Update the dictionary with deserialized values
+			for dict_key in value.keys():
+				var dict_value = value[dict_key]
+				# If the dictionary value is a Resource, we need to properly assign it
+				if dict_value is Resource:
+					target_dict[dict_key] = dict_value
+				else:
+					target_dict[dict_key] = dict_value
 		else:
 			resource.set(key, value)
 
@@ -609,10 +759,10 @@ func _read_json_file(file_path: String) -> Variant:
 
 
 # ============================================================================
-# UTILITY FUNCTIONS
+# UTILITY FUNCTIONS (Legacy - kept for backwards compatibility)
 # ============================================================================
 
-## Check if a save file exists for a specific singleton
+## Check if a save file exists for a specific singleton (legacy, use has_save() instead)
 func has_save_for(singleton_name: String) -> bool:
 	var filename = ""
 	match singleton_name:
@@ -628,8 +778,8 @@ func has_save_for(singleton_name: String) -> bool:
 	return FileAccess.file_exists(SAVE_PATH + filename)
 
 
-## Delete all save files
-func delete_all_saves() -> bool:
+## Delete all save files (legacy, use delete_all_saves() instead)
+func _delete_all_saves_legacy() -> bool:
 	var success = true
 	var files = ["global.json", "player_stats.json", "settings.json"]
 	
@@ -642,8 +792,8 @@ func delete_all_saves() -> bool:
 	return success
 
 
-## Get save metadata (timestamp, version, etc.)
-func get_save_info(singleton_name: String) -> Dictionary:
+## Get save metadata (legacy, use get_slot_info() instead)
+func _get_save_info_legacy(singleton_name: String) -> Dictionary:
 	var filename = ""
 	match singleton_name:
 		"Global", "global":
@@ -669,3 +819,15 @@ func get_save_info(singleton_name: String) -> Dictionary:
 		"timestamp": data.get("timestamp", ""),
 		"class_name": data.get("class_name", "")
 	}
+
+
+# ============================================================================
+# BACKWARDS COMPATIBILITY ALIASES
+# ============================================================================
+
+# Alias old method names to new slot-based methods for backwards compatibility
+func delete_all_saves_legacy() -> bool:
+	return _delete_all_saves_legacy()
+
+func get_save_info_legacy(singleton_name: String) -> Dictionary:
+	return _get_save_info_legacy(singleton_name)
