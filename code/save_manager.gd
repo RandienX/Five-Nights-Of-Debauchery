@@ -298,6 +298,7 @@ func _serialize_object_deep(obj: Object) -> Dictionary:
 	"""
 	Deep serialization that handles Resources with full property capture.
 	This ensures Party resources save their HP, MP, level, equipment, etc.
+	Resources are saved as paths when possible to avoid duplication.
 	"""
 	if obj == null:
 		return {}
@@ -323,6 +324,7 @@ func _serialize_object_deep(obj: Object) -> Dictionary:
 			# Get and serialize the property value
 			if obj.has_meta(prop_name) or prop_name in obj:
 				var value = obj.get(prop_name)
+				# Use _serialize_value which intelligently handles Resources as paths
 				var serialized = _serialize_value(value, prop_type)
 				if serialized != null:
 					data[prop_name] = serialized
@@ -783,6 +785,9 @@ func _apply_scene_state(scene_root: Node, state: Dictionary) -> void:
 func _restore_collision_shape(node: Node, shape_data: Dictionary) -> void:
 	pass
 
+func _deserialize_into_object(obj: Object, data: Dictionary) -> void:
+	"""Deserialize dictionary data into an object's properties"""
+	if not obj or not data:
 		return
 	
 	for key in data:
