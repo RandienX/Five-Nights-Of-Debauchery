@@ -19,40 +19,6 @@ func _process(delta: float) -> void:
 	time_played += delta
 
 # === Save Data Management ===
-func serialize_value(value: Variant) -> Variant:
-	if value is Resource:
-		return value.resource_path if value.resource_path != "" else null
-	elif value is Dictionary:
-		var new_dict = {}
-		for k in value.keys():
-			new_dict[serialize_value(k)] = serialize_value(value[k])
-		return new_dict
-	elif value is Array:
-		var new_arr = []
-		for v in value:
-			new_arr.append(serialize_value(v))
-		return new_arr
-	elif value is Vector2 or value is Color:
-		return var_to_str(value)
-	return value
-
-func deserialize_value(value: Variant) -> Variant:
-	if value is String and value.ends_with(".tres"):
-		return load(value)
-	elif value is String and (value.begins_with("Vector2") or value.begins_with("Color")):
-		return str_to_var(value)
-	elif value is Dictionary:
-		var new_dict = {}
-		for k in value.keys():
-			new_dict[deserialize_value(k)] = deserialize_value(value[k])
-		return new_dict
-	elif value is Array:
-		var new_arr = []
-		for v in value:
-			new_arr.append(deserialize_value(v))
-		return new_arr
-	return value
-
 func get_save_data() -> Dictionary:
 	# Delegate to PlayerStats for comprehensive save data
 	if Engine.has_singleton("PlayerStats"):

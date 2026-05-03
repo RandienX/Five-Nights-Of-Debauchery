@@ -285,8 +285,11 @@ func _capture_global_data() -> Dictionary:
 		"time_played": Global.time_played
 	}
 	
-	# Capture PlayerStats data
-	if is_instance_valid(PlayerStats):
+	# Capture PlayerStats data using its own get_save_data() method for complete serialization
+	if is_instance_valid(PlayerStats) and PlayerStats.has_method("get_save_data"):
+		data["player_stats"] = PlayerStats.get_save_data()
+	elif is_instance_valid(PlayerStats):
+		# Fallback to property serialization if get_save_data() is not available
 		data["player_stats"] = _serialize_object_properties(PlayerStats)
 	
 	# Capture any other autoload singletons with save data
@@ -466,8 +469,8 @@ func _serialize_object_properties(obj: Object) -> Dictionary:
 			continue
 		if not (usage & PROPERTY_USAGE_STORAGE):
 			continue
-		if usage & PROPERTY_USAGE_EDITOR:
-			continue
+		# Allow editor properties if they are storage properties (like equipped items)
+		# Removed: if usage & PROPERTY_USAGE_EDITOR: continue
 		
 		# Get property value
 		var value = obj.get(prop_name) if obj.has_method("get") or prop_name in obj else null
@@ -506,8 +509,16 @@ func _serialize_shape(shape: Shape2D) -> Dictionary:
 	return data
 
 # ============================================================================
-# VALUE SERIALIZATION
+# VALUE SERIALIZATION - PUBLIC API
 # ============================================================================
+
+## Public method to serialize a value (can be called from other scripts)
+func serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
+	return _serialize_value(value, type_hint)
+
+## Public method to deserialize a value (can be called from other scripts)
+func deserialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
+	return _deserialize_value(value, type_hint)
 
 func _serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	if value == null:
@@ -524,8 +535,8 @@ func _serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	# Handle Resources - serialize as path for external resources, deep serialize for runtime-modified ones
 	if value is Resource:
 		# For Resources that have been modified at runtime (like Party), we need to save their state
-		# Check if it's a custom resource with runtime modifications
-		if value.has_meta("_runtime_modified") or not value.resource_path:
+		# Check if it's a custom resource with runtime modifications OR if it's an Item/Entity with equipment
+		if value.has_meta("_runtime_modified") or not value.resource_path or value is Item or value is Entity:
 			return _serialize_object_deep(value)
 		else:
 			# External resource file - just save the path
@@ -686,9 +697,13 @@ func _apply_global_data(global_data: Dictionary) -> void:
 	if global_data.has("player_position"):
 		Global.player_position = str_to_var(global_data["player_position"])
 	
-	# Restore PlayerStats (will be included in singletons too, but keep for backwards compat)
-	if global_data.has("player_stats"):
-		_deserialize_into_object(PlayerStats, global_data["player_stats"])
+	# Restore PlayerStats using its load_save_data() method if available
+	if global_data.has("player_stats") and is_instance_valid(PlayerStats):
+		if PlayerStats.has_method("load_save_data"):
+			PlayerStats.load_save_data(global_data["player_stats"])
+		else:
+			# Fallback to property deserialization
+			_deserialize_into_object(PlayerStats, global_data["player_stats"])
 	
 	# Restore all singletons (includes PlayerStats with full party data)
 	if global_data.has("singletons"):
