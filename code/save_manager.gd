@@ -590,16 +590,65 @@ func _deserialize_resource_from_dict(data: Dictionary) -> Resource:
 				return null
 	
 	# Apply all saved properties
-	_copy_resource_properties(new_resource, _dict_to_resource(data))
+	_copy_resource_properties_direct(new_resource, data)
 	return new_resource
 
-func _dict_to_resource(data: Dictionary) -> Resource:
-	"""Helper to create a temporary resource from dict for property copying"""
-	var temp = Resource.new()
+func _copy_resource_properties_direct(target: Resource, data: Dictionary) -> void:
+	"""Copy all properties directly from dictionary to resource"""
+	if not target or data.is_empty():
+		return
+	
 	for key in data:
-		if key != "_resource_type" and key != "_resource_path":
-			temp.set_meta(key, data[key])
-	return temp
+		if key == "_resource_type" or key == "_resource_path":
+			continue
+		
+		var value = data[key]
+		
+		# Check if the target has this property before setting
+		if key in target:
+			# Handle nested Resources in properties
+			if value is Dictionary and value.has("_resource_type"):
+				target.set(key, _deserialize_resource_from_dict(value))
+			elif value is Array:
+				var new_array: Array = []
+				for item in value:
+					if item is Dictionary and item.has("_resource_type"):
+						new_array.append(_deserialize_resource_from_dict(item))
+					elif item is Array:
+						# Handle nested arrays
+						new_array.append(_deserialize_value(item, TYPE_NIL))
+					elif item is Dictionary:
+						# Handle nested dictionaries
+						new_array.append(_deserialize_value(item, TYPE_NIL))
+					else:
+						new_array.append(item)
+				target.set(key, new_array)
+			elif value is Dictionary:
+				# Handle nested dictionaries with Resource values
+				var new_dict: Dictionary = {}
+				for dict_key in value.keys():
+					var dict_val = value[dict_key]
+					if dict_val is Dictionary and dict_val.has("_resource_type"):
+						new_dict[dict_key] = _deserialize_resource_from_dict(dict_val)
+					elif dict_val is Array:
+						var array_result: Array = []
+						for arr_item in dict_val:
+							if arr_item is Dictionary and arr_item.has("_resource_type"):
+								array_result.append(_deserialize_resource_from_dict(arr_item))
+							elif arr_item is Array:
+								array_result.append(_deserialize_value(arr_item, TYPE_NIL))
+							elif arr_item is Dictionary:
+								array_result.append(_deserialize_value(arr_item, TYPE_NIL))
+							else:
+								array_result.append(arr_item)
+						new_dict[dict_key] = array_result
+					elif dict_val is Dictionary:
+						new_dict[dict_key] = _deserialize_value(dict_val, TYPE_NIL)
+					else:
+						new_dict[dict_key] = dict_val
+				target.set(key, new_dict)
+			else:
+				target.set(key, value)
 
 # ============================================================================
 # DATA APPLICATION (LOADING)
@@ -736,6 +785,12 @@ func _copy_resource_properties(target: Resource, source: Resource) -> void:
 					for item in value:
 						if item is Dictionary and item.has("_resource_type"):
 							new_array.append(_deserialize_resource_from_dict(item))
+						elif item is Array:
+							# Handle nested arrays
+							new_array.append(_deserialize_value(item, TYPE_NIL))
+						elif item is Dictionary:
+							# Handle nested dictionaries
+							new_array.append(_deserialize_value(item, TYPE_NIL))
 						else:
 							new_array.append(item)
 					target.set(prop_name, new_array)
@@ -746,6 +801,20 @@ func _copy_resource_properties(target: Resource, source: Resource) -> void:
 						var dict_val = value[key]
 						if dict_val is Dictionary and dict_val.has("_resource_type"):
 							new_dict[key] = _deserialize_resource_from_dict(dict_val)
+						elif dict_val is Array:
+							var array_result: Array = []
+							for arr_item in dict_val:
+								if arr_item is Dictionary and arr_item.has("_resource_type"):
+									array_result.append(_deserialize_resource_from_dict(arr_item))
+								elif arr_item is Array:
+									array_result.append(_deserialize_value(arr_item, TYPE_NIL))
+								elif arr_item is Dictionary:
+									array_result.append(_deserialize_value(arr_item, TYPE_NIL))
+								else:
+									array_result.append(arr_item)
+							new_dict[key] = array_result
+						elif dict_val is Dictionary:
+							new_dict[key] = _deserialize_value(dict_val, TYPE_NIL)
 						else:
 							new_dict[key] = dict_val
 					target.set(prop_name, new_dict)
