@@ -747,7 +747,10 @@ func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Dictionar
 		# Load the base resource and duplicate it to avoid modifying the original
 		var loaded_resource = load(resource_path)
 		if loaded_resource:
-			new_resource = loaded_resource.duplicate()
+			# CRITICAL FIX: Use duplicate(true) for deep copy to preserve nested resource structure
+			# Then we'll overwrite ALL properties from saved data anyway
+			new_resource = loaded_resource.duplicate(true)
+			print("[DEBUG] _deserialize_resource_from_dict: Loaded and duplicated resource from %s, equipped before overwrite: %s" % [resource_path, new_resource.get("equipped") if "equipped" in new_resource else "N/A"])
 		else:
 			push_warning("[AutoSaveManager] Resource exists at path but failed to load: %s" % resource_path)
 			new_resource = _create_resource_by_type(resource_type)
@@ -766,6 +769,8 @@ func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Dictionar
 	
 	# Apply all saved properties with visited set propagation
 	_copy_resource_properties_direct(new_resource, data, parent_visited)
+	
+	print("[DEBUG] _deserialize_resource_from_dict: After copying properties, equipped = %s" % (new_resource.get("equipped") if "equipped" in new_resource else "N/A"))
 	
 	# IMPORTANT: Remove from "currently constructing" set after successful processing
 	# This allows the same resource file to be referenced again elsewhere
@@ -866,6 +871,16 @@ func _deserialize_nested_value_inline(value: Variant, visited: Dictionary) -> Va
 			var deserialized_item = _deserialize_nested_value_inline(item, visited)
 			arr_result.append(deserialized_item)
 			print("[DEBUG]   Array[%d]: %s -> %s" % [i, str(item).substr(0, min(50, len(str(item)))), str(deserialized_item).substr(0, min(50, len(str(deserialized_item))))])
+		
+		# CRITICAL FIX: Check if this array should be typed as Array[Item] for inventory
+		# If all items look like Items, cast them
+		for i in range(arr_result.size()):
+			var item = arr_result[i]
+			if item is Resource and item.get_class() == "Resource":
+				if "item_name" in item or "type" in item:
+					print("[DEBUG]   -> Casting Array[%d] to Item type" % i)
+					arr_result[i] = item as Item
+		
 		return arr_result
 	
 	# Handle Dictionaries - check if it's a deep-serialized Resource
