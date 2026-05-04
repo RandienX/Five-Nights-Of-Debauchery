@@ -714,7 +714,11 @@ func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Dictionar
 		data_id = hash(resource_path)
 	else:
 		# For runtime resources, use type+properties hash
-		data_id = hash(str(data.get("_resource_type", ""), data.keys().sort()))
+		var key_list := PackedStringArray()
+		for k in data.keys():
+			key_list.append(str(k))
+		key_list.sort()
+		data_id = hash(str(data.get("_resource_type", ""), key_list))
 	
 	if parent_visited.has(data_id):
 		push_warning("[AutoSaveManager] Circular reference detected in resource data (path: %s). Returning null to break cycle." % resource_path)
@@ -790,22 +794,29 @@ func _copy_resource_properties_direct(target: Resource, data: Dictionary, visite
 	if visited == null:
 		visited = _visited_objects
 	
+	print("[DEBUG] _copy_resource_properties_direct: Starting for target=%s (%s), data keys=%s" % [target if target else "null", target.resource_path if "resource_path" in target else "no path", str(data.keys())])
+	
 	for key in data:
 		if key == "_resource_type" or key == "_resource_path":
 			continue
 		
 		# Skip properties that shouldn't be restored
 		if key in SKIP_PROPERTIES:
+			print("[DEBUG]   Skipping property '%s' (in SKIP_PROPERTIES)" % key)
 			continue
 		
 		var value = data[key]
 		
 		# Check if the target has this property before setting
 		if key in target:
+			print("[DEBUG]   Processing property '%s': %s" % [key, str(value).substr(0, min(60, len(str(value))))])
 			# Handle nested structures inline without calling _deserialize_value
 			# to preserve visited set state and depth counter
 			var deserialized_value = _deserialize_nested_value_inline(value, visited)
 			target.set(key, deserialized_value)
+			print("[DEBUG]     -> Set to: %s" % ["null" if deserialized_value == null else str(deserialized_value).substr(0, min(60, str(deserialized_value)))])
+		else:
+			print("[DEBUG]   Property '%s' not found in target, skipping" % key)
 
 func _deserialize_nested_value_inline(value: Variant, visited: Dictionary) -> Variant:
 	"""
@@ -817,30 +828,43 @@ func _deserialize_nested_value_inline(value: Variant, visited: Dictionary) -> Va
 	
 	# Handle string-encoded types
 	if value is String:
-		return _parse_encoded_string(value)
+		var parsed = _parse_encoded_string(value)
+		print("[DEBUG] _deserialize_nested_value_inline: String '%s' -> %s (type: %s)" % [value, parsed, type_string(typeof(parsed))])
+		return parsed
 	
 	# Handle Arrays - recursive deserialization
 	elif value is Array:
+		print("[DEBUG] _deserialize_nested_value_inline: Array with %d items" % value.size())
 		var arr_result: Array = []
-		for item in value:
-			arr_result.append(_deserialize_nested_value_inline(item, visited))
+		for i in range(value.size()):
+			var item = value[i]
+			var deserialized_item = _deserialize_nested_value_inline(item, visited)
+			arr_result.append(deserialized_item)
+			print("[DEBUG]   Array[%d]: %s -> %s" % [i, str(item).substr(0, min(50, len(str(item)))), str(deserialized_item).substr(0, min(50, len(str(deserialized_item))))])
 		return arr_result
 	
 	# Handle Dictionaries - check if it's a deep-serialized Resource
 	elif value is Dictionary:
+		print("[DEBUG] _deserialize_nested_value_inline: Dictionary with keys: %s" % str(value.keys()))
 		if value.has("_resource_type"):
 			# This is a deep-serialized Resource, reconstruct it with visited set
-			return _deserialize_resource_from_dict(value, visited)
+			print("[DEBUG]   -> Detected as Resource type: %s, path: %s" % [value.get("_resource_type", "unknown"), value.get("_resource_path", "none")])
+			var resource_result = _deserialize_resource_from_dict(value, visited)
+			print("[DEBUG]   -> Resource result: %s" % ["null" if resource_result == null else (resource_result.resource_path if "resource_path" in resource_result else str(resource_result))])
+			return resource_result
 		else:
+			print("[DEBUG]   -> Regular dictionary, deserializing contents")
 			var dict_result: Dictionary = {}
 			for dict_key in value.keys():
 				var deserialized_key = _deserialize_nested_value_inline(dict_key, visited)
 				var dict_val = value[dict_key]
 				var deserialized_value = _deserialize_nested_value_inline(dict_val, visited)
 				dict_result[deserialized_key] = deserialized_value
+				print("[DEBUG]   Dict['%s']: %s -> %s" % [dict_key, str(dict_val).substr(0, min(30, len(str(dict_val)))), str(deserialized_value).substr(0, min(30, len(str(deserialized_value))))])
 			return dict_result
 	
 	# Basic types pass through unchanged
+	print("[DEBUG] _deserialize_nested_value_inline: Basic type %s = %s" % [type_string(typeof(value)), value])
 	return value
 
 # ============================================================================
