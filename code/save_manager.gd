@@ -567,31 +567,40 @@ func _deserialize_resource_from_dict(data: Dictionary) -> Resource:
 	
 	# Try to load from path first if available (for Entity, Item, Skill resources)
 	if resource_path and ResourceLoader.exists(resource_path):
-		new_resource = load(resource_path).duplicate()
-	else:
-		# Create a new instance of the resource type using class_name
-		# Try known custom resource classes first
-		if resource_type == "Entity":
-			new_resource = Entity.new()
-		elif resource_type == "Skill":
-			new_resource = Skill.new()
-		elif resource_type == "Item":
-			new_resource = Item.new()
-		elif resource_type == "BattleEffect":
-			new_resource = BattleEffect.new()
+		# Load the base resource and duplicate it to avoid modifying the original
+		var base_resource = load(resource_path)
+		if base_resource:
+			new_resource = base_resource.duplicate()
 		else:
-			# Try ClassDB for built-in types
-			var class_type = ClassDB.class_exists(resource_type)
-			if class_type:
-				new_resource = ClassDB.instantiate(resource_type)
-			else:
-				# Fallback: try to find script class
-				push_warning("[AutoSaveManager] Could not instantiate resource type: %s" % resource_type)
-				return null
+			new_resource = _create_resource_by_type(resource_type)
+	else:
+		new_resource = _create_resource_by_type(resource_type)
+	
+	if not new_resource:
+		return null
 	
 	# Apply all saved properties
 	_copy_resource_properties_direct(new_resource, data)
 	return new_resource
+
+func _create_resource_by_type(resource_type: String) -> Resource:
+	"""Create a new resource instance by type name"""
+	if resource_type == "Entity":
+		return Entity.new()
+	elif resource_type == "Skill":
+		return Skill.new()
+	elif resource_type == "Item":
+		return Item.new()
+	elif resource_type == "BattleEffect":
+		return BattleEffect.new()
+	else:
+		# Try ClassDB for built-in types
+		if ClassDB.class_exists(resource_type):
+			return ClassDB.instantiate(resource_type)
+		else:
+			# Fallback: try to find script class
+			push_warning("[AutoSaveManager] Could not instantiate resource type: %s" % resource_type)
+			return null
 
 func _copy_resource_properties_direct(target: Resource, data: Dictionary) -> void:
 	"""Copy all properties directly from dictionary to resource"""
