@@ -810,11 +810,19 @@ func _copy_resource_properties_direct(target: Resource, data: Dictionary, visite
 		# Check if the target has this property before setting
 		if key in target:
 			print("[DEBUG]   Processing property '%s': %s" % [key, str(value).substr(0, min(60, len(str(value))))])
+			# Special handling for 'equipped' dictionary - add extra debug info
+			if key == "equipped" and value is Dictionary:
+				print("[DEBUG]     >>> EQUIPPED DICTIONARY DETECTED! Keys: %s" % value.keys())
+				for equip_key in value.keys():
+					print("[DEBUG]     >>> equipped['%s'] = %s" % [equip_key, str(value[equip_key]).substr(0, 80)])
 			# Handle nested structures inline without calling _deserialize_value
 			# to preserve visited set state and depth counter
 			var deserialized_value = _deserialize_nested_value_inline(value, visited)
 			target.set(key, deserialized_value)
 			print("[DEBUG]     -> Set to: %s" % ["null" if deserialized_value == null else str(deserialized_value).substr(0, min(60, str(deserialized_value)))])
+			# Extra check for equipped after setting
+			if key == "equipped":
+				print("[DEBUG]     >>> After setting, target.equipped = %s" % target.get("equipped"))
 		else:
 			print("[DEBUG]   Property '%s' not found in target, skipping" % key)
 
@@ -861,6 +869,7 @@ func _deserialize_nested_value_inline(value: Variant, visited: Dictionary) -> Va
 				var deserialized_value = _deserialize_nested_value_inline(dict_val, visited)
 				dict_result[deserialized_key] = deserialized_value
 				print("[DEBUG]   Dict['%s']: %s -> %s" % [dict_key, str(dict_val).substr(0, min(30, len(str(dict_val)))), str(deserialized_value).substr(0, min(30, len(str(deserialized_value))))])
+			print("[DEBUG]   -> Final dictionary result: %s" % dict_result)
 			return dict_result
 	
 	# Basic types pass through unchanged
