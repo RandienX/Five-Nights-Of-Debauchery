@@ -402,13 +402,15 @@ func _serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	if value == null:
 		return null
 	
-	# Handle basic types
+	# Handle basic types (excluding Array and Dictionary which need special handling)
 	if typeof(value) in SERIALIZABLE_TYPES:
 		if typeof(value) in [TYPE_VECTOR2, TYPE_VECTOR2I, TYPE_VECTOR3, TYPE_VECTOR3I, 
 							 TYPE_COLOR, TYPE_RECT2, TYPE_RECT2I, TYPE_TRANSFORM2D,
 							 TYPE_QUATERNION, TYPE_PLANE]:
 			return var_to_str(value)
-		return value
+		# Skip Array and Dictionary here - they need deep serialization
+		if typeof(value) not in [TYPE_ARRAY, TYPE_DICTIONARY]:
+			return value
 	
 	# Handle Resources - serialize as path for external resources, deep serialize for runtime-modified ones
 	if value is Resource:
@@ -424,7 +426,16 @@ func _serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 		var result: Array = []
 		for item in value:
 			# Check if array item is a Resource that needs deep serialization
-			result.append(_serialize_object_deep(item))
+			if item is Resource or item is Object:
+				result.append(_serialize_object_deep(item))
+			elif item is Array:
+				# Handle nested arrays
+				result.append(_serialize_value(item, TYPE_NIL))
+			elif item is Dictionary:
+				# Handle nested dictionaries
+				result.append(_serialize_init_dictionary(item))
+			else:
+				result.append(_serialize_value(item, TYPE_NIL))
 		return result
 	
 	# Handle Dictionaries
@@ -453,8 +464,14 @@ func _serialize_init_dictionary(value: Dictionary):
 			# Handle arrays within dictionaries (like skills[level] = [Skill, Skill])
 			var array_result: Array = []
 			for arr_item in dict_value:
-				if arr_item is Resource:
+				if arr_item is Resource or arr_item is Object:
 					array_result.append(_serialize_object_deep(arr_item))
+				elif arr_item is Array:
+					# Handle nested arrays
+					array_result.append(_serialize_value(arr_item, TYPE_NIL))
+				elif arr_item is Dictionary:
+					# Handle nested dictionaries
+					array_result.append(_serialize_init_dictionary(arr_item))
 				else:
 					array_result.append(_serialize_value(arr_item, TYPE_NIL))
 			serialized_value = array_result
@@ -489,6 +506,12 @@ func _deserialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 			# Check if array item is a deep-serialized Resource
 			if item is Dictionary and item.has("_resource_type"):
 				result.append(_deserialize_resource_from_dict(item))
+			elif item is Array:
+				# Handle nested arrays
+				result.append(_deserialize_value(item, TYPE_NIL))
+			elif item is Dictionary:
+				# Handle nested dictionaries
+				result.append(_deserialize_value(item, TYPE_NIL))
 			else:
 				result.append(_deserialize_value(item, TYPE_NIL))
 		return result
@@ -513,9 +536,18 @@ func _deserialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 				for arr_item in dict_val:
 					if arr_item is Dictionary and arr_item.has("_resource_type"):
 						array_result.append(_deserialize_resource_from_dict(arr_item))
+					elif arr_item is Array:
+						# Handle nested arrays
+						array_result.append(_deserialize_value(arr_item, TYPE_NIL))
+					elif arr_item is Dictionary:
+						# Handle nested dictionaries
+						array_result.append(_deserialize_value(arr_item, TYPE_NIL))
 					else:
 						array_result.append(_deserialize_value(arr_item, TYPE_NIL))
 				deserialized_value = array_result
+			elif dict_val is Dictionary:
+				# Handle nested dictionaries
+				deserialized_value = _deserialize_value(dict_val, TYPE_NIL)
 			else:
 				deserialized_value = _deserialize_value(dict_val, TYPE_NIL)
 			result[deserialized_key] = deserialized_value
