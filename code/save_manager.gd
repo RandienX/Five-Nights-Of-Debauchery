@@ -232,6 +232,7 @@ func _serialize_object_deep(obj: Object) -> Dictionary:
 	
 	var data : Dictionary = {}
 	
+	print(obj)
 	# Handle Resources specially - serialize ALL their properties
 	if obj is Resource:
 		data["_resource_type"] = obj.get_class()
@@ -411,59 +412,59 @@ func _serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	
 	# Handle Resources - serialize as path for external resources, deep serialize for runtime-modified ones
 	if value is Resource:
-		return _serialize_object_deep(value)
+		# Handle Resources that are direct property values
+		if value.has_meta("_runtime_modified") or not value.resource_path or value is Item or value is Entity or value is Skill:
+			return _serialize_object_deep(value)
+		else:
+		# External resource file - just save the path
+			return value.resource_path if value.resource_path else null
 	
 	# Handle Arrays
 	if value is Array:
 		var result: Array = []
 		for item in value:
 			# Check if array item is a Resource that needs deep serialization
-			if item is Resource:
-				result.append(_serialize_object_deep(item))
-			else:
-				result.append(_serialize_value(item, TYPE_NIL))
+			result.append(_serialize_object_deep(item))
 		return result
 	
 	# Handle Dictionaries
 	if value is Dictionary:
-		var result: Dictionary = {}
-		for key in value.keys():
-			var serialized_key = _serialize_value(key, TYPE_NIL)
-			var dict_value = value[key]
-			var serialized_value: Variant
-			# Check if dictionary value is a Resource that needs deep serialization
-			if dict_value is Resource:
-				serialized_value = _serialize_object_deep(dict_value)
-			elif dict_value is Array:
-				# Handle arrays within dictionaries (like skills[level] = [Skill, Skill])
-				var array_result: Array = []
-				for arr_item in dict_value:
-					if arr_item is Resource:
-						array_result.append(_serialize_object_deep(arr_item))
-					else:
-						array_result.append(_serialize_value(arr_item, TYPE_NIL))
-				serialized_value = array_result
-			else:
-				serialized_value = _serialize_value(dict_value, TYPE_NIL)
-			if serialized_key != null:
-				result[serialized_key] = serialized_value
-		return result
+		return _serialize_init_dictionary(value)
 	
 	# Handle Objects with properties
 	if value is Object:
-		if value is Resource:
-			# Handle Resources that are direct property values
-			if value.has_meta("_runtime_modified") or not value.resource_path or value is Item or value is Entity or value is Skill:
-				return _serialize_object_deep(value)
-			else:
-			# External resource file - just save the path
-				return value.resource_path if value.resource_path else null
 
 		return _serialize_object_properties(value)
 	
 	# Unknown type - try string conversion as fallback
 	push_warning("[AutoSaveManager] Cannot serialize value of type: %s" % typeof(value))
 	return null
+
+func _serialize_init_dictionary(value: Dictionary):
+	var result: Dictionary = {}
+	for key in value.keys():
+		var serialized_key = _serialize_value(key, TYPE_NIL)
+		var dict_value = value[key]
+		var serialized_value: Variant
+		# Check if dictionary value is a Resource that needs deep serialization
+		if dict_value is Resource or dict_value is Object:
+			serialized_value = _serialize_object_deep(dict_value)
+		elif dict_value is Array:
+			# Handle arrays within dictionaries (like skills[level] = [Skill, Skill])
+			var array_result: Array = []
+			for arr_item in dict_value:
+				if arr_item is Resource:
+					array_result.append(_serialize_object_deep(arr_item))
+				else:
+					array_result.append(_serialize_value(arr_item, TYPE_NIL))
+			serialized_value = array_result
+		elif dict_value is Dictionary:
+			serialized_value = _serialize_init_dictionary(dict_value)
+		else:
+			serialized_value = _serialize_value(dict_value, TYPE_NIL)
+		if serialized_key != null:
+			result[serialized_key] = serialized_value
+	return result
 
 func _deserialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	if value == null:
@@ -473,17 +474,7 @@ func _deserialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	if value is String:
 		if value.begins_with("Vector2(") or value.begins_with("Vector2i("):
 			return str_to_var(value)
-		if value.begins_with("Vector3(") or value.begins_with("Vector3i("):
-			return str_to_var(value)
 		if value.begins_with("Color("):
-			return str_to_var(value)
-		if value.begins_with("Rect2(") or value.begins_with("Rect2i("):
-			return str_to_var(value)
-		if value.begins_with("Transform2D("):
-			return str_to_var(value)
-		if value.begins_with("Quaternion("):
-			return str_to_var(value)
-		if value.begins_with("Plane("):
 			return str_to_var(value)
 		# Check if it's a resource path (but not a deep-serialized resource dict)
 		if value.ends_with(".tres") or value.ends_with(".tscn") or value.ends_with(".gd"):
