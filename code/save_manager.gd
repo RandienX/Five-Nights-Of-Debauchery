@@ -29,6 +29,8 @@ const SAVE_VERSION := "1.1"  # Schema version for backward compatibility
 # === Internal State ===
 var _autosave_timer: float = 0.0
 var _autosave_enabled: bool = false
+var _visited_objects: Dictionary = {}  # Used as Set[int] for circular reference detection
+var _max_recursion_depth: int = 50
 
 # === Types that can be serialized directly ===
 const SERIALIZABLE_TYPES := [
@@ -47,7 +49,9 @@ const SKIP_PROPERTIES := [
 	"script", "resource_local_to_scene", "material_override",
 	"visibility_layer", "visibility_mask", "process_mode",
 	"unique_name_in_owner", "owner", "editor_description", "usage",
-	"player_steps", "_uid", "shape"
+	"player_steps", "_uid", "shape",
+	"resource_path",              # Managed separately via _resource_path key
+	"resource_scene_unique_id"    # Auto-generated, don't save/restore
 ]
 
 const SKIP_PROPERTY_PREFIXES := [
@@ -226,7 +230,7 @@ func _get_all_autoload_names() -> PackedStringArray:
 	var autoloads := PackedStringArray(["Global", "Save", "PlayerStats", "SaveManager", "Settings"])
 	return autoloads
 
-func _serialize_object_deep(obj: Object, visited: Set[int] = null, depth: int = 0) -> Dictionary:
+func _serialize_object_deep(obj: Object, visited: Dictionary = {}, depth: int = 0) -> Dictionary:
 	"""
 	Deep serialization that handles Resources with full property capture.
 	This ensures Party resources save their HP, MP, level, equipment, etc.
@@ -252,7 +256,7 @@ func _serialize_object_deep(obj: Object, visited: Set[int] = null, depth: int = 
 		return {"_circular_ref": true, "_instance_id": obj_id}
 	
 	# Mark as visited
-	visited.add(obj_id)
+	visited[obj_id] = true
 	
 	var data: Dictionary = {}
 	
@@ -316,7 +320,7 @@ func _capture_all_scenes_data() -> Dictionary:
 	
 	return scenes_data
 
-func _serialize_object_properties(obj: Object, visited: Set[int] = null, depth: int = 0) -> Dictionary:
+func _serialize_object_properties(obj: Object, visited: Dictionary = {}, depth: int = 0) -> Dictionary:
 	var data: Dictionary = {}
 
 	# Check recursion depth
@@ -447,9 +451,7 @@ func deserialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	_visited_objects.clear()  # Reset visited set for new deserialization
 	return _deserialize_value(value, type_hint)
 
-# === Circular Reference Detection ===
-# Tracks object IDs during serialization/deserialization to prevent infinite recursion
-var _visited_objects: Set[int] = []
+# === Circular Reference Detection Constants ===
 const MAX_RECURSION_DEPTH := 50  # Prevent stack overflow from deeply nested structures
 var _current_depth: int = 0  # Track current recursion depth
 
@@ -691,7 +693,7 @@ func _parse_encoded_string(encoded: String) -> Variant:
 	# Unknown string format - return as-is (might be a regular string value)
 	return encoded
 
-func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Set[int] = null) -> Resource:
+func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Dictionary = {}) -> Resource:
 	"""
 	Reconstruct a Resource from its deep-serialized dictionary.
 	Uses visited set to detect and break circular references.
@@ -703,17 +705,25 @@ func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Set[int] 
 	if parent_visited == null:
 		parent_visited = _visited_objects
 	
-	# Create a unique ID for this resource data to detect cycles
-	var data_id = hash(str(data.get("_resource_type", ""), data.get("_resource_path", "")))
+	# Create a unique ID for this resource using its path (most stable identifier)
+	var resource_path: String = data.get("_resource_path", "")
+	var data_id: int
+	
+	if resource_path and not resource_path.begins_with("<Resource#"):
+		# Use path hash for file-based resources (stable across loads)
+		data_id = hash(resource_path)
+	else:
+		# For runtime resources, use type+properties hash
+		data_id = hash(str(data.get("_resource_type", ""), data.keys().sort()))
+	
 	if parent_visited.has(data_id):
-		push_warning("[AutoSaveManager] Circular reference detected in resource data. Returning null to break cycle.")
+		push_warning("[AutoSaveManager] Circular reference detected in resource data (path: %s). Returning null to break cycle." % resource_path)
 		return null
 	
 	# Mark as visited
-	parent_visited.add(data_id)
+	parent_visited[data_id] = true
 	
 	var resource_type: String = data["_resource_type"]
-	var resource_path: String = data.get("_resource_path", "")
 	
 	var new_resource: Resource
 	
@@ -765,10 +775,13 @@ func _create_resource_by_type(resource_type: String) -> Resource:
 			push_warning("[AutoSaveManager] Could not instantiate resource type: %s" % resource_type)
 			return null
 
-func _copy_resource_properties_direct(target: Resource, data: Dictionary, visited: Set[int] = null) -> void:
+func _copy_resource_properties_direct(target: Resource, data: Dictionary, visited: Dictionary = {}) -> void:
 	"""
 	Copy all properties directly from dictionary to resource.
 	Propagates visited set for circular reference detection in nested resources.
+	
+	IMPORTANT: Does NOT call _deserialize_value recursively to avoid resetting
+	the visited set and depth counter. Instead, handles nested structures inline.
 	"""
 	if not target or data.is_empty():
 		return
@@ -781,13 +794,54 @@ func _copy_resource_properties_direct(target: Resource, data: Dictionary, visite
 		if key == "_resource_type" or key == "_resource_path":
 			continue
 		
+		# Skip properties that shouldn't be restored
+		if key in SKIP_PROPERTIES:
+			continue
+		
 		var value = data[key]
 		
 		# Check if the target has this property before setting
 		if key in target:
-			# Use the centralized deserialization to handle all nested structures
-			# The visited set is automatically used by _deserialize_value
-			target.set(key, _deserialize_value(value, TYPE_NIL))
+			# Handle nested structures inline without calling _deserialize_value
+			# to preserve visited set state and depth counter
+			var deserialized_value = _deserialize_nested_value_inline(value, visited)
+			target.set(key, deserialized_value)
+
+func _deserialize_nested_value_inline(value: Variant, visited: Dictionary) -> Variant:
+	"""
+	Inline deserialization helper that preserves visited set state.
+	Used by _copy_resource_properties_direct to avoid resetting counters.
+	"""
+	if value == null:
+		return null
+	
+	# Handle string-encoded types
+	if value is String:
+		return _parse_encoded_string(value)
+	
+	# Handle Arrays - recursive deserialization
+	elif value is Array:
+		var arr_result: Array = []
+		for item in value:
+			arr_result.append(_deserialize_nested_value_inline(item, visited))
+		return arr_result
+	
+	# Handle Dictionaries - check if it's a deep-serialized Resource
+	elif value is Dictionary:
+		if value.has("_resource_type"):
+			# This is a deep-serialized Resource, reconstruct it with visited set
+			return _deserialize_resource_from_dict(value, visited)
+		else:
+			var dict_result: Dictionary = {}
+			for dict_key in value.keys():
+				var deserialized_key = _deserialize_nested_value_inline(dict_key, visited)
+				var dict_val = value[dict_key]
+				var deserialized_value = _deserialize_nested_value_inline(dict_val, visited)
+				dict_result[deserialized_key] = deserialized_value
+			return dict_result
+	
+	# Basic types pass through unchanged
+	return value
 
 # ============================================================================
 # DATA APPLICATION (LOADING)
@@ -1026,7 +1080,7 @@ func _validate_and_migrate(save_data: Dictionary) -> bool:
 ##
 ## 1. CIRCULAR REFERENCES:
 ##    ────────────────────
-##    - Detected via _visited_objects Set[int] tracking
+##    - Detected via _visited_objects Dictionary tracking
 ##    - Each resource data gets a unique hash ID
 ##    - When same ID encountered again, returns null to break cycle
 ##    - Warning logged: "Circular reference detected in resource data"
