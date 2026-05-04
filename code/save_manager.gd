@@ -796,6 +796,11 @@ func _copy_resource_properties_direct(target: Resource, data: Dictionary, visite
 	
 	print("[DEBUG] _copy_resource_properties_direct: Starting for target=%s (%s), data keys=%s" % [target if target else "null", target.resource_path if "resource_path" in target else "no path", str(data.keys())])
 	
+	# Check if 'equipped' exists in data at all
+	if data.has("equipped"):
+		print("[DEBUG]   >>> EQUIPPED FOUND IN DATA! Value: %s" % data["equipped"])
+		print("[DEBUG]   >>> Target has 'equipped' property: %s" % ("equipped" in target))
+	
 	for key in data:
 		if key == "_resource_type" or key == "_resource_path":
 			continue
