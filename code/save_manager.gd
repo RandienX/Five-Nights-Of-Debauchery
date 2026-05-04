@@ -750,7 +750,14 @@ func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Dictionar
 			# CRITICAL FIX: Use duplicate(true) for deep copy to preserve nested resource structure
 			# Then we'll overwrite ALL properties from saved data anyway
 			new_resource = loaded_resource.duplicate(true)
-			print("[DEBUG] _deserialize_resource_from_dict: Loaded and duplicated resource from %s, equipped before overwrite: %s" % [resource_path, new_resource.get("equipped") if "equipped" in new_resource else "N/A"])
+			print("[DEBUG] _deserialize_resource_from_dict: Loaded and duplicated resource from %s" % resource_path)
+			print("[DEBUG]   Base resource equipped before overwrite: %s" % (new_resource.get("equipped") if "equipped" in new_resource else "N/A"))
+			if "equipped" in new_resource and new_resource.equipped is Dictionary:
+				print("[DEBUG]   Base equipped keys: ", new_resource.equipped.keys())
+				for ek in new_resource.equipped:
+					print("[DEBUG]     [%s] = %s" % [ek, "null" if new_resource.equipped[ek] == null else new_resource.equipped[ek].get("item_name", "MISSING")])
+			else:
+				print("[DEBUG]   WARNING: equipped property missing or not a dictionary in base resource!")
 		else:
 			push_warning("[AutoSaveManager] Resource exists at path but failed to load: %s" % resource_path)
 			new_resource = _create_resource_by_type(resource_type)
@@ -770,7 +777,16 @@ func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Dictionar
 	# Apply all saved properties with visited set propagation
 	_copy_resource_properties_direct(new_resource, data, parent_visited)
 	
-	print("[DEBUG] _deserialize_resource_from_dict: After copying properties, equipped = %s" % (new_resource.get("equipped") if "equipped" in new_resource else "N/A"))
+	print("[DEBUG] _deserialize_resource_from_dict: After copying properties")
+	if "equipped" in new_resource:
+		print("[DEBUG]   Final equipped: %s" % new_resource.equipped)
+		if new_resource.equipped is Dictionary:
+			print("[DEBUG]   Final equipped keys: ", new_resource.equipped.keys())
+			for ek in new_resource.equipped:
+				var item = new_resource.equipped[ek]
+				print("[DEBUG]     [%s] = %s (type: %s)" % [ek, "null" if item == null else item.get("item_name", "MISSING"), typeof(item)])
+	else:
+		print("[DEBUG]   WARNING: equipped property does not exist on target after copy!")
 	
 	# IMPORTANT: Remove from "currently constructing" set after successful processing
 	# This allows the same resource file to be referenced again elsewhere
