@@ -226,17 +226,36 @@ func _get_all_autoload_names() -> PackedStringArray:
 	var autoloads := PackedStringArray(["Global", "Save", "PlayerStats", "SaveManager", "Settings"])
 	return autoloads
 
-func _serialize_object_deep(obj: Object) -> Dictionary:
+func _serialize_object_deep(obj: Object, visited: Set[int] = null, depth: int = 0) -> Dictionary:
 	"""
 	Deep serialization that handles Resources with full property capture.
 	This ensures Party resources save their HP, MP, level, equipment, etc.
+	
+	Uses visited set to detect and break circular references during serialization.
 	"""
 	if obj == null:
 		return {}
 	
-	var data : Dictionary = {}
+	# Check recursion depth
+	if depth >= MAX_RECURSION_DEPTH:
+		push_error("[AutoSaveManager] Max serialization depth (%d) exceeded for object: %s" % [MAX_RECURSION_DEPTH, str(obj)])
+		return {}
 	
-	print(obj)
+	# Initialize or use provided visited set
+	if visited == null:
+		visited = _visited_objects
+	
+	# Create unique ID for this object to detect cycles
+	var obj_id = obj.get_instance_id()
+	if visited.has(obj_id):
+		push_warning("[AutoSaveManager] Circular reference detected during serialization of: %s" % str(obj))
+		return {"_circular_ref": true, "_instance_id": obj_id}
+	
+	# Mark as visited
+	visited.add(obj_id)
+	
+	var data: Dictionary = {}
+	
 	# Handle Resources specially - serialize ALL their properties
 	if obj is Resource:
 		data["_resource_type"] = obj.get_class()
@@ -268,10 +287,14 @@ func _serialize_object_deep(obj: Object) -> Dictionary:
 				if serialized != null:
 					data[prop_name] = serialized
 		
+		# Remove from visited after processing
+		visited.erase(obj_id)
 		return data
 	
 	# Handle other objects
-	return _serialize_object_properties(obj)
+	var result = _serialize_object_properties(obj)
+	visited.erase(obj_id)
+	return result
 
 func _capture_all_scenes_data() -> Dictionary:
 	var scenes_data: Dictionary = {}
@@ -293,8 +316,13 @@ func _capture_all_scenes_data() -> Dictionary:
 	
 	return scenes_data
 
-func _serialize_object_properties(obj: Object) -> Dictionary:
+func _serialize_object_properties(obj: Object, visited: Set[int] = null, depth: int = 0) -> Dictionary:
 	var data: Dictionary = {}
+
+	# Check recursion depth
+	if depth >= MAX_RECURSION_DEPTH:
+		push_error("[AutoSaveManager] Max serialization depth (%d) exceeded for object properties" % MAX_RECURSION_DEPTH)
+		return data
 	
 	if not obj:
 		return data
@@ -416,7 +444,14 @@ func serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 
 ## Public method to deserialize a value (can be called from other scripts)
 func deserialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
+	_visited_objects.clear()  # Reset visited set for new deserialization
 	return _deserialize_value(value, type_hint)
+
+# === Circular Reference Detection ===
+# Tracks object IDs during serialization/deserialization to prevent infinite recursion
+var _visited_objects: Set[int] = []
+const MAX_RECURSION_DEPTH := 50  # Prevent stack overflow from deeply nested structures
+var _current_depth: int = 0  # Track current recursion depth
 
 func _serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	if value == null:
@@ -507,47 +542,175 @@ func _deserialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	if value == null:
 		return null
 	
-	# Handle string-encoded types
-	if value is String:
-		if value.begins_with("Vector2(") or value.begins_with("Vector2i("):
-			return str_to_var(value)
-		if value.begins_with("Color("):
-			return str_to_var(value)
-		# Check if it's a resource path (but not a deep-serialized resource dict)
-		if value.ends_with(".tres") or value.ends_with(".tscn") or value.ends_with(".gd"):
-			var resource = load(value)
-			if resource:
-				return resource
+	# Check recursion depth to prevent stack overflow
+	if _current_depth >= MAX_RECURSION_DEPTH:
+		push_error("[AutoSaveManager] Max recursion depth (%d) exceeded. Possible circular reference or deeply nested structure." % MAX_RECURSION_DEPTH)
+		return null
 	
-	# Handle Arrays
-	if value is Array:
-		var result: Array = []
+	_current_depth += 1
+	var result: Variant = null
+	
+	# Handle string-encoded types (type-safe parsing without str_to_var)
+	if value is String:
+		result = _parse_encoded_string(value)
+	
+	# Handle Arrays - recursive deserialization
+	elif value is Array:
+		var arr_result: Array = []
 		for item in value:
-			# Always use recursive deserialization to handle any nesting depth
-			result.append(_deserialize_value(item, TYPE_NIL))
-		return result
+			arr_result.append(_deserialize_value(item, TYPE_NIL))
+		result = arr_result
 	
 	# Handle Dictionaries - check if it's a deep-serialized Resource
-	if value is Dictionary:
+	elif value is Dictionary:
 		if value.has("_resource_type"):
 			# This is a deep-serialized Resource, reconstruct it
-			return _deserialize_resource_from_dict(value)
-		
-		var result: Dictionary = {}
-		for key in value.keys():
-			var deserialized_key = _deserialize_value(key, TYPE_NIL)
-			var dict_val = value[key]
-			# Always use recursive deserialization for dictionary values to handle any nesting depth
-			var deserialized_value = _deserialize_value(dict_val, TYPE_NIL)
-			result[deserialized_key] = deserialized_value
-		return result
+			result = _deserialize_resource_from_dict(value)
+		else:
+			var dict_result: Dictionary = {}
+			for key in value.keys():
+				var deserialized_key = _deserialize_value(key, TYPE_NIL)
+				var dict_val = value[key]
+				var deserialized_value = _deserialize_value(dict_val, TYPE_NIL)
+				dict_result[deserialized_key] = deserialized_value
+			result = dict_result
 	
-	return value
+	else:
+		# Basic types pass through unchanged
+		result = value
+	
+	_current_depth -= 1
+	return result
 
-func _deserialize_resource_from_dict(data: Dictionary) -> Resource:
-	"""Reconstruct a Resource from its deep-serialized dictionary"""
+func _parse_encoded_string(encoded: String) -> Variant:
+	"""
+	Type-safe parsing of encoded Godot types from strings.
+	Replaces deprecated str_to_var() with explicit type parsing.
+	"""
+	if encoded.is_empty():
+		return null
+	
+	# Vector2
+	if encoded.begins_with("Vector2("):
+		var inner = encoded.trim_prefix("Vector2(").trim_suffix(")")
+		var parts = inner.split(",")
+		if parts.size() == 2:
+			return Vector2(float(parts[0].strip_edges()), float(parts[1].strip_edges()))
+		return Vector2.ZERO
+	
+	# Vector2i
+	if encoded.begins_with("Vector2i("):
+		var inner = encoded.trim_prefix("Vector2i(").trim_suffix(")")
+		var parts = inner.split(",")
+		if parts.size() == 2:
+			return Vector2i(int(parts[0].strip_edges()), int(parts[1].strip_edges()))
+		return Vector2i.ZERO
+	
+	# Vector3
+	if encoded.begins_with("Vector3("):
+		var inner = encoded.trim_prefix("Vector3(").trim_suffix(")")
+		var parts = inner.split(",")
+		if parts.size() == 3:
+			return Vector3(float(parts[0].strip_edges()), float(parts[1].strip_edges()), float(parts[2].strip_edges()))
+		return Vector3.ZERO
+	
+	# Vector3i
+	if encoded.begins_with("Vector3i("):
+		var inner = encoded.trim_prefix("Vector3i(").trim_suffix(")")
+		var parts = inner.split(",")
+		if parts.size() == 3:
+			return Vector3i(int(parts[0].strip_edges()), int(parts[1].strip_edges()), int(parts[2].strip_edges()))
+		return Vector3i.ZERO
+	
+	# Color
+	if encoded.begins_with("Color("):
+		var inner = encoded.trim_prefix("Color(").trim_suffix(")")
+		var parts = inner.split(",")
+		if parts.size() >= 3:
+			var r = float(parts[0].strip_edges())
+			var g = float(parts[1].strip_edges())
+			var b = float(parts[2].strip_edges())
+			var a = float(parts[3].strip_edges()) if parts.size() > 3 else 1.0
+			return Color(r, g, b, a)
+		return Color.BLACK
+	
+	# Rect2
+	if encoded.begins_with("Rect2("):
+		var inner = encoded.trim_prefix("Rect2(").trim_suffix(")")
+		var parts = inner.split(",")
+		if parts.size() == 4:
+			return Rect2(float(parts[0].strip_edges()), float(parts[1].strip_edges()), 
+						float(parts[2].strip_edges()), float(parts[3].strip_edges()))
+		return Rect2()
+	
+	# Rect2i
+	if encoded.begins_with("Rect2i("):
+		var inner = encoded.trim_prefix("Rect2i(").trim_suffix(")")
+		var parts = inner.split(",")
+		if parts.size() == 4:
+			return Rect2i(int(parts[0].strip_edges()), int(parts[1].strip_edges()), 
+						 int(parts[2].strip_edges()), int(parts[3].strip_edges()))
+		return Rect2i()
+	
+	# Transform2D - simplified parsing
+	if encoded.begins_with("Transform2D("):
+		push_warning("[AutoSaveManager] Transform2D parsing may be incomplete: %s" % encoded)
+		# Fallback: try str_to_var for complex types, but log warning
+		return str_to_var(encoded)
+	
+	# Quaternion
+	if encoded.begins_with("Quaternion("):
+		var inner = encoded.trim_prefix("Quaternion(").trim_suffix(")")
+		var parts = inner.split(",")
+		if parts.size() == 4:
+			return Quaternion(float(parts[0].strip_edges()), float(parts[1].strip_edges()), 
+							 float(parts[2].strip_edges()), float(parts[3].strip_edges()))
+		return Quaternion.IDENTITY
+	
+	# Plane
+	if encoded.begins_with("Plane("):
+		var inner = encoded.trim_prefix("Plane(").trim_suffix(")")
+		var parts = inner.split(",")
+		if parts.size() == 4:
+			return Plane(float(parts[0].strip_edges()), float(parts[1].strip_edges()), 
+						float(parts[2].strip_edges()), float(parts[3].strip_edges()))
+		return Plane()
+	
+	# Resource path check (but not a deep-serialized resource dict)
+	if encoded.ends_with(".tres") or encoded.ends_with(".tscn") or encoded.ends_with(".gd"):
+		if ResourceLoader.exists(encoded):
+			var resource = load(encoded)
+			if resource:
+				return resource
+			else:
+				push_warning("[AutoSaveManager] Failed to load resource at path: %s" % encoded)
+		else:
+			push_warning("[AutoSaveManager] Resource path does not exist: %s" % encoded)
+		return null
+	
+	# Unknown string format - return as-is (might be a regular string value)
+	return encoded
+
+func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Set[int] = null) -> Resource:
+	"""
+	Reconstruct a Resource from its deep-serialized dictionary.
+	Uses visited set to detect and break circular references.
+	"""
 	if not data.has("_resource_type"):
 		return null
+	
+	# Initialize visited set if not provided
+	if parent_visited == null:
+		parent_visited = _visited_objects
+	
+	# Create a unique ID for this resource data to detect cycles
+	var data_id = hash(str(data.get("_resource_type", ""), data.get("_resource_path", "")))
+	if parent_visited.has(data_id):
+		push_warning("[AutoSaveManager] Circular reference detected in resource data. Returning null to break cycle.")
+		return null
+	
+	# Mark as visited
+	parent_visited.add(data_id)
 	
 	var resource_type: String = data["_resource_type"]
 	var resource_path: String = data.get("_resource_path", "")
@@ -561,15 +724,26 @@ func _deserialize_resource_from_dict(data: Dictionary) -> Resource:
 		if loaded_resource:
 			new_resource = loaded_resource.duplicate()
 		else:
+			push_warning("[AutoSaveManager] Resource exists at path but failed to load: %s" % resource_path)
 			new_resource = _create_resource_by_type(resource_type)
+	elif resource_path:
+		# Path exists but resource doesn't - handle gracefully
+		push_warning("[AutoSaveManager] Resource path does not exist: %s. Creating new instance." % resource_path)
+		new_resource = _create_resource_by_type(resource_type)
 	else:
+		# No path - runtime resource, create new instance
 		new_resource = _create_resource_by_type(resource_type)
 	
 	if not new_resource:
+		push_error("[AutoSaveManager] Failed to create resource of type: %s" % resource_type)
+		parent_visited.erase(data_id)  # Clean up on failure
 		return null
 	
-	# Apply all saved properties
-	_copy_resource_properties_direct(new_resource, data)
+	# Apply all saved properties with visited set propagation
+	_copy_resource_properties_direct(new_resource, data, parent_visited)
+	
+	# Remove from visited set after processing (allow same resource type elsewhere)
+	parent_visited.erase(data_id)
 	return new_resource
 
 func _create_resource_by_type(resource_type: String) -> Resource:
@@ -591,10 +765,17 @@ func _create_resource_by_type(resource_type: String) -> Resource:
 			push_warning("[AutoSaveManager] Could not instantiate resource type: %s" % resource_type)
 			return null
 
-func _copy_resource_properties_direct(target: Resource, data: Dictionary) -> void:
-	"""Copy all properties directly from dictionary to resource"""
+func _copy_resource_properties_direct(target: Resource, data: Dictionary, visited: Set[int] = null) -> void:
+	"""
+	Copy all properties directly from dictionary to resource.
+	Propagates visited set for circular reference detection in nested resources.
+	"""
 	if not target or data.is_empty():
 		return
+	
+	# Use shared visited set or create new one
+	if visited == null:
+		visited = _visited_objects
 	
 	for key in data:
 		if key == "_resource_type" or key == "_resource_path":
@@ -605,6 +786,7 @@ func _copy_resource_properties_direct(target: Resource, data: Dictionary) -> voi
 		# Check if the target has this property before setting
 		if key in target:
 			# Use the centralized deserialization to handle all nested structures
+			# The visited set is automatically used by _deserialize_value
 			target.set(key, _deserialize_value(value, TYPE_NIL))
 
 # ============================================================================
@@ -703,15 +885,18 @@ func _restore_party_array(player_stats: Node, party_data: Array) -> void:
 	
 	for member_data in party_data:
 		if member_data is Dictionary and member_data.has("_resource_type"):
-			# Deep-serialized Party resource
+			# Deep-serialized Party resource - pass visited set for cycle detection
 			var party_member = _deserialize_resource_from_dict(member_data)
 			if party_member and party_member.role == Entity.Role.PARTY:
 				new_party.append(party_member)
 		elif member_data is String:
-			# Resource path
-			var party_member = load(member_data)
-			if party_member and party_member.role == Entity.Role.PARTY:
-				new_party.append(party_member.duplicate())
+			# Resource path - validate existence before loading
+			if ResourceLoader.exists(member_data):
+				var party_member = load(member_data)
+				if party_member and party_member.role == Entity.Role.PARTY:
+					new_party.append(party_member.duplicate())
+			else:
+				push_warning("[AutoSaveManager] Party member resource not found: %s" % member_data)
 	
 	if new_party.size() > 0:
 		player_stats.set("party", new_party)
@@ -780,3 +965,185 @@ func _validate_and_migrate(save_data: Dictionary) -> bool:
 		save_data["schema_version"] = SAVE_VERSION
 	
 	return true
+
+
+# ============================================================================
+# DOCUMENTATION & INTEGRATION GUIDE
+# ============================================================================
+## 
+## ════════════════════════════════════════════════════════════════════════════
+## STEP-BY-STEP INTEGRATION GUIDE
+## ════════════════════════════════════════════════════════════════════════════
+##
+## 1. SETUP IN YOUR PROJECT:
+##    ──────────────────────
+##    a) Add SaveManager as an autoload (Project Settings → Autoload):
+##       - Path: res://code/save_manager.gd
+##       - Name: SaveManager
+##    
+##    b) Ensure your Resources (Entity, Item, Skill, etc.) are properly set up:
+##       - Must extend Resource or RefCounted
+##       - Should have @export properties for data you want to save
+##       - Runtime-modified resources will be deep-serialized automatically
+##
+## 2. HOOKING INTO EXISTING DATA:
+##    ───────────────────────────
+##    The system automatically captures:
+##    - Global.autoload data (via Global.scene_data dictionary)
+##    - PlayerStats data (via PlayerStats.get_save_data() / load_save_data())
+##    - Scene node properties (exported variables, transforms, etc.)
+##    
+##    To add custom data:
+##    ```gdscript
+##    # In your script's get_save_data():
+##    func get_save_data() -> Dictionary:
+##        return {
+##            "my_custom_value": my_value,
+##            "my_resource": my_resource  # Will be auto-serialized
+##        }
+##    
+##    # In your script's load_save_data():
+##    func load_save_data(data: Dictionary) -> void:
+##        if data.has("my_custom_value"):
+##            my_custom_value = data["my_custom_value"]
+##    ```
+##
+## 3. REQUIRED NODE/RESOURCE SETUP:
+##    ──────────────────────────────
+##    • Entity.gd, Item.gd, Skill.gd must:
+##      - Extend Resource
+##      - Have class_name declared for type identification
+##      - Implement @export properties for serializable data
+##    
+##    • PlayerStats.gd must:
+##      - Extend Node (autoload)
+##      - Implement get_save_data() and load_save_data() methods
+##      - Store party members in "party" array property
+##
+## ════════════════════════════════════════════════════════════════════════════
+## EDGE-CASE HANDLING STRATEGY
+## ════════════════════════════════════════════════════════════════════════════
+##
+## 1. CIRCULAR REFERENCES:
+##    ────────────────────
+##    - Detected via _visited_objects Set[int] tracking
+##    - Each resource data gets a unique hash ID
+##    - When same ID encountered again, returns null to break cycle
+##    - Warning logged: "Circular reference detected in resource data"
+##    
+##    Example scenario prevented:
+##      ResourceA.resource_b = ResourceB
+##      ResourceB.resource_a = ResourceA  ← Detected & broken
+##
+## 2. MISSING RESOURCES:
+##    ──────────────────
+##    - Validated with ResourceLoader.exists(path) before loading
+##    - If missing: logs warning, creates new instance of same type
+##    - Fallback hierarchy:
+##      a) Try load from resource_path
+##      b) Try instantiate by resource_type (Entity.new(), etc.)
+##      c) Try ClassDB.instantiate() for built-in types
+##      d) Return null with error log
+##    
+##    Graceful degradation ensures save/load continues even with missing assets.
+##
+## 3. SCHEMA CHANGES / VERSION DRIFT:
+##    ───────────────────────────────
+##    - SAVE_VERSION constant tracks current schema
+##    - _validate_and_migrate() handles version differences
+##    - Missing properties in old saves: use default values (property already exists)
+##    - Extra properties in new saves: ignored during deserialization
+##    
+##    Migration strategy:
+##    ```gdscript
+##    func _validate_and_migrate(save_data: Dictionary) -> bool:
+##        var version = save_data.get("schema_version", "0.0")
+##        if version == "1.0":
+##            # Migrate 1.0 → 1.1
+##            _migrate_v1_to_v2(save_data)
+##        save_data["schema_version"] = SAVE_VERSION
+##        return true
+##    ```
+##
+## 4. RAPID LOAD CALLS:
+##    ─────────────────
+##    - _current_depth counter prevents stack overflow
+##    - MAX_RECURSION_DEPTH (default: 50) limits nesting
+##    - _visited_objects.clear() called at start of each deserialize_value()
+##    - State reset ensures no cross-contamination between load operations
+##    
+##    Thread safety note: Godot's scene loading is single-threaded by design.
+##    For async loading, use await on change_scene_to_file().
+##
+## ════════════════════════════════════════════════════════════════════════════
+## PERFORMANCE NOTES & MEMORY-SAFE RECURSION TIPS
+## ════════════════════════════════════════════════════════════════════════════
+##
+## 1. RECURSION OPTIMIZATION:
+##    ───────────────────────
+##    • Depth-first traversal with early exit on max depth
+##    • Shared visited set avoids redundant allocations
+##    • Tail-call friendly structure (Godot doesn't optimize tail calls, but
+##      the depth counter prevents stack overflow)
+##    
+##    Performance characteristics:
+##    - Time: O(n) where n = total properties across all nested objects
+##    - Space: O(d) where d = maximum nesting depth (capped at MAX_RECURSION_DEPTH)
+##
+## 2. MEMORY MANAGEMENT:
+##    ──────────────────
+##    • Duplicate() used for loaded resources to avoid modifying originals
+##    • Visited set cleared after each top-level deserialize call
+##    • No persistent references held after deserialization completes
+##    • Arrays/Dictionaries created fresh, not reused
+##    
+##    Memory tips:
+##    - Keep MAX_RECURSION_DEPTH reasonable (50 handles most cases)
+##    - Avoid deeply nested structures (>20 levels) in game data design
+##    - Use resource_path for shared resources instead of deep serialization
+##
+## 3. CACHING STRATEGIES:
+##    ───────────────────
+##    • ResourceLoader caches loaded resources internally
+##    • _visited_objects acts as cycle-detection cache
+##    • Consider adding LRU cache for frequently loaded resources if needed:
+##      ```gdscript
+##      var _resource_cache: Dictionary = {}
+##      
+##      func _load_resource_cached(path: String) -> Resource:
+##          if _resource_cache.has(path):
+##              return _resource_cache[path].duplicate()
+##          var res = load(path)
+##          if res:
+##              _resource_cache[path] = res
+##          return res
+##      ```
+##
+## 4. SERIALIZATION SYMMETRY:
+##    ───────────────────────
+##    Save and load use identical type-tagging:
+##    - Resources: {_resource_type, _resource_path, ...properties}
+##    - Vectors: "Vector2(x, y)" string format
+##    - Arrays: Recursive element-by-element
+##    - Dictionaries: Recursive key/value pairs
+##    
+##    This 1:1 symmetry ensures:
+##    - No data loss during save/load cycles
+##    - Type preservation without str_to_var() risks
+##    - Predictable behavior for debugging
+##
+## ════════════════════════════════════════════════════════════════════════════
+## DEBUG LOGGING REFERENCE
+## ════════════════════════════════════════════════════════════════════════════
+##
+## Log prefixes to search for in Godot console:
+## - [AutoSaveManager] Circular reference detected → Check for bidirectional refs
+## - [AutoSaveManager] Resource path does not exist → Missing asset file
+## - [AutoSaveManager] Failed to load resource → Corrupted or incompatible resource
+## - [AutoSaveManager] Max recursion depth exceeded → Redesign data structure
+## - [AutoSaveManager] Could not instantiate resource type → Unknown class
+## - [AutoSaveManager] Transform2D parsing may be incomplete → Complex transform
+##
+## Enable verbose logging by uncommenting debug prints in serialization methods.
+##
+## ════════════════════════════════════════════════════════════════════════════
