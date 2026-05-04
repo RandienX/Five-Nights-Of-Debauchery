@@ -503,17 +503,8 @@ func _deserialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	if value is Array:
 		var result: Array = []
 		for item in value:
-			# Check if array item is a deep-serialized Resource
-			if item is Dictionary and item.has("_resource_type"):
-				result.append(_deserialize_resource_from_dict(item))
-			elif item is Array:
-				# Handle nested arrays
-				result.append(_deserialize_value(item, TYPE_NIL))
-			elif item is Dictionary:
-				# Handle nested dictionaries
-				result.append(_deserialize_value(item, TYPE_NIL))
-			else:
-				result.append(_deserialize_value(item, TYPE_NIL))
+			# Always use recursive deserialization to handle any nesting depth
+			result.append(_deserialize_value(item, TYPE_NIL))
 		return result
 	
 	# Handle Dictionaries - check if it's a deep-serialized Resource
@@ -526,30 +517,8 @@ func _deserialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 		for key in value.keys():
 			var deserialized_key = _deserialize_value(key, TYPE_NIL)
 			var dict_val = value[key]
-			var deserialized_value: Variant
-			# Check if dictionary value is a deep-serialized Resource
-			if dict_val is Dictionary and dict_val.has("_resource_type"):
-				deserialized_value = _deserialize_resource_from_dict(dict_val)
-			elif dict_val is Array:
-				# Handle arrays within dictionaries (like skills[level] = [Skill, Skill])
-				var array_result: Array = []
-				for arr_item in dict_val:
-					if arr_item is Dictionary and arr_item.has("_resource_type"):
-						array_result.append(_deserialize_resource_from_dict(arr_item))
-					elif arr_item is Array:
-						# Handle nested arrays
-						array_result.append(_deserialize_value(arr_item, TYPE_NIL))
-					elif arr_item is Dictionary:
-						# Handle nested dictionaries
-						array_result.append(_deserialize_value(arr_item, TYPE_NIL))
-					else:
-						array_result.append(_deserialize_value(arr_item, TYPE_NIL))
-				deserialized_value = array_result
-			elif dict_val is Dictionary:
-				# Handle nested dictionaries
-				deserialized_value = _deserialize_value(dict_val, TYPE_NIL)
-			else:
-				deserialized_value = _deserialize_value(dict_val, TYPE_NIL)
+			# Always use recursive deserialization for dictionary values to handle any nesting depth
+			var deserialized_value = _deserialize_value(dict_val, TYPE_NIL)
 			result[deserialized_key] = deserialized_value
 		return result
 	
@@ -615,49 +584,8 @@ func _copy_resource_properties_direct(target: Resource, data: Dictionary) -> voi
 		
 		# Check if the target has this property before setting
 		if key in target:
-			# Handle nested Resources in properties
-			if value is Dictionary and value.has("_resource_type"):
-				target.set(key, _deserialize_resource_from_dict(value))
-			elif value is Array:
-				var new_array: Array = []
-				for item in value:
-					if item is Dictionary and item.has("_resource_type"):
-						new_array.append(_deserialize_resource_from_dict(item))
-					elif item is Array:
-						# Handle nested arrays
-						new_array.append(_deserialize_value(item, TYPE_NIL))
-					elif item is Dictionary:
-						# Handle nested dictionaries
-						new_array.append(_deserialize_value(item, TYPE_NIL))
-					else:
-						new_array.append(item)
-				target.set(key, new_array)
-			elif value is Dictionary:
-				# Handle nested dictionaries with Resource values
-				var new_dict: Dictionary = {}
-				for dict_key in value.keys():
-					var dict_val = value[dict_key]
-					if dict_val is Dictionary and dict_val.has("_resource_type"):
-						new_dict[dict_key] = _deserialize_resource_from_dict(dict_val)
-					elif dict_val is Array:
-						var array_result: Array = []
-						for arr_item in dict_val:
-							if arr_item is Dictionary and arr_item.has("_resource_type"):
-								array_result.append(_deserialize_resource_from_dict(arr_item))
-							elif arr_item is Array:
-								array_result.append(_deserialize_value(arr_item, TYPE_NIL))
-							elif arr_item is Dictionary:
-								array_result.append(_deserialize_value(arr_item, TYPE_NIL))
-							else:
-								array_result.append(arr_item)
-						new_dict[dict_key] = array_result
-					elif dict_val is Dictionary:
-						new_dict[dict_key] = _deserialize_value(dict_val, TYPE_NIL)
-					else:
-						new_dict[dict_key] = dict_val
-				target.set(key, new_dict)
-			else:
-				target.set(key, value)
+			# Use the centralized deserialization to handle all nested structures
+			target.set(key, _deserialize_value(value, TYPE_NIL))
 
 # ============================================================================
 # DATA APPLICATION (LOADING)
@@ -786,49 +714,8 @@ func _copy_resource_properties(target: Resource, source: Resource) -> void:
 		if prop_name in source:
 			var value = source.get(prop_name)
 			if prop_name in target:
-				# Handle nested Resources in properties (skills array, equipped items dict, etc.)
-				if value is Dictionary and value.has("_resource_type"):
-					target.set(prop_name, _deserialize_resource_from_dict(value))
-				elif value is Array:
-					var new_array: Array = []
-					for item in value:
-						if item is Dictionary and item.has("_resource_type"):
-							new_array.append(_deserialize_resource_from_dict(item))
-						elif item is Array:
-							# Handle nested arrays
-							new_array.append(_deserialize_value(item, TYPE_NIL))
-						elif item is Dictionary:
-							# Handle nested dictionaries
-							new_array.append(_deserialize_value(item, TYPE_NIL))
-						else:
-							new_array.append(item)
-					target.set(prop_name, new_array)
-				elif value is Dictionary:
-					# Handle dictionaries with Resource values (like equipped: Dictionary[String, Item])
-					var new_dict: Dictionary = {}
-					for key in value.keys():
-						var dict_val = value[key]
-						if dict_val is Dictionary and dict_val.has("_resource_type"):
-							new_dict[key] = _deserialize_resource_from_dict(dict_val)
-						elif dict_val is Array:
-							var array_result: Array = []
-							for arr_item in dict_val:
-								if arr_item is Dictionary and arr_item.has("_resource_type"):
-									array_result.append(_deserialize_resource_from_dict(arr_item))
-								elif arr_item is Array:
-									array_result.append(_deserialize_value(arr_item, TYPE_NIL))
-								elif arr_item is Dictionary:
-									array_result.append(_deserialize_value(arr_item, TYPE_NIL))
-								else:
-									array_result.append(arr_item)
-							new_dict[key] = array_result
-						elif dict_val is Dictionary:
-							new_dict[key] = _deserialize_value(dict_val, TYPE_NIL)
-						else:
-							new_dict[key] = dict_val
-					target.set(prop_name, new_dict)
-				else:
-					target.set(prop_name, value)
+				# Use the centralized deserialization to handle all nested structures
+				target.set(prop_name, _deserialize_value(value, TYPE_NIL))
 
 # ============================================================================
 # UTILITY FUNCTIONS
