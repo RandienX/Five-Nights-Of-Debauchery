@@ -50,6 +50,10 @@ const SKIP_PROPERTIES := [
 	"player_steps", "_uid", "shape"
 ]
 
+const SKIP_PROPERTY_PREFIXES := [
+	"metadata/"
+]
+
 func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(SAVE_PATH)
 	_connect_signals()
@@ -248,6 +252,14 @@ func _serialize_object_deep(obj: Object) -> Dictionary:
 			# Skip only internal/resource management properties
 			if prop_name in ["script", "resource_local_to_scene", "resource_name"]:
 				continue
+			# Skip properties with certain prefixes (like metadata/)
+			var should_skip := false
+			for prefix in SKIP_PROPERTY_PREFIXES:
+				if prop_name.begins_with(prefix):
+					should_skip = true
+					break
+			if should_skip:
+				continue
 			
 			# Get and serialize the property value
 			if prop_name in obj:
@@ -297,6 +309,14 @@ func _serialize_object_properties(obj: Object) -> Dictionary:
 		
 		# Skip properties that shouldn't be serialized
 		if prop_name in SKIP_PROPERTIES:
+			continue
+		# Skip properties with certain prefixes (like metadata/)
+		var should_skip := false
+		for prefix in SKIP_PROPERTY_PREFIXES:
+			if prop_name.begins_with(prefix):
+				should_skip = true
+				break
+		if should_skip:
 			continue
 		if not (usage & PROPERTY_USAGE_STORAGE):
 			continue
@@ -537,9 +557,9 @@ func _deserialize_resource_from_dict(data: Dictionary) -> Resource:
 	# Try to load from path first if available (for Entity, Item, Skill resources)
 	if resource_path and ResourceLoader.exists(resource_path):
 		# Load the base resource and duplicate it to avoid modifying the original
-		var base_resource = load(resource_path)
-		if base_resource:
-			new_resource = base_resource.duplicate()
+		var loaded_resource = load(resource_path)
+		if loaded_resource:
+			new_resource = loaded_resource.duplicate()
 		else:
 			new_resource = _create_resource_by_type(resource_type)
 	else:
