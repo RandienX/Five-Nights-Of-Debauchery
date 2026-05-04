@@ -824,27 +824,40 @@ func _copy_resource_properties_direct(target: Resource, data: Dictionary, visite
 		
 		# Skip properties that shouldn't be restored
 		if key in SKIP_PROPERTIES:
-			print("[DEBUG]   Skipping property '%s' (in SKIP_PROPERTIES)" % key)
 			continue
 		
 		var value = data[key]
 		
 		# Check if the target has this property before setting
 		if key in target:
-			print("[DEBUG]   Processing property '%s': %s" % [key, str(value).substr(0, min(60, len(str(value))))])
 			# Special handling for 'equipped' dictionary - add extra debug info
-			if key == "equipped" and value is Dictionary:
-				print("[DEBUG]     >>> EQUIPPED DICTIONARY DETECTED! Keys: %s" % value.keys())
-				for equip_key in value.keys():
-					print("[DEBUG]     >>> equipped['%s'] = %s" % [equip_key, str(value[equip_key]).substr(0, 80)])
+			if key == "equipped":
+				print("[EQUIPPED] Found equipped in data")
+				print("[EQUIPPED] Raw data keys: ", value.keys() if value is Dictionary else "NOT A DICT")
+				if value is Dictionary:
+					for ek in value:
+						print("[EQUIPPED]   Data['%s'] = %s" % [ek, "null" if value[ek] == null else str(value[ek]).substr(0, 60)])
+			
 			# Handle nested structures inline without calling _deserialize_value
 			# to preserve visited set state and depth counter
 			var deserialized_value = _deserialize_nested_value_inline(value, visited)
-			target.set(key, deserialized_value)
-			print("[DEBUG]     -> Set to: %s" % ["null" if deserialized_value == null else str(deserialized_value).substr(0, min(60, str(deserialized_value)))])
-			# Extra check for equipped after setting
+			
 			if key == "equipped":
-				print("[DEBUG]     >>> After setting, target.equipped = %s" % target.get("equipped"))
+				print("[EQUIPPED] After deserialize: ", deserialized_value)
+				if deserialized_value is Dictionary:
+					for ek in deserialized_value:
+						var item = deserialized_value[ek]
+						print("[EQUIPPED]   Deserialized['%s'] = %s (Type: %s)" % [ek, "null" if item == null else item.get("item_name", "Unknown"), typeof(item)])
+			
+			target.set(key, deserialized_value)
+			
+			if key == "equipped":
+				var verify = target.get("equipped")
+				print("[EQUIPPED] VERIFICATION: target.equipped = ", verify)
+				if verify is Dictionary:
+					for ek in verify:
+						var item = verify[ek]
+						print("[EQUIPPED]   Final['%s'] = %s" % [ek, "null" if item == null else item.get("item_name", "MISSING")])
 		else:
 			print("[DEBUG]   Property '%s' not found in target, skipping" % key)
 
