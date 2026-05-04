@@ -449,6 +449,7 @@ func serialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 ## Public method to deserialize a value (can be called from other scripts)
 func deserialize_value(value: Variant, type_hint: int = TYPE_NIL) -> Variant:
 	_visited_objects.clear()  # Reset visited set for new deserialization
+	_current_depth = 0  # Reset depth counter
 	return _deserialize_value(value, type_hint)
 
 # === Circular Reference Detection Constants ===
@@ -697,6 +698,9 @@ func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Dictionar
 	"""
 	Reconstruct a Resource from its deep-serialized dictionary.
 	Uses visited set to detect and break circular references.
+	
+	IMPORTANT: Only breaks cycles within the SAME object graph traversal.
+	Same resource files referenced from different parents are allowed.
 	"""
 	if not data.has("_resource_type"):
 		return null
@@ -709,22 +713,29 @@ func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Dictionar
 	var resource_path: String = data.get("_resource_path", "")
 	var data_id: int
 	
+	# For file-based resources, we need to distinguish between:
+	# 1. Same file referenced multiple times (ALLOWED - different instances)
+	# 2. Actual circular reference (BLOCKED - same instance referring to itself)
+	# 
+	# Solution: Use a "currently processing" set that tracks resources being built RIGHT NOW
+	# When a resource finishes building, remove it from this set
 	if resource_path and not resource_path.begins_with("<Resource#"):
-		# Use path hash for file-based resources (stable across loads)
-		data_id = hash(resource_path)
+		# Use a special marker for "currently being constructed" resources
+		data_id = hash(resource_path + "::constructing")
 	else:
-		# For runtime resources, use type+properties hash
+		# For runtime resources, use type+properties hash with constructing marker
 		var key_list := PackedStringArray()
 		for k in data.keys():
 			key_list.append(str(k))
 		key_list.sort()
-		data_id = hash(str(data.get("_resource_type", ""), key_list))
+		data_id = hash(str(data.get("_resource_type", ""), key_list, "::constructing"))
 	
+	# Check if we're in the middle of constructing this resource (circular ref)
 	if parent_visited.has(data_id):
 		push_warning("[AutoSaveManager] Circular reference detected in resource data (path: %s). Returning null to break cycle." % resource_path)
 		return null
 	
-	# Mark as visited
+	# Mark as "currently constructing"
 	parent_visited[data_id] = true
 	
 	var resource_type: String = data["_resource_type"]
@@ -756,7 +767,8 @@ func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Dictionar
 	# Apply all saved properties with visited set propagation
 	_copy_resource_properties_direct(new_resource, data, parent_visited)
 	
-	# Remove from visited set after processing (allow same resource type elsewhere)
+	# IMPORTANT: Remove from "currently constructing" set after successful processing
+	# This allows the same resource file to be referenced again elsewhere
 	parent_visited.erase(data_id)
 	return new_resource
 
@@ -872,8 +884,18 @@ func _deserialize_nested_value_inline(value: Variant, visited: Dictionary) -> Va
 				var deserialized_key = _deserialize_nested_value_inline(dict_key, visited)
 				var dict_val = value[dict_key]
 				var deserialized_value = _deserialize_nested_value_inline(dict_val, visited)
+				
+				# CRITICAL FIX: Ensure Item resources are properly typed for Dictionary[String, Item]
+				# Godot's typed dictionaries require exact type matching
+				if deserialized_value is Resource and deserialized_value.get_class() == "Resource":
+					# Check if this looks like an Item resource (has item_name or type property)
+					if "item_name" in deserialized_value or "type" in deserialized_value:
+						print("[DEBUG]   -> Casting Resource to Item type for typed dictionary")
+						# Cast to Item by using 'as' operator
+						deserialized_value = deserialized_value as Item
+				
 				dict_result[deserialized_key] = deserialized_value
-				print("[DEBUG]   Dict['%s']: %s -> %s" % [dict_key, str(dict_val).substr(0, min(30, len(str(dict_val)))), str(deserialized_value).substr(0, min(30, len(str(deserialized_value))))])
+				print("[DEBUG]   Dict['%s']: %s -> %s (type: %s)" % [dict_key, str(dict_val).substr(0, min(30, len(str(dict_val)))), str(deserialized_value).substr(0, min(30, len(str(deserialized_value)))), type_string(typeof(deserialized_value))])
 			print("[DEBUG]   -> Final dictionary result: %s" % dict_result)
 			return dict_result
 	
