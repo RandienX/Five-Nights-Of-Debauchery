@@ -230,8 +230,6 @@ func _input(event: InputEvent) -> void:
 				item_manager.close_items_menu()
 		
 	elif state == states.OnItemSelect:
-			if event.is_action_pressed("use") or event.is_action_pressed("back"):
-				get_viewport().set_input_as_handled()
 			item_manager.item_select_input(event)
 		
 	elif state == states.OnEnemy:
@@ -333,6 +331,11 @@ func undo_last_action():
 		if atk.item_reference:
 			var used_item = atk.item_reference
 			PlayerStats.add_item(used_item, 1)  # Restore item
+			# Also restore item_amounts in the item manager UI if open
+			if item_manager and item_manager.available_items.has(used_item):
+				var idx = item_manager.available_items.find(used_item)
+				if idx >= 0:
+					item_manager.item_amounts[idx] += 1
 		attack_executor.attack_array.erase(last)
 	current_attacker = last
 	state = states.OnAction
@@ -353,7 +356,7 @@ func advance_planning():
 			move_who_moves(current_party_plan_index)
 			return
 	if are_all_enemies_defeated():
-		death_manager.check_victory()
+		await death_manager.check_enemy_death_and_xp()
 		return
 	start_resolution_phase()
 

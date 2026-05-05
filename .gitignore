@@ -1,1 +1,28 @@
-(code/save_manager.gd)
+```
+# Godot-specific ignores
+*.import
+*.remap
+export_presets.cfg
+.autoloads/
+.editor/
+
+# Build artifacts
+*.so
+*.dylib
+*.dll
+*.exe
+*.bin
+
+# Dependencies
+res://addons/
+*.import
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+```
