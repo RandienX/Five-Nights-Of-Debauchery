@@ -39,9 +39,15 @@ func check_enemy_death_and_xp():
 		return
 	
 	var total_xp = 0
-	for e in root.enemy_instances:
-		if e:
-			total_xp += e.xp_reward
+	var total_currency = 0
+	
+	# Calculate XP and currency rewards from all enemy slots (using override values if set)
+	for slot in root.battle.enemies:
+		if slot and slot.enemy:
+			total_xp += slot.get_xp_reward()
+			total_currency += slot.get_currency_reward()
+	
+	# Distribute XP and currency to party members
 	for actor in root.initiative:
 		if actor.role == Entity.Role.PARTY:
 			actor.xp += total_xp
@@ -57,7 +63,16 @@ func check_enemy_death_and_xp():
 				actor.mp = actor.max_stats["mp"]
 				root.get_node("Control/enemy_ui/CenterContainer/output").text = actor.name + " leveled up to " + str(actor.level) + "! "
 				await get_tree().create_timer(1.0).timeout
+	
+	# Add currency reward to player
+	if total_currency > 0:
+		PlayerStats.add_currency(total_currency, PlayerStats.CurrencyType.GOLD)
+		root.get_node("Control/enemy_ui/CenterContainer/output").text += "Gained " + str(total_currency) + " gold!"
+	
 	await end_battle_victory()
+
+func check_victory():
+	await check_enemy_death_and_xp()
 
 func end_battle_victory() -> void:
 	await root.get_tree().create_timer(1.0).timeout
