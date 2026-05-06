@@ -66,6 +66,7 @@ id = 5
 [node name="save6" parent="VBoxContainer" instance=ExtResource("2_maxk1")]
 layout_mode = 2
 mouse_default_cursor_shape = 2
+id = 6
 
 [node name="save7" parent="VBoxContainer" instance=ExtResource("2_maxk1")]
 layout_mode = 2

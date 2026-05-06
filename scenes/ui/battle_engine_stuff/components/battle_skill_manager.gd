@@ -151,41 +151,52 @@ func select_skill():
 		await root.get_tree().create_timer(0.5).timeout
 		return
 	
-	if skill.target_type == 0:
+	if skill.target_type == 0: #SingleEnemy
 		root.state = root.states.OnSkillSelect
 		root.selected_enemy = root.previous_enemy if root.previous_enemy != 0 else 1
 		root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select target..."
 		return
-	elif skill.target_type == 1:
+	elif skill.target_type == 1: #Self 
 		root.add_attack(root.current_attacker, [root.current_attacker], skill)
 		root.action_history.append(root.current_attacker)
 		close_skills_menu()
-		root.advance_planning()
-	elif skill.target_type == 2:
+		await root.advance_planning()
+	elif skill.target_type == 2: #Party
 		root.add_attack(root.current_attacker, root.party.duplicate(), skill)
 		root.action_history.append(root.current_attacker)
 		close_skills_menu()
-		root.advance_planning()
-	elif skill.target_type == 3:
+		await root.advance_planning()
+	elif skill.target_type == 3: #AllEnemies
+		root.add_attack(root.current_attacker, root.enemy_instances.duplicate(), skill)
+		root.action_history.append(root.current_attacker)
+		close_skills_menu()
+		await root.advance_planning()
+	elif skill.target_type == 4: #SingleAlly
 		root.state = root.states.OnSkillSelect
 		root.selected_enemy = root.previous_enemy if root.previous_enemy != 0 else 1
 		root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select ally..."
-
+		return
+	elif skill.target_type == 5: #RandomEnemy
+		root.add_attack(root.current_attacker, root.enemy_instances.duplicate()[randi_range(0, root.enemy_instances.duplicate().size()-1)], skill)
+		root.action_history.append(root.current_attacker)
+		close_skills_menu()
+		await root.advance_planning()
+		
 func confirm_skill_target():
 	var skill = available_skills[current_skill_index]
-	if skill.target_type == 0:
+	if skill.target_type == 0: #SingleEnemy
 		var target = root.get_enemy(root.selected_enemy)
 		if target and target.hp > 0:
 			root.add_attack(root.current_attacker, [target], skill)
 			root.action_history.append(root.current_attacker)
 			close_skills_menu()
-			root.advance_planning()
-	elif skill.target_type == 3:
+			await root.advance_planning()
+	elif skill.target_type == 4: #SingleAlly
 		var target = root.party[clamp(root.selected_enemy - 1, 0, root.party.size() - 1)]
 		root.add_attack(root.current_attacker, [target], skill)
 		root.action_history.append(root.current_attacker)
 		close_skills_menu()
-		root.advance_planning()
+		await root.advance_planning()
 		
 func close_skills_menu():
 	skills_container.visible = false

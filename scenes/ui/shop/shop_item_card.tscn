@@ -37,9 +37,16 @@ layout_mode = 2
 layout_mode = 2
 text = "XS Pizza"
 
-[node name="Desc" type="Label" parent="HBoxContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 80)
+[node name="ScrollContainer" type="ScrollContainer" parent="HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(128, 80)
 layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Desc" type="Label" parent="HBoxContainer/VBoxContainer/ScrollContainer"]
+custom_minimum_size = Vector2(128, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 2
 
 [node name="Price" type="Label" parent="HBoxContainer/VBoxContainer"]
 layout_mode = 2

@@ -464,3 +464,9 @@ func _update_button_states() -> void:
 		talk_button.button_pressed = (current_mode == "talk")
 	if sell_button:
 		sell_button.button_pressed = (current_mode == "sell")
+
+
+func _on_exit_pressed() -> void:
+	Global.loading = true
+	get_tree().change_scene_to_file(Global.current_scene)
+	Global.loading = false

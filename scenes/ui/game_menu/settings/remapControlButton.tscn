@@ -1,0 +1,34 @@
+[gd_scene load_steps=3 format=3 uid="uid://bn1tatlj4yrof"]
+
+[ext_resource type="Script" uid="uid://bshni5xdwhih2" path="res://scenes/ui/game_menu/settings/remapControlButton.gd" id="1_6q0qd"]
+[ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="1_wthx8"]
+
+[node name="Button" type="Button"]
+custom_minimum_size = Vector2(60, 60)
+offset_right = 60.0
+offset_bottom = 60.0
+flat = true
+script = ExtResource("1_6q0qd")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_left = 60.0
+offset_right = 240.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 24
+text = "rrthdhshhdhdhfghdff"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="NinePatchRect" type="NinePatchRect" parent="."]
+layout_mode = 0
+offset_right = 60.0
+offset_bottom = 60.0
+texture = ExtResource("1_wthx8")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[connection signal="toggled" from="." to="." method="_on_toggled"]

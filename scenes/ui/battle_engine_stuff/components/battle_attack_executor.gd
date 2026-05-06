@@ -2,6 +2,7 @@ extends Node
 class_name AttackExecutor
 
 var root
+var root_nodepath
 var death_manager
 var effect_manager
 var log_manager
@@ -11,6 +12,7 @@ var attack_array: Dictionary = {}
 
 func setup(broot, d_mgr, e_mgr, l_mgr, batt):
 	root = broot
+	root_nodepath = root.get_path()
 	death_manager = d_mgr
 	effect_manager = e_mgr
 	log_manager = l_mgr
@@ -22,10 +24,6 @@ func do_attacks() -> void:
 			root.current_attacker = actor
 			await execute_single_attack(actor)
 			await death_manager.check_enemy_death_and_xp()
-			if root:
-				await root.get_tree().create_timer(0.5).timeout
-			else:
-				pass
 	root.start_round()
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -67,7 +65,7 @@ func _route_attack_execution(attacker: Object, alive: Array, atk: Skill) -> void
 	await _apply_on_use_effects(attacker, alive, atk)
 	
 	# Step 2: Check if this is an item-based skill
-	if atk.item_reference:
+	if atk.is_item_skill:
 		await _handle_item_usage(attacker, attack_array[attacker][0], atk)
 		return
 	
@@ -87,8 +85,9 @@ func _route_attack_execution(attacker: Object, alive: Array, atk: Skill) -> void
 func _get_alive_targets(targets: Array) -> Array:
 	var alive: Array = []
 	for t in targets:
-		if t.hp > 0:
-			alive.append(t)
+		if t is Entity:
+			if t.hp > 0:
+				alive.append(t)
 	return alive
 
 
@@ -112,15 +111,15 @@ func _assign_random_target(attacker: Entity, atk: Skill) -> bool:
 
 
 func _handle_item_usage(attacker: Entity, targets: Array, atk: Skill) -> void:
-	var used_item = atk.item_reference
-	
+	var used_item = root.item_manager.item_ref
+	print("e")
 	if used_item and targets.size() > 0:
 		var target = targets[0]
 		var success = PlayerStats.use_item(used_item, target)
 		
 		if success:
 			var item_log = "[color=#FFD700]━━━ ITEM ━━━[/color]"
-			item_log += "\n[color=#4CAF50]" + attacker.name + "[/color] used [color=#2196F3]" + atk.name + "[/color] on [color=#FF5722]" + target.name + "[/color]"
+			item_log += "\n[color=#4CAF50]" + attacker.name + "[/color] used [color=#2196F3]" + atk.skill_name + "[/color] on [color=#FF5722]" + target.name + "[/color]"
 			if used_item.heal_amount > 0:
 				item_log += " [color=#4CAF50](+" + str(used_item.heal_amount) + " HP)[/color]"
 			if used_item.mana_amount > 0:

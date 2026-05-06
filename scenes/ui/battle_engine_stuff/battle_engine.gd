@@ -40,6 +40,7 @@ func _ready() -> void:
 	_setup_battle_log_label()
 	if battle.music:
 		$AudioStreamPlayer.stream = battle.music
+		$AudioStreamPlayer.play()
 
 func _setup_managers():
 	effect_manager = EffectManager.new()
@@ -68,7 +69,6 @@ func setup_enemies():
 		enemies_by_slot[i] = null
 
 	for e in battle.enemies:
-		print(e.position_index+1)
 		var path = "Control/enemy_ui/enemies/enemy" + str(e.position_index+1)
 		var node = get_node_or_null(path)
 		
@@ -148,7 +148,7 @@ func _process(delta: float) -> void:
 		node.enemy = enemy_instances[e]
 			
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if event.is_echo(): return
 	if death_manager.game_over_active:
 		if death_manager.can_reload and event.is_action_pressed("use") or event.is_action_pressed("menu"):
@@ -191,9 +191,6 @@ func _input(event: InputEvent) -> void:
 			elif event.is_action_pressed("use"):
 				get_viewport().set_input_as_handled()
 				skill_manager.select_skill()
-			elif event.is_action_pressed("back"):
-				get_viewport().set_input_as_handled()
-				skill_manager.close_skills_menu()
 		
 	elif state == states.OnSkillSelect:
 			if event.is_action_pressed("left"):
@@ -205,9 +202,6 @@ func _input(event: InputEvent) -> void:
 			elif event.is_action_pressed("use"):
 				get_viewport().set_input_as_handled()
 				skill_manager.confirm_skill_target()
-			elif event.is_action_pressed("back"):
-				get_viewport().set_input_as_handled()
-				skill_manager.close_skills_menu()
 		
 	elif state == states.OnItems:
 			if event.is_action_pressed("down"):
@@ -225,12 +219,9 @@ func _input(event: InputEvent) -> void:
 			elif event.is_action_pressed("use"):
 				get_viewport().set_input_as_handled()
 				item_manager.select_item()
-			elif event.is_action_pressed("back"):
-				get_viewport().set_input_as_handled()
-				item_manager.close_items_menu()
 		
 	elif state == states.OnItemSelect:
-			item_manager.item_select_input(event)
+			await item_manager.item_select_input(event)
 		
 	elif state == states.OnEnemy:
 			if event.is_action_pressed("left"):
@@ -319,7 +310,6 @@ func get_alive_enemies() -> Array[Entity]:
 func are_all_enemies_defeated() -> bool:
 	for e in enemy_instances:
 		if e and e.hp > 0:
-			print(e, "  ", e.hp)
 			return false
 	return true
 
@@ -328,10 +318,9 @@ func undo_last_action():
 	var last = action_history.pop_back()
 	if attack_executor.attack_array.has(last):
 		var atk = attack_executor.attack_array[last][1]
-		if atk.item_reference:
-			var used_item = atk.item_reference
-			PlayerStats.add_item(used_item, 1)  # Restore item
-			# Also restore item_amounts in the item manager UI if open
+		if atk.is_item_attack:
+			var used_item = item_manager.item_ref
+			PlayerStats.add_item(used_item, 1)  # Restore item                        
 			if item_manager and item_manager.available_items.has(used_item):
 				var idx = item_manager.available_items.find(used_item)
 				if idx >= 0:
@@ -488,9 +477,19 @@ func _on_defend_button_pressed() -> void:
 	advance_planning() 
 
 func _on_item_button_pressed() -> void:
+	if not battle.can_use_items:
+		$Control/enemy_ui/CenterContainer/output.text = "Items are disabled in this battle!"
+		await get_tree().create_timer(0.5).timeout
+		return
+
 	item_manager.open_items_menu()
-	
+
 func _on_run_button_pressed() -> void:
+	if not battle.can_flee:
+		$Control/enemy_ui/CenterContainer/output.text = "Cannot flee from this battle!"
+		await get_tree().create_timer(0.5).timeout
+		return
+
 	var counter = 0
 	for e in enemy_instances:
 		counter += e.speed if e.hp > 0 else 0

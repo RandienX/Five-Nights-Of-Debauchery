@@ -38,16 +38,20 @@ func check_enemy_death_and_xp():
 	if not root.are_all_enemies_defeated():
 		return
 	
-	var total_xp = 0
+	var total_xp = 0        
 	var total_currency = 0
-	
+
 	# Calculate XP and currency rewards from all enemy slots (using override values if set)
 	for slot in root.battle.enemies:
 		if slot and slot.enemy:
 			total_xp += slot.get_xp_reward()
 			total_currency += slot.get_currency_reward()
-	
-	# Distribute XP and currency to party members
+
+	if battle:
+		total_currency += battle.currency_reward
+	print("Total Currency From Battle", total_currency)
+	PlayerStats.add_currency(total_currency, PlayerStats.CurrencyType.GOLD)
+
 	for actor in root.initiative:
 		if actor.role == Entity.Role.PARTY:
 			actor.xp += total_xp
@@ -63,22 +67,19 @@ func check_enemy_death_and_xp():
 				actor.mp = actor.max_stats["mp"]
 				root.get_node("Control/enemy_ui/CenterContainer/output").text = actor.name + " leveled up to " + str(actor.level) + "! "
 				await get_tree().create_timer(1.0).timeout
+				
 	
 	# Add currency reward to player
 	if total_currency > 0:
 		PlayerStats.add_currency(total_currency, PlayerStats.CurrencyType.GOLD)
 		root.get_node("Control/enemy_ui/CenterContainer/output").text += "Gained " + str(total_currency) + " gold!"
-	
+		
 	await end_battle_victory()
-
-func check_victory():
-	await check_enemy_death_and_xp()
 
 func end_battle_victory() -> void:
 	await root.get_tree().create_timer(1.0).timeout
 	Global.loading = true
 	root.get_tree().change_scene_to_file(Global.current_scene)
-	await root.get_tree().process_frame
 	Global.loading = false
 
 func animate_enemy_death(e: Entity) -> void:
@@ -127,7 +128,7 @@ func death(obj: Entity):
 	for i in range(root.initiative.size()-1, -1, -1):
 		if root.initiative[i] == obj:
 			root.initiative.remove_at(i)
-			if root.attack_array.has(obj): root.attack_array.erase(obj)
+			if root.attack_executor.attack_array.has(obj): root.attack_executor.attack_array.erase(obj)
 			if obj.role == Entity.Role.PARTY and root.planning_phase and root.action_history.has(obj):
 				root.action_history.erase(obj)
 				root.current_party_plan_index -= 1

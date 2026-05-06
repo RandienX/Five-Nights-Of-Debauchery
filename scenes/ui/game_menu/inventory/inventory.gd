@@ -62,7 +62,6 @@ func _refresh_inventory() -> void:
 			continue
 		
 		var item: Item = item_res as Item
-		print(item)
 		if item.type != current_category:
 			continue
 		
@@ -141,12 +140,8 @@ func _on_use_button_pressed() -> void:
 	var item: Item = selected_item as Item
 	
 	if item.type == ItemTypes.CONSUMABLE:
-		pass
 		if item.can_use_outside_battle:
-			PlayerStats.use_item_on_party(item)
-			item_used.emit(item)
-			_refresh_inventory()
-			_update_detail_panel()
+			$"../../../..".open_party_for_item(item)
 	elif item.type == ItemTypes.WEAPON or item.type == ItemTypes.ARMOR or item.type == ItemTypes.ACCESSORY:
 		pass
 

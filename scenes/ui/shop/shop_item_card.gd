@@ -9,7 +9,7 @@ signal sold(item: Item, quantity: int, currency_type: PlayerStats.CurrencyType, 
 
 @onready var icon_texture: TextureRect = $HBoxContainer/Icon
 @onready var name_label: Label = $HBoxContainer/VBoxContainer/Name
-@onready var description_label: Label = $HBoxContainer/VBoxContainer/Desc
+@onready var description_label: Label = $HBoxContainer/VBoxContainer/ScrollContainer/Desc
 @onready var price_label: Label = $HBoxContainer/VBoxContainer/Price
 @onready var buy_button: Button = $HBoxContainer/VBoxContainer2/MarginContainer/Buy
 @onready var quantity_spinbox: SpinBox = $HBoxContainer/VBoxContainer2/SpinBox

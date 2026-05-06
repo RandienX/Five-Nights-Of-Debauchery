@@ -23,7 +23,7 @@ func setup(member: Entity, slot: String) -> void:
 	
 	member_name_label.text = member.name if member else "Unknown"
 	slot_label.text = "Slot: " + _get_slot_display_name(slot)
-	current_equipped_item = member.equipped.get(slot, null) if member else null
+	current_equipped_item = member.equipped.get(slot, null) as Item if member else null
 	_update_current_equip_display()
 	_filter_available_items(slot)
 	_populate_items_grid()
@@ -156,6 +156,7 @@ func _on_item_selected(item: Item) -> void:
 		target_member.equip_stats_change()
 	
 	visible = false
+	$"..".refresh()
 	$"..".update_equipment_grid(target_member)
 
 func _on_unequip_button_pressed() -> void:
@@ -169,8 +170,10 @@ func _on_unequip_button_pressed() -> void:
 		target_member.equip_stats_change()
 	
 	visible = false
+	$"..".refresh()
 	$"..".update_equipment_grid(target_member)
 
 func _on_cancel_button_pressed() -> void:
 	visible = false
+	$"..".refresh()
 	$"..".update_equipment_grid(target_member)

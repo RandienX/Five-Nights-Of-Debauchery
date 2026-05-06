@@ -1,23 +1,21 @@
 extends Control
 
-## Modern Party Menu - Displays all party members with detailed stats and equipment management
-
 signal party_member_selected(member: Resource)
 
-@onready var members_container: VBoxContainer = $MarginContainer/VBoxContainer/HSplitContainer/MembersContainer
-@onready var member_detail_panel: Panel = $MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel
-@onready var member_name_label: Label = $MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/MemberNameLabel
-@onready var member_level_label: Label = $MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/MemberLevelLabel
-@onready var member_portrait: TextureRect = $MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/HBoxContainer/MemberPortrait
-@onready var hp_progress: ProgressBar = $MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/HBoxContainer/VBoxContainer/HPProgress
-@onready var mp_progress: ProgressBar = $MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/HBoxContainer/VBoxContainer/MPProgress
-@onready var hp_label: Label = $MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/HBoxContainer/VBoxContainer/HPLabel
-@onready var mp_label: Label = $MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/HBoxContainer/VBoxContainer/MPLabel
-@onready var stats_grid: GridContainer = $MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/StatsGrid
-@onready var equipment_container: VBoxContainer = $MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/EquipmentContainer
-@onready var equipment_slots: GridContainer = $MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/EquipmentContainer/EquipmentSlots
-@onready var skills_list: VBoxContainer = $MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/SkillsList
-@onready var no_member_label: Label = $MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/VBoxContainer/NoMemberLabel
+@export var members_container: VBoxContainer
+@export var member_detail_panel: Panel
+@export var member_name_label: Label
+@export var member_level_label: Label
+@export var member_portrait: TextureRect
+@export var hp_progress: ProgressBar
+@export var mp_progress: ProgressBar
+@export var hp_label: Label
+@export var mp_label: Label
+@export var stats_grid: GridContainer
+@export var equipment_container: VBoxContainer
+@export var equipment_slots: GridContainer
+@export var skills_list: VBoxContainer
+@export var no_member_label: Label
 
 @onready var equip_select: Control = $EquipmentSelection
 
@@ -55,20 +53,31 @@ func _refresh_party_display() -> void:
 	for i in range(party_members.size()):
 		var member: Resource = party_members[i]
 		var btn = Button.new()
-		btn.custom_minimum_size = Vector2(200, 60)
+		btn.custom_minimum_size = Vector2(192, 60)
 		btn.text = member.get("name") if member.has_meta("name") or "name" in member else "Member " + str(i + 1)
 		btn.name = "MemberBtn" + str(i)
 		
-		if member.has_meta("portrait") or "portrait" in member:
+		if member.portrait:
 			var portrait = member.get("portrait")
 			if portrait:
+				btn.flat = true
 				btn.icon = AtlasTexture.new()
 				btn.icon.atlas = portrait
-				btn.icon.region = member.get("portrait_rect")
+				btn.icon.region = member.portrait_rect
 		
 		btn.pressed.connect(_on_member_button_pressed.bind(i))
 		members_container.add_child(btn)
 		member_buttons.append(btn)
+		
+		var npr = NinePatchRect.new()
+		npr.custom_minimum_size = Vector2(btn.size.x, btn.size.y)
+		npr.texture = load("res://assets/ui/button.png")
+		npr.patch_margin_left = 5
+		npr.patch_margin_right = 5
+		npr.patch_margin_top = 5
+		npr.patch_margin_bottom = 5
+		npr.z_index = -1
+		btn.add_child(npr)
 	
 	if not party_members.is_empty():
 		_select_member(0)
@@ -83,7 +92,6 @@ func _select_member(index: int) -> void:
 	selected_member_index = index
 	var member: Resource = party_members[index]
 	
-	# Update button states
 	for i in range(member_buttons.size()):
 		if is_instance_valid(member_buttons[i]):
 			member_buttons[i].button_pressed = (i == index)
@@ -127,7 +135,9 @@ func _update_detail_panel() -> void:
 	
 	var portrait = member.get("portrait") if "portrait" in member else null
 	if portrait:
-		member_portrait.texture = portrait
+		member_portrait.texture = AtlasTexture.new()
+		member_portrait.texture.atlas = portrait
+		member_portrait.texture.region = member.portrait_rect
 	else:
 		member_portrait.texture = null
 	
@@ -174,10 +184,10 @@ func update_equipment_grid(member: Resource) -> void:
 	
 	for slot_name in EQUIPMENT_SLOTS:
 		var btn = Button.new()
-		btn.custom_minimum_size = Vector2(198, 40)
+		btn.custom_minimum_size = Vector2(192, 40)
 		btn.name = "EquipSlot_" + slot_name
 		
-		var item: Item = equipped.get(slot_name, null)
+		var item = equipped.get(slot_name, null) as Item
 		var item_name = item.item_name if item else "Empty"
 		var slot_display = SLOT_DISPLAY_NAMES.get(slot_name, slot_name.capitalize())
 		
@@ -191,8 +201,6 @@ func update_equipment_grid(member: Resource) -> void:
 		equipment_slot_buttons.append(btn)
 
 func on_equipment_slot_pressed(slot: String) -> void:
-	print(slot, selected_member_index, party_members[selected_member_index])
-	
 	var member: Entity = party_members[selected_member_index] as Entity
 	equip_select.setup(member, slot)
 
