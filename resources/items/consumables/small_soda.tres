@@ -1,22 +1,23 @@
-[gd_resource type="Resource" script_class="Item" load_steps=4 format=3 uid="uid://bw0e1yparf4hs"]
+[gd_resource type="Resource" script_class="Item" load_steps=4 format=3 uid="uid://dp1welb2vy3sa"]
 
-[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="1_6r8v1"]
-[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_fmrlp"]
-[ext_resource type="Texture2D" uid="uid://codnbumyppg5i" path="res://assets/item_textures/soda.png" id="2_m6c45"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_m6c45"]
+[ext_resource type="Texture2D" uid="uid://codnbumyppg5i" path="res://assets/item_textures/soda.png" id="2_3rydw"]
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="3_cfjyx"]
 
 [resource]
-script = ExtResource("1_6r8v1")
+script = ExtResource("3_cfjyx")
 item_name = "Small Soda"
-texture = ExtResource("2_m6c45")
-icon = ExtResource("2_m6c45")
+description = "A somewhat cold, carbonated beverage helping with focus and composure. This one is for kids."
+texture = ExtResource("2_3rydw")
+icon = ExtResource("2_3rydw")
 type = 2
 item_bonuses = Dictionary[String, int]({
 "atk": 0,
 "def": 0,
 "hp": 0,
 "magic": 0,
-"mp": 10,
+"mp": 20,
 "speed": 0
 })
-mana_amount = 10
+mana_amount = 20
 metadata/_custom_type_script = "uid://dn31qme1ukrys"

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="Skill" load_steps=4 format=3 uid="uid://drkdj81ctnimf"]
+
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_8gdb6"]
+[ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="2_t8ci4"]
+
+[sub_resource type="Resource" id="Resource_8gdb6"]
+script = ExtResource("1_8gdb6")
+effect_type = 6
+status_effect = 17
+status_level = 2
+status_duration = 5
+chance_percent = 90.0
+status_effect = 17
+status_level = 2
+status_duration = 5
+chance_percent = 90.0
+metadata/_custom_type_script = "uid://ch7hoesea8vrf"
+
+[resource]
+script = ExtResource("2_t8ci4")
+skill_name = "Molotov"
+target_type = 3
+hp_cost = 5
+accuracy = 0.9
+priority = 1
+attack_multiplier = 1.25
+attack_bonus = 8
+on_hit_effects = Array[ExtResource("1_8gdb6")]([SubResource("Resource_8gdb6")])
+is_item_skill = true
+metadata/_custom_type_script = "uid://o74imedfcjis"

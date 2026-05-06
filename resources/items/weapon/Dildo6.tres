@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Item" load_steps=3 format=3 uid="uid://cl6s08n0unc3o"]
+
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_5bddn"]
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="2_lu6nh"]
+
+[resource]
+script = ExtResource("2_lu6nh")
+item_name = "6cm Dildo"
+description = "TINY, but a demon."
+item_bonuses = Dictionary[String, int]({
+"atk": 5,
+"def": 0,
+"hp": 0,
+"magic": 0,
+"mp": 0,
+"speed": 0
+})
+metadata/_custom_type_script = "uid://dn31qme1ukrys"

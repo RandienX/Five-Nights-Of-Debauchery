@@ -14,7 +14,7 @@ item_bonuses = Dictionary[String, int]({
 "ai": 0,
 "atk": 0,
 "cool": 0,
-"def": 1,
+"def": 2,
 "hp": 0,
 "mp": 0
 })

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Item" load_steps=4 format=3 uid="uid://b3qdog10ofahg"]
+[gd_resource type="Resource" script_class="Item" load_steps=4 format=3 uid="uid://dlxeylilwh1gg"]
 
 [ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="1_4xfe2"]
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_htsio"]
@@ -6,23 +6,18 @@
 
 [resource]
 script = ExtResource("1_4xfe2")
-item_name = "S Pizza"
-description = "Plasticey, mediocre, cheap Freddy's pizza. Good if you are hungry, never in any other circumstances. The size of this pizza is not enough to feed a 8 year old child."
+item_name = "XS Pizza"
+description = "Plasticey, mediocre, cheap Freddy's pizza. Good if you are hungry, never in any other circumstances. The size of this pizza is so puny even Chica sometimes refuses to eat it."
 texture = ExtResource("2_eqju6")
 icon = ExtResource("2_eqju6")
 type = 2
-sell_price = Dictionary[int, int]({
-0: 30,
-1: 25,
-2: 10
-})
 item_bonuses = Dictionary[String, int]({
 "atk": 0,
 "def": 0,
-"hp": 50,
+"hp": 25,
 "magic": 0,
 "mp": 0,
 "speed": 0
 })
-heal_amount = 50
+heal_amount = 25
 metadata/_custom_type_script = "uid://dn31qme1ukrys"
