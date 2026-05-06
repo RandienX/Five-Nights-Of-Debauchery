@@ -32,7 +32,7 @@ class_name Skill
 @export var legacy_effects: Dictionary[BattleEffect.StatusEffect, Array] = {}  # {effect: [level, duration]}
 
 @export_group("Item Usage")
-@export var item_reference: Item
+@export var is_item_skill: bool = false
 
 @export_group("Visual & Audio")
 @export var animation_name: String = ""

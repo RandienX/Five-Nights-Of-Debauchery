@@ -93,15 +93,6 @@ func save_game(slot: int, save_name: String = "") -> bool:
 	if not save_data:
 		save_completed.emit(false, slot)
 		return false
-	print("[AutoSaveManager] Save data keys: ", save_data.keys())
-	if save_data.has("global_data"):
-		print("[AutoSaveManager] Global data keys: ", save_data["global_data"].keys())
-		if save_data["global_data"].has("player_stats"):
-			var ps = save_data["global_data"]["player_stats"]
-			print("[AutoSaveManager] PlayerStats has 'party': ", ps.has("party"))
-			if ps.has("party"):
-				print("[AutoSaveManager] Party size: ", ps["party"].size())
-
 	var file_path := SAVE_PATH + "slot_%d.json" % slot
 	var success := _write_json_file(file_path, save_data)
 	
@@ -747,17 +738,7 @@ func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Dictionar
 		# Load the base resource and duplicate it to avoid modifying the original
 		var loaded_resource = load(resource_path)
 		if loaded_resource:
-			# CRITICAL FIX: Use duplicate(true) for deep copy to preserve nested resource structure
-			# Then we'll overwrite ALL properties from saved data anyway
 			new_resource = loaded_resource.duplicate(true)
-			print("[DEBUG] _deserialize_resource_from_dict: Loaded and duplicated resource from %s" % resource_path)
-			print("[DEBUG]   Base resource equipped before overwrite: %s" % (new_resource.get("equipped") if "equipped" in new_resource else "N/A"))
-			if "equipped" in new_resource and new_resource.equipped is Dictionary:
-				print("[DEBUG]   Base equipped keys: ", new_resource.equipped.keys())
-				for ek in new_resource.equipped:
-					print("[DEBUG]     [%s] = %s" % [ek, "null" if new_resource.equipped[ek] == null else new_resource.equipped[ek].get("item_name", "MISSING")])
-			else:
-				print("[DEBUG]   WARNING: equipped property missing or not a dictionary in base resource!")
 		else:
 			push_warning("[AutoSaveManager] Resource exists at path but failed to load: %s" % resource_path)
 			new_resource = _create_resource_by_type(resource_type)
@@ -776,17 +757,6 @@ func _deserialize_resource_from_dict(data: Dictionary, parent_visited: Dictionar
 	
 	# Apply all saved properties with visited set propagation
 	_copy_resource_properties_direct(new_resource, data, parent_visited)
-	
-	print("[DEBUG] _deserialize_resource_from_dict: After copying properties")
-	if "equipped" in new_resource:
-		print("[DEBUG]   Final equipped: %s" % new_resource.equipped)
-		if new_resource.equipped is Dictionary:
-			print("[DEBUG]   Final equipped keys: ", new_resource.equipped.keys())
-			for ek in new_resource.equipped:
-				var item = new_resource.equipped[ek]
-				print("[DEBUG]     [%s] = %s (type: %s)" % [ek, "null" if item == null else item.get("item_name", "MISSING"), typeof(item)])
-	else:
-		print("[DEBUG]   WARNING: equipped property does not exist on target after copy!")
 	
 	# IMPORTANT: Remove from "currently constructing" set after successful processing
 	# This allows the same resource file to be referenced again elsewhere
@@ -827,13 +797,6 @@ func _copy_resource_properties_direct(target: Resource, data: Dictionary, visite
 	if visited == null:
 		visited = _visited_objects
 	
-	print("[DEBUG] _copy_resource_properties_direct: Starting for target=%s (%s), data keys=%s" % [target if target else "null", target.resource_path if "resource_path" in target else "no path", str(data.keys())])
-	
-	# Check if 'equipped' exists in data at all
-	if data.has("equipped"):
-		print("[DEBUG]   >>> EQUIPPED FOUND IN DATA! Value: %s" % data["equipped"])
-		print("[DEBUG]   >>> Target has 'equipped' property: %s" % ("equipped" in target))
-	
 	for key in data:
 		if key == "_resource_type" or key == "_resource_path":
 			continue
@@ -846,34 +809,10 @@ func _copy_resource_properties_direct(target: Resource, data: Dictionary, visite
 		
 		# Check if the target has this property before setting
 		if key in target:
-			# Special handling for 'equipped' dictionary - add extra debug info
-			if key == "equipped":
-				print("[EQUIPPED] Found equipped in data")
-				print("[EQUIPPED] Raw data keys: ", value.keys() if value is Dictionary else "NOT A DICT")
-				if value is Dictionary:
-					for ek in value:
-						print("[EQUIPPED]   Data['%s'] = %s" % [ek, "null" if value[ek] == null else str(value[ek]).substr(0, 60)])
-			
 			# Handle nested structures inline without calling _deserialize_value
 			# to preserve visited set state and depth counter
 			var deserialized_value = _deserialize_nested_value_inline(value, visited)
-			
-			if key == "equipped":
-				print("[EQUIPPED] After deserialize: ", deserialized_value)
-				if deserialized_value is Dictionary:
-					for ek in deserialized_value:
-						var item = deserialized_value[ek]
-						print("[EQUIPPED]   Deserialized['%s'] = %s (Type: %s)" % [ek, "null" if item == null else item.get("item_name", "Unknown"), typeof(item)])
-			
 			target.set(key, deserialized_value)
-			
-			if key == "equipped":
-				var verify = target.get("equipped")
-				print("[EQUIPPED] VERIFICATION: target.equipped = ", verify)
-				if verify is Dictionary:
-					for ek in verify:
-						var item = verify[ek]
-						print("[EQUIPPED]   Final['%s'] = %s" % [ek, "null" if item == null else item.get("item_name", "MISSING")])
 		else:
 			print("[DEBUG]   Property '%s' not found in target, skipping" % key)
 
@@ -888,63 +827,47 @@ func _deserialize_nested_value_inline(value: Variant, visited: Dictionary) -> Va
 	# Handle string-encoded types
 	if value is String:
 		var parsed = _parse_encoded_string(value)
-		print("[DEBUG] _deserialize_nested_value_inline: String '%s' -> %s (type: %s)" % [value, parsed, type_string(typeof(parsed))])
 		return parsed
 	
 	# Handle Arrays - recursive deserialization
 	elif value is Array:
-		print("[DEBUG] _deserialize_nested_value_inline: Array with %d items" % value.size())
 		var arr_result: Array = []
 		for i in range(value.size()):
 			var item = value[i]
 			var deserialized_item = _deserialize_nested_value_inline(item, visited)
 			arr_result.append(deserialized_item)
-			print("[DEBUG]   Array[%d]: %s -> %s" % [i, str(item).substr(0, min(50, len(str(item)))), str(deserialized_item).substr(0, min(50, len(str(deserialized_item))))])
 		
-		# CRITICAL FIX: Check if this array should be typed as Array[Item] for inventory
-		# If all items look like Items, cast them
 		for i in range(arr_result.size()):
 			var item = arr_result[i]
 			if item is Resource and item.get_class() == "Resource":
 				if "item_name" in item or "type" in item:
-					print("[DEBUG]   -> Casting Array[%d] to Item type" % i)
 					arr_result[i] = item as Item
 		
 		return arr_result
 	
 	# Handle Dictionaries - check if it's a deep-serialized Resource
 	elif value is Dictionary:
-		print("[DEBUG] _deserialize_nested_value_inline: Dictionary with keys: %s" % str(value.keys()))
 		if value.has("_resource_type"):
 			# This is a deep-serialized Resource, reconstruct it with visited set
-			print("[DEBUG]   -> Detected as Resource type: %s, path: %s" % [value.get("_resource_type", "unknown"), value.get("_resource_path", "none")])
 			var resource_result = _deserialize_resource_from_dict(value, visited)
-			print("[DEBUG]   -> Resource result: %s" % ["null" if resource_result == null else (resource_result.resource_path if "resource_path" in resource_result else str(resource_result))])
 			return resource_result
 		else:
-			print("[DEBUG]   -> Regular dictionary, deserializing contents")
 			var dict_result: Dictionary = {}
 			for dict_key in value.keys():
 				var deserialized_key = _deserialize_nested_value_inline(dict_key, visited)
 				var dict_val = value[dict_key]
 				var deserialized_value = _deserialize_nested_value_inline(dict_val, visited)
 				
-				# CRITICAL FIX: Ensure Item resources are properly typed for Dictionary[String, Item]
-				# Godot's typed dictionaries require exact type matching
 				if deserialized_value is Resource and deserialized_value.get_class() == "Resource":
 					# Check if this looks like an Item resource (has item_name or type property)
 					if "item_name" in deserialized_value or "type" in deserialized_value:
-						print("[DEBUG]   -> Casting Resource to Item type for typed dictionary")
 						# Cast to Item by using 'as' operator
 						deserialized_value = deserialized_value as Item
 				
 				dict_result[deserialized_key] = deserialized_value
-				print("[DEBUG]   Dict['%s']: %s -> %s (type: %s)" % [dict_key, str(dict_val).substr(0, min(30, len(str(dict_val)))), str(deserialized_value).substr(0, min(30, len(str(deserialized_value)))), type_string(typeof(deserialized_value))])
-			print("[DEBUG]   -> Final dictionary result: %s" % dict_result)
 			return dict_result
 	
 	# Basic types pass through unchanged
-	print("[DEBUG] _deserialize_nested_value_inline: Basic type %s = %s" % [type_string(typeof(value)), value])
 	return value
 
 # ============================================================================

@@ -7,6 +7,7 @@ extends Area2D
 @export var textbox_node: CanvasLayer
 @export var once_per_session: bool = true
 @export var require_input_to_finish: bool = true
+@export var require_input_to_start: bool = false
 
 var _has_triggered: bool = false
 var _dialogue_runner: DialogueRunner
@@ -32,11 +33,19 @@ func _ready() -> void:
 				push_error("DialogueTriggerArea2D: %s" % err)
 				
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("use") and require_input_to_start:
+		if _player in get_overlapping_bodies():
+			if once_per_session and _has_triggered:
+				return
+			_has_triggered = true
+			_start_dialogue()
+
 func _on_body_entered(body: Node) -> void:
 	if _player and body != _player:
 		return
 	
-	if once_per_session and _has_triggered:
+	if (once_per_session and _has_triggered) or require_input_to_start:
 		return
 	
 	_has_triggered = true

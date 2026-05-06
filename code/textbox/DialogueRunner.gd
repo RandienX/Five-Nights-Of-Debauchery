@@ -114,7 +114,7 @@ func _run_effects(effects: Array[DialogueEffect]) -> void:
 		
 		match effect.effect_type:
 			DialogueEffect.EffectType.SET_VARIABLE:
-				_effect_set_variable(effect.param_string, effect.param_value)
+				_effect_set_variable(effect.param_string, str_to_var(effect.param_value))
 			
 			DialogueEffect.EffectType.ADD_ITEM:
 				_effect_add_item(effect.param_string, int(effect.param_value))
@@ -135,8 +135,8 @@ func _run_effects(effects: Array[DialogueEffect]) -> void:
 				_effect_complete_quest(effect.param_string)
 			
 			DialogueEffect.EffectType.TRIGGER_EVENT:
-				_effect_trigger_event(effect.param_string)
-			
+				_effect_trigger_event(effect.param_string, effect.param_value)
+				
 			DialogueEffect.EffectType.WAIT:
 				_effect_wait(effect.wait_seconds)
 			
@@ -144,7 +144,7 @@ func _run_effects(effects: Array[DialogueEffect]) -> void:
 				_effect_custom(effect)
 
 
-func _effect_set_variable(var_name: String, value: float) -> void:
+func _effect_set_variable(var_name: String, value) -> void:
 	if Global.get(var_name) != null:
 		Global[var_name] = value
 	if load(Global.current_scene).get(var_name) != null:
@@ -180,9 +180,10 @@ func _effect_complete_quest(quest_id: String) -> void:
 	# Hook this to your quest system
 	pass
 
-func _effect_trigger_event(event_name: String) -> void:
-	# Emit a signal or call a function
-	pass
+func _effect_trigger_event(event_name: String, event_var: String) -> void:
+	if event_name.to_lower() == "open shop" or event_name.to_lower() == "open_shop":
+		Global.shop_current = load(event_var)
+		get_tree().change_scene_to_file("res://scenes/ui/shop/shop.tscn")
 
 func _effect_wait(seconds: float) -> void:
 	# Pause dialogue - UI should handle this

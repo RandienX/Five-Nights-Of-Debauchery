@@ -6,6 +6,7 @@ enum AI {Dumb, Casual, Violent, Defensive, Intelligent, Flexible}
 var battle_ref: Node = null
 
 var battle_current = null
+var shop_current: ShopData = null
 
 #--Saved Variables--
 var time_played: float = 0.0
@@ -21,8 +22,8 @@ func _process(delta: float) -> void:
 # === Save Data Management ===
 func get_save_data() -> Dictionary:
 	# Delegate to PlayerStats for comprehensive save data
-	if Engine.has_singleton("PlayerStats"):
-		var stats = Engine.get_singleton("PlayerStats")
+	if PlayerStats:
+		var stats = PlayerStats
 		return stats.get_save_data()
 	
 	# Fallback if PlayerStats is not available

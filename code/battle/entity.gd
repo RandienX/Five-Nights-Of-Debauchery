@@ -73,7 +73,7 @@ enum AIType { Dumb, Casual, Violent, Defensive, Intelligent, Flexible }
 
 # ==================== EQUIPMENT (Party Only) ====================
 @export_group("Equipment")
-@export var equipped: Dictionary[String, Item] = {
+@export var equipped: Dictionary = {
 	"head": null,
 	"body": null,
 	"legs": null,
@@ -104,15 +104,6 @@ enum AIType { Dumb, Casual, Violent, Defensive, Intelligent, Flexible }
 @export var can_flee: bool = false
 @export var flee_threshold_hp_percent: int = 25
 
-# ==================== LEGACY COMPATIBILITY ====================
-@export_category("Legacy Compatibility")
-@export var face_path: String = ""
-@export var face_part_rect: Rect2
-@export var overview: String = ""
-@export var overview_model: Texture2D
-@export var items: Dictionary = {}
-
-
 func _init():
 	# Initialize stat dictionaries if empty
 	for key in base_stats.keys():
@@ -142,7 +133,7 @@ func equip_stats_change():
 	effects.clear()
 	
 	for slot_name in equipped.keys():
-		var item: Item = equipped[slot_name]
+		var item = equipped[slot_name] as Item
 		if item != null:
 			for stat in item.item_bonuses.keys():
 				var value = item.item_bonuses[stat]

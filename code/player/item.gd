@@ -36,8 +36,6 @@ class_name Item
 @export_category("Weapon")
 @export_enum("One-Handed", "Two-Handed") var weapon_type: int = 0
 @export var weapon_effects_given: Dictionary[BattleEffect.StatusEffect, Array] = {}
-@export var required_level: int = 0
-@export var required_class: String = ""
 
 @export_category("Armor")
 @export_enum("Head", "Chest", "Legs", "Shield", "Accessory") var armor_type: int = 0
@@ -46,7 +44,6 @@ class_name Item
 
 @export_category("Consumable")
 @export var consume_effects: Array[BattleEffect] = []
-@export var legacy_consume_effects: Dictionary[BattleEffect.StatusEffect, Array] = {}
 @export var is_item_attack: bool = false
 @export var item_attack: Skill
 @export var heals_effects: Array[BattleEffect.StatusEffect] = []
@@ -54,9 +51,6 @@ class_name Item
 @export var mana_amount: int = 0
 @export var revive_amount: int = 0
 
-
-func _init():
-	pass
 func get_bonus(stat_name: String) -> int:
 	return item_bonuses.get(stat_name, 0)
 func get_total_hp_bonus() -> int:
@@ -71,11 +65,6 @@ func get_total_def_bonus() -> int:
 func can_equip(character: Entity) -> bool:
 	if character.role != Entity.Role.PARTY:
 		return false
-	if required_level > 0 and character.level < required_level:
-		return false
-	if not required_class.is_empty():
-	# Could check character class here
-		pass
 	return true
 
 func get_consume_effects_array() -> Array[BattleEffect]:
