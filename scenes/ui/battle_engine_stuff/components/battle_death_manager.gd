@@ -16,26 +16,12 @@ var game_over_active: bool = false
 var game_over_overlay: ColorRect
 var game_over_texture: TextureRect
 var can_reload = false
-
-func setup_game_over_ui() -> void:
-	game_over_overlay = ColorRect.new()
-	game_over_overlay.name = "GameOverOverlay"
-	game_over_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	game_over_overlay.color = Color(0, 0, 0, 0)
-	game_over_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(game_over_overlay)
-
-	game_over_texture = TextureRect.new()
-	game_over_texture.name = "GameOverTexture"
-	game_over_texture.set_anchors_preset(Control.PRESET_CENTER)
-	game_over_texture.texture = load("res://assets/ui/game_over.png") if ResourceLoader.exists("res://assets/ui/game_over.png") else null
-	game_over_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	game_over_texture.modulate.a = 0
-	game_over_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(game_over_texture)
 	
 func check_enemy_death_and_xp():
-	if not root.are_all_enemies_defeated():
+	if root:
+		if not root.are_all_enemies_defeated():
+			return
+	else:
 		return
 	
 	var total_xp = 0        
@@ -130,13 +116,17 @@ func death(obj: Entity):
 			root.initiative.remove_at(i)
 			if root.attack_executor.attack_array.has(obj): root.attack_executor.attack_array.erase(obj)
 			if obj.role == Entity.Role.PARTY and root.planning_phase and root.action_history.has(obj):
+
 				root.action_history.erase(obj)
 				root.current_party_plan_index -= 1
+	if obj.role == Entity.Role.PARTY:
+		check_party_wipe()
 
 func check_party_wipe() -> void:
 	var alive = false
-	for p in PlayerStats.party:
+	for p in root.party:
 		if p.hp > 0:
+			print("!!!")
 			alive = true
 			break
 	if not alive:
@@ -145,18 +135,14 @@ func check_party_wipe() -> void:
 func trigger_game_over() -> void:
 	game_over_active = true
 	root.state = root.states.Waiting
-	root.get_node("Control/gui/HBoxContainer2").visible = false
-	root.get_node("Control/enemy_ui").visible = false
 	root.get_node("WhoMoves").visible = false
 	
-	var tween = create_tween()
-	tween.tween_property(game_over_overlay, "modulate:a", 1.0, 2.0)
-	await tween.finished
+	var gitgud = preload("res://scenes/ui/game_over.tscn").instantiate()
+	gitgud.z_index = 999
+	root.add_child(gitgud)
+	root.get_node("AudioStreamPlayer").autoplay = false
+	root.get_node("AudioStreamPlayer").playing = false
+	gitgud.get_node("AnimationPlayer").play("gitgud")
 	
-	if game_over_texture.texture:
-		tween = create_tween()
-		tween.tween_property(game_over_texture, "modulate:a", 1.0, 1.0)
-		await tween.finished
-	
-	await get_tree().create_timer(1.0).timeout
+	await root.get_tree().create_timer(1.5).timeout
 	can_reload = true

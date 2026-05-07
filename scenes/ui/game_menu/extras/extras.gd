@@ -7,6 +7,7 @@ func _on_back_pressed() -> void:
 		for c in display.get_children():
 			c.queue_free()
 		$"../../../..".layer_down = 0
+		$"../../../..".visible = false
 
 func _on_exit_pressed() -> void:
 	# Exit to main menu

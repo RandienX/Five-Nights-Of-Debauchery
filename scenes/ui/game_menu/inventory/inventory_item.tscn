@@ -1,10 +1,15 @@
-[gd_scene load_steps=6 format=3 uid="uid://djgnpgxemexr3"]
+[gd_scene load_steps=8 format=3 uid="uid://djgnpgxemexr3"]
 
 [ext_resource type="Script" uid="uid://bq5ydw0ivt08r" path="res://scenes/ui/game_menu/inventory/inventory_item.gd" id="1_escoi"]
 [ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="1_xk8b8"]
 [ext_resource type="Texture2D" uid="uid://dgypba5b83iod" path="res://assets/ui/delete_button.png" id="2_escoi"]
 [ext_resource type="Resource" uid="uid://w2rnarta2aii" path="res://resources/items/inventory_item.tres" id="2_j23f8"]
 [ext_resource type="Texture2D" uid="uid://dexwxvdtim46r" path="res://assets/ui/button_pressed.png" id="3_d5aqj"]
+[ext_resource type="FontFile" uid="uid://bbkqbneky7jdt" path="res://assets/courbd.ttf" id="4_6ol5e"]
+
+[sub_resource type="Theme" id="Theme_gmei6"]
+default_font = ExtResource("4_6ol5e")
+default_font_size = 48
 
 [node name="inventory_item" type="Control"]
 z_index = 5
@@ -48,11 +53,14 @@ offset_right = 36.0
 offset_bottom = 36.0
 
 [node name="ItemName" type="Label" parent="HBoxContainer/Item/NinePatchRect"]
+clip_contents = true
+custom_minimum_size = Vector2(138, 0)
 layout_mode = 0
 offset_left = 38.0
 offset_top = 4.0
 offset_right = 176.0
 offset_bottom = 36.0
+theme = SubResource("Theme_gmei6")
 theme_override_font_sizes/font_size = 14
 vertical_alignment = 1
 
@@ -72,7 +80,7 @@ offset_left = 4.0
 offset_top = 4.0
 offset_right = 76.0
 offset_bottom = 36.0
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 18
 text = "4"
 horizontal_alignment = 2
 vertical_alignment = 1

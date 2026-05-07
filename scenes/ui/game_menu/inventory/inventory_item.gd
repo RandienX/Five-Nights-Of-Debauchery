@@ -18,9 +18,7 @@ func _ready() -> void:
 	if config:
 		custom_minimum_size = config.min_size
 		if item_display_name:
-			item_display_name.add_theme_font_size_override("font_size", config.name_font_size)
-		if item_display_amount:
-			item_display_amount.add_theme_font_size_override("font_size", config.amount_font_size)
+			item_display_name.theme.default_font_size = config.name_font_size
 	
 	if itemBox_type == itemBox_types.Null:
 		redisplay()
@@ -29,8 +27,10 @@ func _ready() -> void:
 	
 func redisplay():
 	item_display_name.text = item.item_name
+	item_display_name.custom_minimum_size = Vector2(138, 0)
 	item_display_texture.texture = item.texture
 	item_display_amount.text = "x" + str(amount)
+	Global.lower_font($HBoxContainer/Item/NinePatchRect/ItemName)
 	
 	if amount <= 0:
 		queue_free()
@@ -71,5 +71,6 @@ func redisplay_equip():
 			item_display_amount.text = "+" + str(diff)
 		else:
 			item_display_amount.text = str(diff)
+	Global.lower_font($HBoxContainer/Item/NinePatchRect/ItemName)
 	
 	

@@ -139,7 +139,6 @@ func update_item_selection():
 	scroll.scroll_vertical = item_scroll_offset * 70
 
 func navigate_items(direction: int):
-	var columns = 2  
 	var new_index = current_item_index + direction
 	
 	if new_index < 0:
@@ -175,10 +174,38 @@ func select_item():
 	
 	if item.is_item_attack and item.item_attack:
 		item_target_type = 0
-		root.state = root.states.OnItemSelect
 		items_container.visible = false
-		root.selected_enemy = root.previous_enemy if root.previous_enemy != 0 else 1
-		root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select enemy..."
+		var item_attack = item.item_attack.duplicate()
+		if item_attack.target_type == 0: #SingleEnemy
+			root.state = root.states.OnItemSelect
+			root.selected_enemy = root.previous_enemy if root.previous_enemy != 0 else 1
+			root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select target..."
+			return
+		elif item_attack.target_type == 1: #Self 
+			root.add_attack(root.current_attacker, [root.current_attacker], item_attack)
+			root.action_history.append(root.current_attacker)
+			close_items_menu()
+			await root.advance_planning()
+		elif item_attack.target_type == 2: #Party
+			root.add_attack(root.current_attacker, root.party, item_attack)
+			root.action_history.append(root.current_attacker)
+			close_items_menu()
+			await root.advance_planning()
+		elif item_attack.target_type == 3: #AllEnemies
+			root.add_attack(root.current_attacker, root.enemy_instances, item_attack)
+			root.action_history.append(root.current_attacker)
+			close_items_menu()
+			await root.advance_planning()
+		elif item_attack.target_type == 4: #SingleAlly
+			root.state = root.states.OnItemSelect
+			root.selected_enemy = root.previous_enemy if root.previous_enemy != 0 else 1
+			root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select ally..."
+			return
+		elif item_attack.target_type == 5: #RandomEnemy
+			root.add_attack(root.current_attacker, root.enemy_instances[randi_range(0, root.enemy_instances.duplicate().size()-1)], item_attack)
+			root.action_history.append(root.current_attacker)
+			close_items_menu()
+			await root.advance_planning()
 		return
 	else:
 		item_target_type = 1
@@ -209,15 +236,22 @@ func confirm_item_target():
 				var item_attack = item.item_attack.duplicate()
 				item_attack.skill_name = item.item_name
 				item_ref = item
-				
-				root.add_attack(root.current_attacker, [target], item_attack)
+				if item_attack.target_type == 0: #SingleEnemy
+					if target and target.hp > 0:
+						root.add_attack(root.current_attacker, [target], item_attack)
+						root.action_history.append(root.current_attacker)
+						close_items_menu()
+						await root.advance_planning()
+				elif item_attack.target_type == 4: #SingleAlly
+					root.add_attack(root.current_attacker, [target], item_attack)
+					root.action_history.append(root.current_attacker)
+					close_items_menu()
+					await root.advance_planning()
 				root.get_node("WhoMoves").visible = true
 				root.move_who_moves(saved_party_plan_index)
 				root.action_history.append(root.current_attacker)
 				PlayerStats.remove_item(item, 1)
 				item_amounts[current_item_index] -= 1
-				root.advance_planning()
-				close_items_menu()
 			else:
 				root.get_node("Control/enemy_ui/CenterContainer/output").text = "Invalid target!"
 				await root.get_tree().create_timer(0.5).timeout
@@ -236,7 +270,7 @@ func confirm_item_target():
 				PlayerStats.remove_item(item, 1)
 				item_amounts[current_item_index] -= 1
 			else:
-				PlayerStats.use_item(item, target)
+				PlayerStats.use_item(item, [target])
 			
 			root.get_node("WhoMoves").visible = true
 			root.move_who_moves(saved_party_plan_index)

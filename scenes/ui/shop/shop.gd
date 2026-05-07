@@ -163,14 +163,6 @@ func _attempt_purchase(shop_item: ShopItem, quantity: int) -> void:
 		purchase_failed.emit(null, "Invalid item")
 		return
 	
-	if not shop_item.has_stock():
-		purchase_failed.emit(shop_item, "Out of stock")
-		return
-	
-	if shop_item.max_stock != -1 and shop_item.current_stock < quantity:
-		purchase_failed.emit(shop_item, "Not enough stock")
-		return
-	
 	var success = false
 	if quantity == 1:
 		success = shop_item.purchase()

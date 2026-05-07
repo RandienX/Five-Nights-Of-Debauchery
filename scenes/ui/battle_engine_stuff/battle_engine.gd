@@ -36,11 +36,12 @@ func _ready() -> void:
 	initiative = setup_initiative()
 	setup_party()
 	setup_current_attacker()
-	death_manager.setup_game_over_ui()
 	_setup_battle_log_label()
 	if battle.music:
 		$AudioStreamPlayer.stream = battle.music
 		$AudioStreamPlayer.play()
+	if battle.background:
+		$Control/enemy_ui/bg.texture = battle.background
 
 func _setup_managers():
 	effect_manager = EffectManager.new()
@@ -151,9 +152,9 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_echo(): return
 	if death_manager.game_over_active:
-		if death_manager.can_reload and event.is_action_pressed("use") or event.is_action_pressed("menu"):
-			get_viewport().set_input_as_handled()
+		if death_manager.can_reload and (event.is_action_pressed("use") or event.is_action_pressed("menu") or event.is_action_pressed("lmb")):
 			Global.reload_last_save()
+			return
 		return
 	
 	if state == states.Waiting:
@@ -206,10 +207,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif state == states.OnItems:
 			if event.is_action_pressed("down"):
 				get_viewport().set_input_as_handled()
-				item_manager.navigate_items(-2)
+				item_manager.navigate_items(2)
 			elif event.is_action_pressed("up"):
 				get_viewport().set_input_as_handled()
-				item_manager.navigate_items(2)
+				item_manager.navigate_items(-2)
 			elif event.is_action_pressed("right"):
 				get_viewport().set_input_as_handled()
 				item_manager.navigate_items(1)
@@ -337,7 +338,7 @@ func advance_planning():
 	for i in range(initiative.size()):
 		var idx = (start + i) % initiative.size()
 		var actor = initiative[idx]
-		if actor.role == Entity.Role.PARTY and not attack_executor.attack_array.has(actor):
+		if actor.role == Entity.Role.PARTY and not attack_executor.attack_array.has(actor) and not actor.hp <= 0:
 			initiative_who = idx
 			current_attacker = actor
 			state = states.OnAction
@@ -347,6 +348,8 @@ func advance_planning():
 	if are_all_enemies_defeated():
 		await death_manager.check_enemy_death_and_xp()
 		return
+	else:
+		death_manager.check_party_wipe()
 	start_resolution_phase()
 
 func start_resolution_phase():
@@ -403,8 +406,11 @@ func add_enemy_attack(e: Entity):
 	var atk: Skill = all_skills[randi_range(0, all_skills.size()-1)]
 	var attempts = 0
 	while atk.mana_cost > e.mp and attempts < 10:
-		atk = all_skills[randi_range(0, all_skills.size()-1)]
-		attempts += 1
+		if randi_range(1, 2) == 1:
+			atk = all_skills[randi_range(0, all_skills.size()-1)]
+			attempts += 1
+		else:
+			atk = e.default_attack
 	
 	var prob: Array[int] = []
 	var lowest = 0
@@ -443,11 +449,18 @@ func add_enemy_attack(e: Entity):
 			if rng2 <= 0 and prob[i] > 0:
 				target = [party[i]]
 				break
-	elif atk.target_type == 2:  # Party
-		target = party.filter(func(p): return p.hp > 0)
-	
-	if target and not target.is_empty(): 
-		attack_executor.attack_array[e] = [target, atk]
+				
+	if atk.target_type == 0: #SingleEnemy
+		add_attack(e, [target], atk)
+	elif atk.target_type == 1: #Self 
+		add_attack(e, [e], atk)
+	elif atk.target_type == 2: #Party
+		add_attack(e, enemy_instances, atk)
+	elif atk.target_type == 3: #AllEnemies
+		add_attack(e, party, atk)
+	elif atk.target_type in [4, 5]: #RandomEnemy or SingleAlly
+		add_attack(e, [enemy_instances[randi_range(0, enemy_instances.duplicate().size()-1)]], atk)
+
 
 func start_round():
 	effect_manager.update_effects() 

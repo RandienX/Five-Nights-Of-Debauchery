@@ -1,0 +1,59 @@
+[gd_scene load_steps=5 format=3 uid="uid://dsjjuyj8i4ycq"]
+
+[ext_resource type="Texture2D" uid="uid://c1reaudbkpptj" path="res://assets/ui/game_over.png" id="1_60xr3"]
+
+[sub_resource type="Animation" id="Animation_60xr3"]
+resource_name = "gitgud"
+length = 1.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("TextureRect:self_modulate:a")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1.4666667),
+"transitions": PackedFloat32Array(1.5691684, 2.143547),
+"update": 0,
+"values": [0.0, 1.0]
+}
+
+[sub_resource type="Animation" id="Animation_fu4wh"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("TextureRect:self_modulate:a")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [1.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_x6o8e"]
+_data = {
+&"RESET": SubResource("Animation_fu4wh"),
+&"gitgud": SubResource("Animation_60xr3")
+}
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 864.0
+offset_bottom = 648.0
+texture = ExtResource("1_60xr3")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_x6o8e")
+}

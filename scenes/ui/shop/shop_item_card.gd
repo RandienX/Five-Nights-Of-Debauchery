@@ -2,7 +2,7 @@
 extends MarginContainer
 class_name ShopItemCard
 ## ShopItemCard - Reusable UI component for displaying a single shop item
-## Shows icon, name, description, price, stock, and handles purchase interaction
+## Shows icon, name, description, price, and handles purchase interaction
 
 signal purchase_requested(shop_item: ShopItem, quantity: int)
 signal sold(item: Item, quantity: int, currency_type: PlayerStats.CurrencyType, earnings: int)
@@ -34,12 +34,9 @@ func init(item: ShopItem) -> void:
 	_update_visuals()
 
 func setup_for_sell(item: Item, amount: int) -> void:
-	print(item.item_name)
-	
 	is_sell_mode = true
 	sell_item = item
 	sell_quantity = amount
-	print(sell_item)
 	
 	if item and item.sell_price is Dictionary:
 		sell_price_value = item.sell_price.get(PlayerStats.CurrencyType.GOLD, 10)
@@ -67,11 +64,6 @@ func _setup() -> void:
 	
 	var currency_symbol = _get_currency_symbol(shop_item.currency_type)
 	price_label.text = "%d %s" % [shop_item.price, currency_symbol]
-	
-	if shop_item.max_stock != -1:
-		quantity_spinbox.max_value = min(99, shop_item.current_stock)
-	else:
-		quantity_spinbox.max_value = 99
 
 func _setup_sell_ui() -> void:
 	# Icon
@@ -87,9 +79,6 @@ func _setup_sell_ui() -> void:
 	
 	var currency_symbol = _get_currency_symbol(sell_currency_type)
 	price_label.text = "Sell: %d %s each\nOwned: %d" % [sell_price_value, currency_symbol, sell_quantity]
-	
-	quantity_spinbox.max_value = sell_quantity
-	quantity_spinbox.value = min(1, sell_quantity)
 	
 	if buy_button:
 		buy_button.text = "Sell"
@@ -114,12 +103,9 @@ func _update_visuals() -> void:
 		return
 	
 	var can_afford = shop_item._can_afford()
-	var has_stock = shop_item.has_stock()
 	
 	if not is_sell_mode:
-		set_disabled(not has_stock or not can_afford)
-		
-		if not can_afford and has_stock:
+		if not can_afford:
 			price_label.modulate = Color.RED
 		else:
 			price_label.modulate = Color.WHITE
@@ -128,10 +114,9 @@ func _update_sell_visuals() -> void:
 	price_label.modulate = Color.GREEN  # Green to indicate earning
 
 func set_disabled(disabled: bool) -> void:
-	print("bruh" if disabled else "gut")
 	if buy_button:
 		buy_button.disabled = disabled
-	modulate.a = 0.5 if disabled else 1.0
+	modulate.a = 0.5 if disabled == true else 1.0
 
 func refresh() -> void:
 	if is_sell_mode:
@@ -139,18 +124,11 @@ func refresh() -> void:
 		# Update quantity in case inventory changed
 		if PlayerStats and sell_item:
 			sell_quantity = PlayerStats.get_item_amount(sell_item)
-			quantity_spinbox.max_value = sell_quantity
-			quantity_spinbox.value = min(quantity_spinbox.value, sell_quantity)
 			var currency_symbol = _get_currency_symbol(sell_currency_type)
 			price_label.text = "Sell: %d %s each\nOwned: %d" % [sell_price_value, currency_symbol, sell_quantity]
 	else:
 		_update_visuals()
 		
-		# Update max quantity for bulk
-		if shop_item and shop_item.max_stock != -1:
-			quantity_spinbox.max_value = min(99, shop_item.current_stock)
-			quantity_spinbox.value = min(quantity_spinbox.value, quantity_spinbox.max_value)
-
 func _on_buy_pressed() -> void:
 	if is_sell_mode:
 		_on_sell_pressed()
@@ -175,9 +153,6 @@ func _on_sell_pressed() -> void:
 
 func on_currency_changed() -> void:
 	_update_visuals()
-
-func on_stock_changed() -> void:
-	refresh()
 
 ## Enable or disable bulk buying (show/hide spinbox)
 func enable_bulk_buy(enabled: bool) -> void:

@@ -73,10 +73,9 @@ func remove_effect(target: Object, effect: BattleEffect.StatusEffect):
 func apply_effects(target: Object, atk: Skill):
 	if atk.on_hit_effects or atk.on_use_effects:
 		for effect in atk.on_hit_effects:
-			if effect.effect_type == 6:
-				var level = effect.status_level
-				var duration = effect.status_duration
-				apply_effect(target, effect.effect_type, level, duration)
+			var level = effect.status_level
+			var duration = effect.status_duration
+			apply_effect(target, effect.effect_type, level, duration)
 
 func apply_effect(target: Object, effect: BattleEffect.StatusEffect, level: int, duration: int):
 	if not target.effects.has(effect):

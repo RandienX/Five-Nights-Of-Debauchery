@@ -162,12 +162,12 @@ func select_skill():
 		close_skills_menu()
 		await root.advance_planning()
 	elif skill.target_type == 2: #Party
-		root.add_attack(root.current_attacker, root.party.duplicate(), skill)
+		root.add_attack(root.current_attacker, root.party, skill)
 		root.action_history.append(root.current_attacker)
 		close_skills_menu()
 		await root.advance_planning()
 	elif skill.target_type == 3: #AllEnemies
-		root.add_attack(root.current_attacker, root.enemy_instances.duplicate(), skill)
+		root.add_attack(root.current_attacker, root.enemy_instances, skill)
 		root.action_history.append(root.current_attacker)
 		close_skills_menu()
 		await root.advance_planning()
@@ -177,7 +177,7 @@ func select_skill():
 		root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select ally..."
 		return
 	elif skill.target_type == 5: #RandomEnemy
-		root.add_attack(root.current_attacker, root.enemy_instances.duplicate()[randi_range(0, root.enemy_instances.duplicate().size()-1)], skill)
+		root.add_attack(root.current_attacker, root.enemy_instances[randi_range(0, root.enemy_instances.duplicate().size()-1)], skill)
 		root.action_history.append(root.current_attacker)
 		close_skills_menu()
 		await root.advance_planning()

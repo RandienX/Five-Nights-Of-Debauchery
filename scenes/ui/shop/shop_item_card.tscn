@@ -82,7 +82,9 @@ texture = ExtResource("1_reup3")
 
 [node name="SpinBox" type="SpinBox" parent="HBoxContainer/VBoxContainer2"]
 layout_mode = 2
+min_value = 1.0
 max_value = 99.0
+value = 1.0
 rounded = true
 
 [connection signal="pressed" from="HBoxContainer/VBoxContainer2/MarginContainer/Buy" to="." method="_on_buy_pressed"]
