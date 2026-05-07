@@ -1,12 +1,20 @@
-[gd_scene load_steps=19 format=4 uid="uid://ba0qdw35nr2vg"]
+[gd_scene load_steps=27 format=4 uid="uid://ba0qdw35nr2vg"]
 
 [ext_resource type="Script" uid="uid://duek0uk444kjf" path="res://code/root_script.gd" id="1_moar0"]
 [ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="2_xiu6t"]
-[ext_resource type="Resource" uid="uid://d0alullmmxp3b" path="res://resources/battles/alpha_party_hat_1.tres" id="3_ur0wa"]
+[ext_resource type="Resource" uid="uid://dk6da26u6uuj3" path="res://resources/battles/pizzeria/gamma_party_hat_1.tres" id="3_wsfus"]
 [ext_resource type="Texture2D" uid="uid://tpsaxglf4u38" path="res://assets/tilemaps/Walls.png" id="4_iyeid"]
+[ext_resource type="Resource" uid="uid://clfi17lu28dwy" path="res://resources/battles/pizzeria/gamma_party_hat_2.tres" id="4_mtjjf"]
+[ext_resource type="Resource" uid="uid://i40i0rawd43c" path="res://resources/battles/pizzeria/b1_g1.tres" id="5_3ia20"]
 [ext_resource type="Texture2D" uid="uid://c5te14cvg4qke" path="res://assets/tilemaps/Objects.png" id="5_w1u22"]
+[ext_resource type="Resource" uid="uid://bhfnl537c8pxi" path="res://resources/battles/pizzeria/g2_b1.tres" id="6_mx00a"]
 [ext_resource type="PackedScene" uid="uid://yq7stgud35n5" path="res://scenes/objects/player.tscn" id="6_ppu6t"]
-[ext_resource type="Script" uid="uid://c7gylu1ll5qfu" path="res://room_change_trigger.gd" id="7_cdhui"]
+[ext_resource type="Script" uid="uid://c7gylu1ll5qfu" path="res://scenes/objects/room_change_trigger.gd" id="7_cdhui"]
+[ext_resource type="Resource" uid="uid://cfw5lt6sdnwb1" path="res://resources/battles/pizzeria/gamma_party_hat_3.tres" id="7_egpm4"]
+[ext_resource type="Resource" uid="uid://da40cco6xlmcx" path="res://resources/battles/pizzeria/g1_b2.tres" id="8_4fj1y"]
+[ext_resource type="Resource" uid="uid://b3brmm40llhh4" path="res://resources/battles/pizzeria/colorful_easy.tres" id="9_jvdsm"]
+[ext_resource type="Resource" uid="uid://ddcvj0kdlk1hv" path="res://resources/battles/pizzeria/beta_party_hat_3.tres" id="10_6qdx3"]
+[ext_resource type="Resource" uid="uid://degevskgheqp6" path="res://resources/battles/pizzeria/b2_a1.tres" id="11_mtjjf"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_feixl"]
 texture = ExtResource("4_iyeid")
@@ -61,6 +69,7 @@ texture_region_size = Vector2i(32, 32)
 2:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, -12, -16, -12, -12, -16, -12)
 2:2/0/physics_layer_0/polygon_1/points = PackedVector2Array(16, -16, -16, -16, -16, 16, -12, 16, -12, -12, 16, -12)
 3:2/0 = 0
+3:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
 1:3/0 = 0
 1:3/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, -12, -16, -12, -12, -16, -12)
 
@@ -373,7 +382,9 @@ size = Vector2(32, 32)
 [node name="RootScene" type="Node2D" node_paths=PackedStringArray("player")]
 script = ExtResource("1_moar0")
 room_name = "Pizzeria - Kitchen"
-possible_battles = Array[ExtResource("2_xiu6t")]([ExtResource("3_ur0wa")])
+possible_battles = Array[ExtResource("2_xiu6t")]([ExtResource("3_wsfus"), ExtResource("4_mtjjf"), ExtResource("5_3ia20"), ExtResource("6_mx00a"), ExtResource("7_egpm4"), ExtResource("8_4fj1y"), ExtResource("9_jvdsm"), ExtResource("10_6qdx3"), ExtResource("11_mtjjf")])
+enemy_intensity = 95
+enemy_agressiveness = 66
 player = NodePath("player")
 room_size = Rect2(0, -2, 18, 13)
 metadata/_custom_type_script = "uid://duek0uk444kjf"

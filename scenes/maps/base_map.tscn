@@ -2,11 +2,11 @@
 
 [ext_resource type="Script" uid="uid://duek0uk444kjf" path="res://code/root_script.gd" id="1_iciq6"]
 [ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="2_y42xl"]
-[ext_resource type="Resource" uid="uid://d0alullmmxp3b" path="res://resources/battles/alpha_party_hat_1.tres" id="3_rbkgq"]
+[ext_resource type="Resource" uid="uid://d0alullmmxp3b" path="res://resources/battles/pizzeria/alpha_party_hat_1.tres" id="3_rbkgq"]
 [ext_resource type="Texture2D" uid="uid://tpsaxglf4u38" path="res://assets/tilemaps/Walls.png" id="4_4au65"]
 [ext_resource type="Texture2D" uid="uid://c5te14cvg4qke" path="res://assets/tilemaps/Objects.png" id="5_rblr7"]
 [ext_resource type="PackedScene" uid="uid://yq7stgud35n5" path="res://scenes/objects/player.tscn" id="6_qngx7"]
-[ext_resource type="Script" uid="uid://c7gylu1ll5qfu" path="res://room_change_trigger.gd" id="7_8rvf5"]
+[ext_resource type="Script" uid="uid://c7gylu1ll5qfu" path="res://scenes/objects/room_change_trigger.gd" id="7_8rvf5"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_feixl"]
 texture = ExtResource("4_4au65")

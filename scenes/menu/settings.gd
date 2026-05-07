@@ -2,7 +2,7 @@ extends Button
 
 func _on_pressed() -> void:
 	$"../../settings".visible = !$"../../settings".visible
-	$"../Load".visible = false
+	$"../../save_box/Control".visible = false
 
 var change_text = false
 
