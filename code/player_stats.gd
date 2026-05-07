@@ -156,36 +156,40 @@ func remove_item(item: Item, amount: int = 1):
 		return true
 	return false
 	
-func use_item(item: Item, target: Entity) -> bool:
-	if not item or not target or not is_instance_valid(target):
+func use_item(item: Item, target: Array) -> bool:
+	if not item or target.size() <= 0:
+		print("1")
+		print(target)
 		return false
 	if item.type != 2:  # Not a consumable
+		print("2")
 		return false
-	if not has_item(item):
-		return false
-
-	# Apply heal effects
-	if item.heal_amount > 0 and target.hp < target.max_stats["hp"] and target.hp > 0:
-		target.hp = min(target.hp + item.heal_amount, target.max_stats["hp"])
-
-	# Apply mana restore
-	if item.mana_amount > 0 and target.mp < target.max_stats["mp"]:
-		target.mp = min(target.mp + item.mana_amount, target.max_stats["mp"])
-
-	# Apply revive effect
-	if item.revive_amount > 0 and target.hp <= 0:
-		target.hp = min(item.revive_amount, target.max_stats["hp"])
-
-	# Remove status effects (heals_effects is Array[int] of effect enum values)
-	if item.heals_effects:
-		for effect_key in item.heals_effects:
-			if target.effects.has(effect_key):
-				target.effects.erase(effect_key)
-						
-	if item.consume_effects:
-		for effect in item.consume_effects:
-			# Process BattleEffect resources here if needed
-			pass
+	
+	for t in target:
+		
+		# Apply revive effect
+		if item.revive_amount > 0 and t.hp <= 0:
+			t.hp = min(item.revive_amount, t.max_stats["hp"])
+			
+		# Apply heal effects
+		if item.heal_amount > 0 and t.hp < t.max_stats["hp"] and t.hp > 0:
+			t.hp = min(t.hp + item.heal_amount, t.max_stats["hp"])
+	
+		# Apply mana restore
+		if item.mana_amount > 0 and t.mp < t.max_stats["mp"]:
+			t.mp = min(t.mp + item.mana_amount, t.max_stats["mp"])
+	
+	
+		# Remove status effects (heals_effects is Array[int] of effect enum values)
+		if item.heals_effects:
+			for effect_key in item.heals_effects:
+				if t.effects.has(effect_key):
+					t.effects.erase(effect_key)
+							
+		if item.consume_effects:
+			for effect in item.consume_effects:
+				# Process BattleEffect resources here if needed
+				pass
 	
 	remove_item(item, 1)
 	return true

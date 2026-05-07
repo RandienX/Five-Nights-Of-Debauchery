@@ -32,6 +32,8 @@ var _autosave_enabled: bool = false
 var _visited_objects: Dictionary = {}  # Used as Set[int] for circular reference detection
 var _max_recursion_depth: int = 50
 
+var last_slot: int = 1
+
 # === Types that can be serialized directly ===
 const SERIALIZABLE_TYPES := [
 	TYPE_BOOL, TYPE_INT, TYPE_FLOAT, TYPE_STRING,
@@ -108,6 +110,8 @@ func save_game(slot: int, save_name: String = "") -> bool:
 
 ## Load game from a specific slot
 func load_game(slot: int) -> bool:
+	last_slot = slot
+	
 	if slot < 0 or slot >= MAX_SLOTS:
 		push_error("[AutoSaveManager] Invalid slot number: %d" % slot)
 		load_completed.emit(false, slot)
@@ -599,23 +603,7 @@ func _parse_encoded_string(encoded: String) -> Variant:
 		if parts.size() == 2:
 			return Vector2i(int(parts[0].strip_edges()), int(parts[1].strip_edges()))
 		return Vector2i.ZERO
-	
-	# Vector3
-	if encoded.begins_with("Vector3("):
-		var inner = encoded.trim_prefix("Vector3(").trim_suffix(")")
-		var parts = inner.split(",")
-		if parts.size() == 3:
-			return Vector3(float(parts[0].strip_edges()), float(parts[1].strip_edges()), float(parts[2].strip_edges()))
-		return Vector3.ZERO
-	
-	# Vector3i
-	if encoded.begins_with("Vector3i("):
-		var inner = encoded.trim_prefix("Vector3i(").trim_suffix(")")
-		var parts = inner.split(",")
-		if parts.size() == 3:
-			return Vector3i(int(parts[0].strip_edges()), int(parts[1].strip_edges()), int(parts[2].strip_edges()))
-		return Vector3i.ZERO
-	
+		
 	# Color
 	if encoded.begins_with("Color("):
 		var inner = encoded.trim_prefix("Color(").trim_suffix(")")

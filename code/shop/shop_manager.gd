@@ -53,8 +53,6 @@ func close_shop() -> void:
 	if shop_id != &"":
 		shop_closed.emit(shop_id)
 
-
-## Refresh the current shop (e.g., after restocking)
 func refresh_current_shop() -> void:
 	if current_shop_instance and current_shop_data:
 		var shop_ui = current_shop_instance.get_node_or_null(".") as ShopUI

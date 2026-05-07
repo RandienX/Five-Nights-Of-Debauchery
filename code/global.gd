@@ -15,7 +15,6 @@ var scene_data: Dictionary = {}
 
 var loading = false
 
-
 func _process(delta: float) -> void:
 	time_played += delta
 
@@ -58,23 +57,7 @@ func get_scenes_data():
 	return scene_data
 
 func reload_last_save() -> void:
-	var file = FileAccess.open("user://save.save", FileAccess.READ)
-	if not file:
-		get_tree().change_scene_to_file(current_scene)
-		return
-	var json = file.get_as_text()
-	file.close()
-	var data = JSON.parse_string(json)
-	if data:
-		var scenes_file = FileAccess.open("user://scene_data.save", FileAccess.READ)
-		var scenes_data = {}
-		if scenes_file:
-			var scenes_json = scenes_file.get_as_text()
-			scenes_file.close()
-			scenes_data = JSON.parse_string(scenes_json) if scenes_json else {}
-		load_save_data(data, scenes_data)
-	else:
-		get_tree().change_scene_to_file(current_scene)
+	Save.load_game(SaveManager.last_slot)
 
 # === Item Usage ===
 func use_item(item: Resource, target: Object) -> bool:
@@ -132,8 +115,11 @@ func apply_effect(target: Object, effect: int, level: int, duration: int):
 # === Tools ===
 func lower_font(target: Label):
 	target.theme.default_font_size = 48
-	while target.theme.default_font.get_string_size(target.text, target.horizontal_alignment, -1, target.theme.default_font_size).x > target.custom_minimum_size.x:
-		target.theme.default_font_size -= 1
+	for i in range(48): 
+		if target.theme.default_font.get_string_size(target.text, target.horizontal_alignment, -1, target.theme.default_font_size).x > target.custom_minimum_size.x:
+			target.theme.default_font_size -= 1
+		else:
+			return
 
 # === Mics ===
 func load_battle(battle: Battle):

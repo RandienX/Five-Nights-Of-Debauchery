@@ -41,17 +41,17 @@ func _physics_process(delta: float) -> void:
 	PlayerStats.player_position = player_position
 	
 func _input(event: InputEvent) -> void:
-	var rng = randi_range(1, (1000 - enemy_intensity) * (enemy_agressiveness / 100.0))
+	var rng = randi_range(1, (1000 - enemy_intensity) * (100.0 / enemy_agressiveness))
 	if event.is_action("left"):
 		if (rng * 0.5 if event.is_action("run") else rng * 1) <= enemy_intensity:
 			player_steps -= 1
-	elif event.is_action("right"):
+	if event.is_action("right"):
 		if (rng * 0.5 if event.is_action("run") else rng * 1) <= enemy_intensity:
 			player_steps -= 1
-	elif event.is_action("up"):
+	if event.is_action("up"):
 		if (rng * 0.5 if event.is_action("run") else rng * 1) <= enemy_intensity:
 			player_steps -= 1
-	elif event.is_action("down"):
+	if event.is_action("down"):
 		if (rng * 0.5 if event.is_action("run") else rng * 1) <= enemy_intensity:
 			player_steps -= 1
 	if player_steps <= enemy_agressiveness:
