@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="Battle" load_steps=13 format=3 uid="uid://c4cust6y5xp26"]
+
+[ext_resource type="Texture2D" uid="uid://d0oxwprcg2ps" path="res://assets/battleui/backgrounds/FNaF 1 - West Hall Corner 2.png" id="1_gfrnx"]
+[ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="2_y2ora"]
+[ext_resource type="Script" uid="uid://tjsyf20orwjt" path="res://code/battle/battle_end_condition.gd" id="3_153ku"]
+[ext_resource type="Script" uid="uid://cpuojkdrhbref" path="res://code/battle/battle_enemy_slot.gd" id="4_nq1jx"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="5_dflwj"]
+[ext_resource type="Resource" uid="uid://js76od81la8g" path="res://resources/enemies/o_party_hat.tres" id="6_y2ora"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="7_n288r"]
+[ext_resource type="AudioStream" uid="uid://cskc30lrddixe" path="res://assets/sound/battle/Black Knife.mp3" id="8_153ku"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="9_5727w"]
+[ext_resource type="Script" uid="uid://c87a82v6g8ug3" path="res://code/battle/battle_phase.gd" id="10_l37cm"]
+[ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="11_fjwnp"]
+
+[sub_resource type="Resource" id="Resource_w3sal"]
+script = ExtResource("4_nq1jx")
+enemy = ExtResource("6_y2ora")
+position_index = 2
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[resource]
+script = ExtResource("11_fjwnp")
+battle_name = "Omega Party Hat 1"
+enemies = Array[ExtResource("4_nq1jx")]([SubResource("Resource_w3sal")])
+background = ExtResource("1_gfrnx")
+music = ExtResource("8_153ku")
+xp_multiplier = 0.9
+metadata/_custom_type_script = "uid://s2os42vdwf6y"

@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("2_he1pc")
 item_name = "Molotov Cocktail"
+description = "All Enemies will burn!!! By the slippery hand of Freddy Fuckboy."
 type = 2
 sell_price = Dictionary[int, int]({
 0: 100,

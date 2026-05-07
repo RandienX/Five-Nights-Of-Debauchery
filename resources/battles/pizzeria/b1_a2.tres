@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="Battle" load_steps=16 format=3 uid="uid://diki2hhwqkao6"]
+
+[ext_resource type="Texture2D" uid="uid://bevvexikdqtsr" path="res://assets/battleui/backgrounds/FNaF 1 - Backroom.png" id="1_e1u01"]
+[ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="2_h281e"]
+[ext_resource type="Script" uid="uid://tjsyf20orwjt" path="res://code/battle/battle_end_condition.gd" id="3_2efet"]
+[ext_resource type="Script" uid="uid://cpuojkdrhbref" path="res://code/battle/battle_enemy_slot.gd" id="4_is76e"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="5_cq4hg"]
+[ext_resource type="Resource" uid="uid://jacdqq8darrf" path="res://resources/enemies/a_party_hat.tres" id="6_h281e"]
+[ext_resource type="Resource" uid="uid://dqu0dik6olrpu" path="res://resources/enemies/b_party_hat.tres" id="6_lrpmm"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="7_tvkd2"]
+[ext_resource type="AudioStream" uid="uid://ewpyqkjyyvtp" path="res://assets/sound/battle/My Own Style.mp3" id="8_q0avm"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="9_nc5yw"]
+[ext_resource type="Script" uid="uid://c87a82v6g8ug3" path="res://code/battle/battle_phase.gd" id="10_ect03"]
+[ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="11_8cyw5"]
+
+[sub_resource type="Resource" id="Resource_w3sal"]
+script = ExtResource("4_is76e")
+enemy = ExtResource("6_h281e")
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[sub_resource type="Resource" id="Resource_4a0t1"]
+script = ExtResource("4_is76e")
+enemy = ExtResource("6_lrpmm")
+position_index = 2
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[sub_resource type="Resource" id="Resource_vx1ff"]
+script = ExtResource("4_is76e")
+enemy = ExtResource("6_h281e")
+position_index = 4
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[resource]
+script = ExtResource("11_8cyw5")
+battle_name = "Beta Alpha2"
+enemies = Array[ExtResource("4_is76e")]([SubResource("Resource_w3sal"), SubResource("Resource_4a0t1"), SubResource("Resource_vx1ff")])
+background = ExtResource("1_e1u01")
+music = ExtResource("8_q0avm")
+xp_multiplier = 1.1
+metadata/_custom_type_script = "uid://s2os42vdwf6y"

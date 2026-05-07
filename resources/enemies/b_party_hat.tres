@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="Entity" load_steps=7 format=3 uid="uid://dqu0dik6olrpu"]
+
+[ext_resource type="Texture2D" uid="uid://beog7jqehqpv4" path="res://assets/battlesprites/Party Hat 2.png" id="1_cnoev"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_t1ppm"]
+[ext_resource type="Resource" uid="uid://bm2swlibbpbh4" path="res://resources/attacks/attack.tres" id="2_gle86"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="2_tkh6x"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="3_cnoev"]
+[ext_resource type="Resource" uid="uid://cvrkbggxuxsyd" path="res://resources/attacks/enemies/bonk.tres" id="6_gle86"]
+
+[resource]
+script = ExtResource("3_cnoev")
+name = "Beta Party Hat"
+role = 1
+portrait = ExtResource("1_cnoev")
+battle_sprite = ExtResource("1_cnoev")
+back_sprite = ExtResource("1_cnoev")
+path_to = "res://resources/enemies/b_party_hat.tres"
+base_stats = Dictionary[String, int]({
+"atk": 10,
+"def": 4,
+"hp": 100,
+"magic": 5,
+"mp": 20,
+"speed": 5
+})
+max_stats = Dictionary[String, int]({
+"atk": 10,
+"def": 4,
+"hp": 100,
+"magic": 5,
+"mp": 20,
+"speed": 10
+})
+mp = 20
+skills = Dictionary[int, Array]({
+0: [ExtResource("6_gle86")]
+})
+default_attack = ExtResource("2_gle86")
+xp_reward = 25
+currency_reward = 5
+metadata/_custom_type_script = "uid://c2cret7fy87bn"

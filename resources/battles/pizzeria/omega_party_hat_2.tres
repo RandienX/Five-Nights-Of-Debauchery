@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="Battle" load_steps=14 format=3 uid="uid://dye0c5tra8kjp"]
+
+[ext_resource type="Texture2D" uid="uid://d0oxwprcg2ps" path="res://assets/battleui/backgrounds/FNaF 1 - West Hall Corner 2.png" id="1_2qi2h"]
+[ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="2_kenyt"]
+[ext_resource type="Script" uid="uid://tjsyf20orwjt" path="res://code/battle/battle_end_condition.gd" id="3_wwl3r"]
+[ext_resource type="Script" uid="uid://cpuojkdrhbref" path="res://code/battle/battle_enemy_slot.gd" id="4_jyv81"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="5_vbpw2"]
+[ext_resource type="Resource" uid="uid://js76od81la8g" path="res://resources/enemies/o_party_hat.tres" id="6_kenyt"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="7_cqej7"]
+[ext_resource type="AudioStream" uid="uid://cskc30lrddixe" path="res://assets/sound/battle/Black Knife.mp3" id="8_wwl3r"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="9_22d4u"]
+[ext_resource type="Script" uid="uid://c87a82v6g8ug3" path="res://code/battle/battle_phase.gd" id="10_706mr"]
+[ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="11_pjw20"]
+
+[sub_resource type="Resource" id="Resource_h2t3o"]
+script = ExtResource("4_jyv81")
+enemy = ExtResource("6_kenyt")
+position_index = 1
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[sub_resource type="Resource" id="Resource_ykmfe"]
+script = ExtResource("4_jyv81")
+enemy = ExtResource("6_kenyt")
+position_index = 3
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[resource]
+script = ExtResource("11_pjw20")
+battle_name = "Omega Party Hat 2"
+enemies = Array[ExtResource("4_jyv81")]([SubResource("Resource_h2t3o"), SubResource("Resource_ykmfe")])
+background = ExtResource("1_2qi2h")
+music = ExtResource("8_wwl3r")
+metadata/_custom_type_script = "uid://s2os42vdwf6y"

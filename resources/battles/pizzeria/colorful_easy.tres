@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="Battle" load_steps=16 format=3 uid="uid://b3brmm40llhh4"]
+
+[ext_resource type="Texture2D" uid="uid://bevvexikdqtsr" path="res://assets/battleui/backgrounds/FNaF 1 - Backroom.png" id="1_feh6u"]
+[ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="2_er2rc"]
+[ext_resource type="Script" uid="uid://tjsyf20orwjt" path="res://code/battle/battle_end_condition.gd" id="3_gt33y"]
+[ext_resource type="Script" uid="uid://cpuojkdrhbref" path="res://code/battle/battle_enemy_slot.gd" id="4_i2xx6"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="5_a335f"]
+[ext_resource type="Resource" uid="uid://jacdqq8darrf" path="res://resources/enemies/a_party_hat.tres" id="6_61jb7"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="7_a4b8s"]
+[ext_resource type="Resource" uid="uid://b7val374sectd" path="res://resources/enemies/y_party_hat.tres" id="7_er2rc"]
+[ext_resource type="AudioStream" uid="uid://sv4mrq87pmmc" path="res://assets/sound/battle/Revolutionary Girl Utena.mp3" id="9_er2rc"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="9_wqsvb"]
+[ext_resource type="Script" uid="uid://c87a82v6g8ug3" path="res://code/battle/battle_phase.gd" id="10_xs3fp"]
+[ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="11_rsgp7"]
+
+[sub_resource type="Resource" id="Resource_w3sal"]
+script = ExtResource("4_i2xx6")
+enemy = ExtResource("6_61jb7")
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[sub_resource type="Resource" id="Resource_4a0t1"]
+script = ExtResource("4_i2xx6")
+enemy = ExtResource("6_61jb7")
+position_index = 2
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[sub_resource type="Resource" id="Resource_vx1ff"]
+script = ExtResource("4_i2xx6")
+enemy = ExtResource("7_er2rc")
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[resource]
+script = ExtResource("11_rsgp7")
+battle_name = "Colorful Easy"
+enemies = Array[ExtResource("4_i2xx6")]([SubResource("Resource_w3sal"), SubResource("Resource_4a0t1"), SubResource("Resource_vx1ff")])
+background = ExtResource("1_feh6u")
+music = ExtResource("9_er2rc")
+xp_multiplier = 1.1
+metadata/_custom_type_script = "uid://s2os42vdwf6y"

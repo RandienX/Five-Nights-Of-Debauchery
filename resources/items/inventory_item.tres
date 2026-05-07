@@ -7,6 +7,8 @@
 
 [resource]
 script = ExtResource("1_invitem")
+min_size = Vector2(300, 40)
+icon_size = Vector2(32, 32)
 background_texture = ExtResource("2_bg")
 delete_icon = ExtResource("3_del")
 pressed_background = ExtResource("4_pressed")

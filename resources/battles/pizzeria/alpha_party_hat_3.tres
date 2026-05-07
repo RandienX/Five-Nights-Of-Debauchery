@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="Battle" load_steps=15 format=3 uid="uid://hcjum4b6iriu"]
+
+[ext_resource type="Texture2D" uid="uid://cfoscxh3td7hk" path="res://assets/battleui/backgrounds/FNaF 1 - Dining Area.png" id="1_gbqig"]
+[ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="2_icitr"]
+[ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="2_kscs7"]
+[ext_resource type="Script" uid="uid://tjsyf20orwjt" path="res://code/battle/battle_end_condition.gd" id="3_keuyk"]
+[ext_resource type="Script" uid="uid://cpuojkdrhbref" path="res://code/battle/battle_enemy_slot.gd" id="4_js075"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="5_saa1h"]
+[ext_resource type="Resource" uid="uid://jacdqq8darrf" path="res://resources/enemies/a_party_hat.tres" id="6_gbqig"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="7_gbqig"]
+[ext_resource type="AudioStream" uid="uid://bnajx4f37io4r" path="res://assets/sound/battle/1-81.mp3" id="8_8vcve"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="9_ebinm"]
+[ext_resource type="Script" uid="uid://c87a82v6g8ug3" path="res://code/battle/battle_phase.gd" id="10_43lra"]
+
+[sub_resource type="Resource" id="Resource_xiodm"]
+script = ExtResource("4_js075")
+enemy = ExtResource("6_gbqig")
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[sub_resource type="Resource" id="Resource_2yo4p"]
+script = ExtResource("4_js075")
+enemy = ExtResource("6_gbqig")
+position_index = 2
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[sub_resource type="Resource" id="Resource_ti6gk"]
+script = ExtResource("4_js075")
+enemy = ExtResource("6_gbqig")
+position_index = 4
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[resource]
+script = ExtResource("2_icitr")
+battle_name = "Alpha Party Hat 3"
+enemies = Array[ExtResource("4_js075")]([SubResource("Resource_xiodm"), SubResource("Resource_2yo4p"), SubResource("Resource_ti6gk")])
+background = ExtResource("1_gbqig")
+music = ExtResource("8_8vcve")
+metadata/_custom_type_script = "uid://s2os42vdwf6y"

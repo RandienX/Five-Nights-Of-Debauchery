@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="Battle" load_steps=15 format=3 uid="uid://i40i0rawd43c"]
+
+[ext_resource type="Texture2D" uid="uid://bevvexikdqtsr" path="res://assets/battleui/backgrounds/FNaF 1 - Backroom.png" id="1_e5sox"]
+[ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="2_thg1f"]
+[ext_resource type="Script" uid="uid://tjsyf20orwjt" path="res://code/battle/battle_end_condition.gd" id="3_m0i7c"]
+[ext_resource type="Script" uid="uid://cpuojkdrhbref" path="res://code/battle/battle_enemy_slot.gd" id="4_2m3h5"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="5_6bw1o"]
+[ext_resource type="Resource" uid="uid://b7val374sectd" path="res://resources/enemies/y_party_hat.tres" id="6_rw4ut"]
+[ext_resource type="Resource" uid="uid://dqu0dik6olrpu" path="res://resources/enemies/b_party_hat.tres" id="6_thg1f"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="7_cljfx"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="9_ah15q"]
+[ext_resource type="AudioStream" uid="uid://b8b2magh1twoe" path="res://assets/sound/battle/Pepper Steak - OFF.mp3" id="9_m0i7c"]
+[ext_resource type="Script" uid="uid://c87a82v6g8ug3" path="res://code/battle/battle_phase.gd" id="10_vki6k"]
+[ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="11_mant2"]
+
+[sub_resource type="Resource" id="Resource_h2t3o"]
+script = ExtResource("4_2m3h5")
+enemy = ExtResource("6_thg1f")
+position_index = 1
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[sub_resource type="Resource" id="Resource_ykmfe"]
+script = ExtResource("4_2m3h5")
+enemy = ExtResource("6_rw4ut")
+position_index = 3
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[resource]
+script = ExtResource("11_mant2")
+battle_name = "Beta Gamma"
+enemies = Array[ExtResource("4_2m3h5")]([SubResource("Resource_h2t3o"), SubResource("Resource_ykmfe")])
+background = ExtResource("1_e5sox")
+music = ExtResource("9_m0i7c")
+metadata/_custom_type_script = "uid://s2os42vdwf6y"

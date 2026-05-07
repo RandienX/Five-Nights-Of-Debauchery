@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("3_88h8h")
 item_name = "Endo Armor b"
+description = "Slightly better than the previous iteration. Addition of aluminium foil absorbs slightly more damage."
 texture = ExtResource("2_f2nrl")
 icon = ExtResource("2_f2nrl")
 type = 1

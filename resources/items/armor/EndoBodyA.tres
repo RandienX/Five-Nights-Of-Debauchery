@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("1_d63x7")
 item_name = "Endo Armor a"
+description = "Fragile Endoskeleton, better than nothing."
 texture = ExtResource("2_bayty")
 icon = ExtResource("2_bayty")
 type = 1
