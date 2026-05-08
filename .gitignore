@@ -1,28 +1,28 @@
-```
-# Godot-specific ignores
-*.import
-*.remap
-export_presets.cfg
-.autoloads/
-.editor/
+# Examples 1:
+(empty — output nothing)
 
-# Build artifacts
-*.so
-*.dylib
-*.dll
-*.exe
-*.bin
-
+# Example 2 (Project with artifacts):
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+dist/
+build/
 # Dependencies
-res://addons/
-*.import
-
-# Temporary files
-*.tmp
-*.temp
+.venv/
+venv/
+node_modules/
+# Logs and temp files
 *.log
-
-# System files
-.DS_Store
-Thumbs.db
-```
+*.tmp
+*.swp
+# Environment
+.env
+.env.local
+.env.*
+# Editors
+.vscode/
+.idea/
+# Original rules preserved
+*.log

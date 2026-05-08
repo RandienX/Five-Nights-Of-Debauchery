@@ -2,543 +2,425 @@
 class_name BattleEffect
 extends Resource
 
-## Effect that runs during battle (on skill use, on turn start, on hit, etc.)
-## This is a complete replacement for Global.effect enum system.
-## All effects from Global.effect can be recreated using this resource.
+## Data-driven battle effect resource with structured sub-resources
+## Supports targeting, timing, conditions, stat modifiers, and status application
 
-## Status effect types matching Global.effect enum for compatibility
-enum StatusEffect {
-	Heal,           # Gradually restores HP over time
-	Mana_Heal,      # Gradually restores MP over time
-	Blind,          # Reduces accuracy
-	Poison,         # Deals damage over time
-	Bleed,          # Deals stronger damage over time, not healable by items
-	Power,          # Increases damage dealt
-	Tough,          # Increases defense
-	Focus,          # Increases accuracy
-	Speed,
-	Defend,         # Reduces damage taken
-	Kill,           # Chance to instantly kill non-boss enemies
-	Absorb,         # Increases max HP temporarily
-	Revive,         # Revives knocked out ally
-	Sick,           # Reduces effectiveness of healing
-	Weak,           # Reduces damage dealt
-	Slow,           # Reduces speed/initiative
-	Sleep,          # Skips turns until hit
-	Burn,           # Deals damage over time, reduces attack
-	Freeze,         # Skips turns, deals damage
-	Paralyzed,      # Chance to skip turn, reduces speed
-	Shock,          # Random stat reductions
-	Confuse         # May cause attacking self or allies
-}
+# ==================== ENUMS ====================
 
 enum EffectType {
-	# Stat Modification
-	MODIFY_STAT,          # Modify a stat temporarily or permanently
-	SET_STAT,             # Set a stat to a specific value
-	
-	# Health/MP
-	HEAL_HP,              # Restore HP
-	HEAL_MP,              # Restore MP
-	DAMAGE_HP,            # Deal HP damage
-	DAMAGE_MP,            # Deal MP damage
-	
-	# Status Effects (new resource-based system)
-	ADD_STATUS,           # Apply a status effect from StatusEffect enum
-	REMOVE_STATUS,        # Remove a status effect
-	CLEAR_ALL_STATUS,     # Remove all status effects
-	
-	# Battle Flow
-	FORCE_TARGET,         # Force attack to target specific unit
-	SKIP_TURN,            # Skip the target's next turn
-	EXTRA_TURN,           # Grant an extra turn
-	CHANGE_INITIATIVE,    # Modify turn order priority
-	
-	# Resource Management
-	ADD_ITEM,             # Give item after battle
-	REMOVE_ITEM,          # Remove item during battle
-	GAIN_XP,              # Grant experience points
-	GAIN_CURRENCY,        # Grant currency/gold
-	
-	# Conditional Effects
-	CONDITIONAL_EFFECT,   # Only run if condition is met
-	COUNTER_ATTACK,       # Set up counter attack
-	REFLECT_DAMAGE,       # Reflect percentage of damage
-	
-	# Visual/Audio
-	PLAY_ANIMATION,       # Play specific animation
-	PLAY_SOUND,           # Play sound effect
-	SHAKE_SCREEN,         # Shake the camera
-	FLASH_SCREEN,         # Flash the screen
-	
-	# Custom
-	CUSTOM_SCRIPT         # Run custom GDScript
+	DAMAGE,              # Deal HP/MP damage
+	HEAL,                # Restore HP/MP
+	BUFF,                # Temporary positive stat modifier
+	DEBUFF,              # Temporary negative stat modifier
+	STATUS_APPLY,        # Apply a status effect
+	STATUS_REMOVE,       # Remove a status effect
+	PARAMETER_CHANGE,    # Permanent stat change
+	UTILITY,             # Skip turn, extra turn, item give/take, etc.
+	CUSTOM               # Run custom script/callback
 }
 
 enum TargetType {
-	NONE,
-	SELF,
-	SINGLE_ALLY,
-	SINGLE_ENEMY,
-	ALL_ALLIES,
-	ALL_ENEMIES,
-	ENTIRE_BATTLE,
-	ATTACKER,
-	DEFENDER
+	SELF,                # The caster/source
+	SINGLE_ALLY,         # One ally (selected or random)
+	SINGLE_ENEMY,        # One enemy (selected or random)
+	ALL_ALLIES,          # All allied units
+	ALL_ENEMIES,         # All enemy units
+	PARTY,               # Entire party (for exploration persistence)
+	ENTIRE_BATTLE        # Everyone in battle
 }
 
 enum Timing {
-	ON_USE,               # When skill/ability is used
-	ON_HIT,               # When attack hits
-	ON_MISS,              # When attack misses
-	ON_TURN_START,        # At start of turn
-	ON_TURN_END,          # At end of turn
-	ON_TAKE_DAMAGE,       # When taking damage
-	ON_DEATH,             # When unit dies
-	ON_BATTLE_START,      # When battle begins
-	ON_BATTLE_END,        # When battle ends
-	PASSIVE               # Always active
+	ON_CAST,             # When skill/effect is cast
+	ON_HIT,              # When attack hits target
+	ON_MISS,             # When attack misses
+	ON_TURN_START,       # At beginning of turn
+	ON_TURN_END,         # At end of turn
+	ON_DEATH,            # When entity dies
+	ON_DAMAGE_TAKEN,     # When entity takes damage
+	PERSISTENT           # Ticks every turn automatically
 }
 
+enum ScalingType {
+	NONE,                # No scaling
+	FLAT,                # Add flat value
+	PERCENT_BASE,        # % of base stat
+	PERCENT_CURRENT,     # % of current stat
+	LEVEL_SCALE,         # Scale with source level
+	STAT_SCALE           # Scale with a specific stat
+}
+
+enum Operator {
+	GREATER_THAN,        # >
+	LESS_THAN,           # <
+	EQUALS,              # ==
+	GREATER_EQUAL,       # >=
+	LESS_EQUAL,          # <=
+	HAS_STATUS,          # Has specific status
+	NOT_HAS_STATUS,      # Does not have status
+}
+
+# ==================== SUB-RESOURCES ====================
+
+@resource_class_name("ConditionRule")
+class ConditionRule extends Resource:
+	## Rule for checking if an effect should trigger
+	
+	@export var enabled: bool = true
+	@export var check_stat: String = "hp"  # Stat to check (hp, mp, atk, etc.)
+	@export var operator: Operator = Operator.GREATER_THAN
+	@export var threshold_value: float = 0.0
+	@export var status_to_check: BattleEffect.StatusDefinition = null  # For HAS_STATUS checks
+	@export var invert: bool = false  # Invert the result
+	
+	func evaluate(entity: Entity, context: Dictionary = {}) -> bool:
+		if not enabled:
+			return true
+		
+		var result: bool = false
+		var actual_value: float = 0.0
+		
+		# Special handling for status checks
+		if operator == Operator.HAS_STATUS or operator == Operator.NOT_HAS_STATUS:
+			if status_to_check:
+				result = entity.has_status(status_to_check.id)
+				if operator == Operator.NOT_HAS_STATUS:
+					result = not result
+			else:
+				result = false
+		else:
+			# Get stat value
+			match check_stat:
+				"hp":
+					actual_value = float(entity.hp)
+				"hp_percent":
+					actual_value = (float(entity.hp) / float(entity.get_max_stat("hp"))) * 100.0
+				"mp":
+					actual_value = float(entity.mp)
+				"mp_percent":
+					actual_value = (float(entity.mp) / float(entity.get_max_stat("mp"))) * 100.0
+				_:
+					actual_value = float(entity.get_base_stat(check_stat))
+			
+			# Compare against threshold
+			match operator:
+				Operator.GREATER_THAN:
+					result = actual_value > threshold_value
+				Operator.LESS_THAN:
+					result = actual_value < threshold_value
+				Operator.EQUALS:
+					result = abs(actual_value - threshold_value) < 0.001
+				Operator.GREATER_EQUAL:
+					result = actual_value >= threshold_value
+				Operator.LESS_EQUAL:
+					result = actual_value <= threshold_value
+		
+		return not result if invert else result
+	
+	func _get_icon() -> String:
+		match operator:
+			Operator.GREATER_THAN: return ">"
+			Operator.LESS_THAN: return "<"
+			Operator.EQUALS: return "=="
+			Operator.GREATER_EQUAL: return ">="
+			Operator.LESS_EQUAL: return "<="
+			Operator.HAS_STATUS: return "HAS"
+			Operator.NOT_HAS_STATUS: return "!HAS"
+		return "?"
+
+@resource_class_name("StatModifier")
+class StatModifier extends Resource:
+	## Modifier that changes entity stats temporarily or permanently
+	
+	@export var stat_key: String = "atk"  # Which stat to modify
+	@export var value: float = 0.0        # Base modification value
+	@export var scaling_type: ScalingType = ScalingType.FLAT
+	@export var scale_stat: String = ""   # Stat to scale with (if STAT_SCALE)
+	@export var scale_factor: float = 1.0 # Multiplier for scaling
+	
+	enum DurationType {
+		INSTANT,           # Applied once, never removed
+		TURNS,             # Lasts N turns
+		BATTLE,            # Lasts entire battle
+		PERMANENT,         # Persists outside battle
+		CUSTOM             # Custom duration logic
+	}
+	
+	@export var duration_type: DurationType = DurationType.TURNS
+	@export var duration_turns: int = 3
+	@export var stacking_rule: StackingRule = StackingRule.OVERRIDE
+	
+	enum StackingRule {
+		NONE,              # Cannot stack, ignore new applications
+		OVERRIDE,          # Replace existing (use higher value/duration)
+		EXTEND,            # Add durations, keep higher value
+		REFRESH,           # Reset duration, keep value
+		ADDITIVE,          # Stack values additively
+		MULTIPLICATIVE,    # Stack values multiplicatively
+		CAPPED             # Stack up to max_stacks
+	}
+	
+	@export var max_stacks: int = 99
+	@export var clamp_min: float = -9999
+	@export var clamp_max: float = 9999
+	
+	# Runtime tracking (not serialized)
+	var applied_delta: float = 0.0  # Track what we actually applied for reversal
+	var stack_count: int = 0
+	var turns_remaining: int = 0
+	
+	func calculate_final_value(source: Entity, target: Entity) -> float:
+		var final_value: float = value
+		
+		match scaling_type:
+			ScalingType.NONE:
+				pass
+			ScalingType.FLAT:
+				pass  # value is already flat
+			ScalingType.PERCENT_BASE:
+				var base_stat = target.get_base_stat(stat_key)
+				final_value = base_stat * (value / 100.0)
+			ScalingType.PERCENT_CURRENT:
+				var current_stat = target.get_effective_stat(stat_key)
+				final_value = current_stat * (value / 100.0)
+			ScalingType.LEVEL_SCALE:
+				final_value = value * source.level
+			ScalingType.STAT_SCALE:
+				if scale_stat != "":
+					var scale_value = source.get_base_stat(scale_stat)
+					final_value = value + (scale_value * scale_factor)
+		
+		return clamp(final_value, clamp_min, clamp_max)
+	
+	func get_modifier_type() -> int:
+		# Returns 1 for buff, -1 for debuff, 0 for neutral
+		if value > 0:
+			return 1
+		elif value < 0:
+			return -1
+		return 0
+
+@resource_class_name("StatusDefinition")
+class StatusDefinition extends Resource:
+	## Definition for a reusable status effect
+	
+	@export var id: String = ""           # Unique identifier (e.g., "poison", "power_buff")
+	@export var name: String = ""         # Display name
+	@export var description: String = ""  # Tooltip description
+	@export var icon: Texture2D = null    # UI icon
+	@export var is_positive: bool = false # Buff vs debuff for UI coloring
+	
+	enum DurationType {
+		TURNS,             # Expires after N turns
+		REAL_TIME,         # Expires after N seconds
+		PERMANENT,         # Never expires naturally
+		UNTIL_CONDITION    # Expires when condition met
+	}
+	
+	@export var duration_type: DurationType = DurationType.TURNS
+	@export var duration_value: int = 3   # Turns or seconds depending on type
+	@export var persists_outside_battle: bool = false  # Survives battle end
+	
+	@export var stacking_rule: BattleEffect.StatModifier.StackingRule = BattleEffect.StatModifier.StackingRule.OVERRIDE
+	@export var max_stacks: int = 1
+	@export var can_be_removed: bool = true  # Can be cleansed/removed
+	
+	# Effects applied while status is active
+	@export var stat_modifiers: Array[StatModifier] = []
+	@export var tick_callback: String = ""  # Optional method name to call each tick
+	@export var on_apply_callback: String = ""
+	@export var on_remove_callback: String = ""
+	@export var on_tick_callback: String = ""
+	
+	# Conditions for auto-removal
+	@export var removal_conditions: Array[ConditionRule] = []
+	
+	func duplicate_config() -> StatusDefinition:
+		var new_status = StatusDefinition.new()
+		new_status.id = id
+		new_status.name = name
+		new_status.description = description
+		new_status.icon = icon
+		new_status.is_positive = is_positive
+		new_status.duration_type = duration_type
+		new_status.duration_value = duration_value
+		new_status.persists_outside_battle = persists_outside_battle
+		new_status.stacking_rule = stacking_rule
+		new_status.max_stacks = max_stacks
+		new_status.can_be_removed = can_be_removed
+		for mod in stat_modifiers:
+			new_status.stat_modifiers.append(mod.duplicate())
+		new_status.tick_callback = tick_callback
+		new_status.on_apply_callback = on_apply_callback
+		new_status.on_remove_callback = on_remove_callback
+		for cond in removal_conditions:
+			new_status.removal_conditions.append(cond.duplicate())
+		return new_status
+
+# ==================== BATTLE EFFECT PROPERTIES ====================
+
 @export_group("Effect Definition")
-@export_enum(
-	"Modify Stat", "Set Stat",
-	"Heal HP", "Heal MP", "Damage HP", "Damage MP",
-	"Add Status", "Remove Status", "Clear All Status",
-	"Force Target", "Skip Turn", "Extra Turn", "Change Initiative",
-	"Add Item", "Remove Item", "Gain XP", "Gain Currency",
-	"Conditional Effect", "Counter Attack", "Reflect Damage",
-	"Play Animation", "Play Sound", "Shake Screen", "Flash Screen",
-	"Custom Script"
-)
-var effect_type: int = 0
-
+@export var effect_id: String = ""                    # Unique identifier for scripting
+@export var effect_name: String = ""                  # Display name
+@export var effect_type: EffectType = EffectType.DAMAGE
 @export var target_type: TargetType = TargetType.SELF
-@export var timing: Timing = Timing.ON_USE
+@export var timing: Timing = Timing.ON_CAST
+@export var description: String = ""
 
-@export_group("Parameters (Stat)")
-@export var stat_name: String = ""              # For MODIFY_STAT, SET_STAT
-@export var stat_value: float = 0.0             # Value or multiplier
-@export var stat_operation: int = 0             # 0=Add, 1=Multiply, 2=Set
-@export_range(-10, 10) var stat_levels: int = 0 # For buff/debuff levels
+@export_group("Targeting")
+@export var can_target_dead: bool = false
+@export var require_line_of_sight: bool = false
+@export var range_override: float = -1.0  # -1 = use default
 
-@export_group("Parameters (Effect)")
-@export var heal_amount: int = 0
-@export var heal_percent: float = 0.0
-@export var damage_amount: int = 0
-@export var damage_percent: float = 0.0
+@export_group("Damage/Heal Values")
+@export var base_value: float = 0.0
+@export var scaling_type: ScalingType = ScalingType.FLAT
+@export var damage_type: String = "physical"  # physical, magical, true, etc.
+@export var element: String = ""              # fire, ice, lightning, etc.
+@export var critical_multiplier: float = 2.0
+@export var variance_percent: float = 0.1     # Damage variance ±10%
 
-@export var status_effect: StatusEffect = StatusEffect.Heal
-@export_range(1, 99) var status_level: int = 1
-@export_range(1, 99) var status_duration: int = 3
-@export_range(0, 100) var chance_percent: float = 100.0       # Chance for effect to trigger
+@export_group("Stat Modification")
+@export var stat_modifiers: Array[StatModifier] = []
 
-@export_group("Parameters (Offering)")
-@export var xp_amount: int = 0
-@export var currency_amount: int = 0
-@export var item_reference: Resource              # Item to add/remove
-@export var item_quantity: int = 1
-
-@export_group("Parameters (Other)")
-@export var animation_name: String = ""
-@export var sound_path: String = ""
-@export var shake_intensity: float = 5.0
-@export var flash_color: Color = Color.WHITE
-@export var flash_duration: float = 0.3
-
-@export var custom_script_path: String = ""     # Path to custom effect script
+@export_group("Status Application")
+@export var status_ref: StatusDefinition = null  # Reference to status definition
+@export var status_duration_override: int = -1   # -1 = use status default
+@export var status_apply_chance: float = 100.0   # 0-100%
+@export var status_resist_stat: String = "magic" # Stat used for resistance check
 
 @export_group("Conditions")
-@export var require_hp_below_percent: float = 0.0  # Only trigger if HP below %
-@export var require_hp_above_percent: float = 0.0  # Only trigger if HP above %
-@export var require_mp_below_percent: float = 0.0  # Only trigger if MP below %
-@export var require_status: Array[StatusEffect] = []  # Must have these statuses
-@export var require_no_status: Array[StatusEffect] = []  # Must not have these
-@export var require_turn_number_min: int = 0
-@export var require_turn_number_max: int = 0
+@export var conditions: Array[ConditionRule] = []
 
-@export_group("Changeable")
+@export_group("Visual/Audio")
+@export var animation_name: String = ""
+@export var sound_effect: String = ""
+@export var screen_shake_intensity: float = 0.0
+@export var flash_color: Color = Color.TRANSPARENT
 
-func _get_property_list() -> Array[Dictionary]:
-	var props: Array[Dictionary] = []
-	
-	match effect_type:
-		EffectType.MODIFY_STAT, EffectType.SET_STAT:
-			props.append({"name": "stat_name", "type": TYPE_STRING, "usage": PROPERTY_USAGE_DEFAULT})
-			props.append({"name": "stat_value", "type": TYPE_FLOAT, "usage": PROPERTY_USAGE_DEFAULT})
-			props.append({"name": "stat_operation", "type": TYPE_INT, "usage": PROPERTY_USAGE_DEFAULT})
-			props.append({"name": "stat_levels", "type": TYPE_INT, "usage": PROPERTY_USAGE_DEFAULT})
-		
-		EffectType.HEAL_HP, EffectType.DAMAGE_HP:
-			props.append({"name": "heal_amount", "type": TYPE_INT, "usage": PROPERTY_USAGE_DEFAULT})
-			props.append({"name": "heal_percent", "type": TYPE_FLOAT, "usage": PROPERTY_USAGE_DEFAULT})
-		
-		EffectType.HEAL_MP, EffectType.DAMAGE_MP:
-			props.append({"name": "heal_amount", "type": TYPE_INT, "usage": PROPERTY_USAGE_DEFAULT})
-			props.append({"name": "heal_percent", "type": TYPE_FLOAT, "usage": PROPERTY_USAGE_DEFAULT})
-		
-		EffectType.ADD_STATUS, EffectType.REMOVE_STATUS:
-			props.append({"name": "status_effect", "type": TYPE_INT, "usage": PROPERTY_USAGE_DEFAULT})
-			props.append({"name": "status_level", "type": TYPE_INT, "usage": PROPERTY_USAGE_DEFAULT})
-			props.append({"name": "status_duration", "type": TYPE_INT, "usage": PROPERTY_USAGE_DEFAULT})
-		
-		EffectType.GAIN_XP:
-			props.append({"name": "xp_amount", "type": TYPE_INT, "usage": PROPERTY_USAGE_DEFAULT})
-		
-		EffectType.GAIN_CURRENCY:
-			props.append({"name": "currency_amount", "type": TYPE_INT, "usage": PROPERTY_USAGE_DEFAULT})
-		
-		EffectType.ADD_ITEM, EffectType.REMOVE_ITEM:
-			props.append({"name": "item_reference", "type": TYPE_OBJECT, "usage": PROPERTY_USAGE_DEFAULT, "hint": PROPERTY_HINT_RESOURCE_TYPE, "hint_string": "Resource"})
-			props.append({"name": "item_quantity", "type": TYPE_INT, "usage": PROPERTY_USAGE_DEFAULT})
-		
-		EffectType.PLAY_ANIMATION:
-			props.append({"name": "animation_name", "type": TYPE_STRING, "usage": PROPERTY_USAGE_DEFAULT})
-		
-		EffectType.PLAY_SOUND:
-			props.append({"name": "sound_path", "type": TYPE_STRING, "usage": PROPERTY_USAGE_DEFAULT, "hint": PROPERTY_HINT_FILE, "hint_string": "*.mp3,*.ogg,*.wav"})
-		
-		EffectType.SHAKE_SCREEN:
-			props.append({"name": "shake_intensity", "type": TYPE_FLOAT, "usage": PROPERTY_USAGE_DEFAULT})
-		
-		EffectType.FLASH_SCREEN:
-			props.append({"name": "flash_color", "type": TYPE_COLOR, "usage": PROPERTY_USAGE_DEFAULT})
-			props.append({"name": "flash_duration", "type": TYPE_FLOAT, "usage": PROPERTY_USAGE_DEFAULT})
-		
-		EffectType.CUSTOM_SCRIPT:
-			props.append({"name": "custom_script_path", "type": TYPE_STRING, "usage": PROPERTY_USAGE_DEFAULT, "hint": PROPERTY_HINT_FILE, "hint_string": "*.gd"})
-	
-	# Always show these
-	props.append({"name": "target_type", "type": TYPE_INT, "usage": PROPERTY_USAGE_DEFAULT})
-	props.append({"name": "timing", "type": TYPE_INT, "usage": PROPERTY_USAGE_DEFAULT})
-	props.append({"name": "chance_percent", "type": TYPE_FLOAT, "usage": PROPERTY_USAGE_DEFAULT})
-	
-	return props
+@export_group("Custom Script")
+@export var custom_script_path: String = ""
+@export var custom_data: Dictionary = {}  # Arbitrary data for custom scripts
 
+# ==================== UTILITY FUNCTIONS ====================
 
-func check_conditions(source: Object, target: Object, battle_context: Dictionary) -> bool:
-	if chance_percent < 100.0 and randf() * 100.0 > chance_percent:
-		return false
+func get_scaled_value(source: Entity, target: Entity = null) -> float:
+	"""Calculate the final value based on scaling type."""
+	var final_value: float = base_value
 	
-	if require_hp_below_percent > 0:
-		var hp_percent = (float(target.hp) / float(target.max_stats.get("hp", target.max_hp))) * 100.0
-		if hp_percent >= require_hp_below_percent:
+	match scaling_type:
+		ScalingType.NONE:
+			pass
+		ScalingType.FLAT:
+			pass
+		ScalingType.PERCENT_BASE:
+			if target:
+				var base_hp = target.get_base_stat("hp")
+				final_value = base_hp * (base_value / 100.0)
+		ScalingType.PERCENT_CURRENT:
+			if target:
+				final_value = target.hp * (base_value / 100.0)
+		ScalingType.LEVEL_SCALE:
+			final_value = base_value * source.level
+		ScalingType.STAT_SCALE:
+			# Would need additional config for which stat to scale with
+			pass
+	
+	return final_value
+
+func check_all_conditions(source: Entity, target: Entity, context: Dictionary = {}) -> bool:
+	"""Evaluate all conditions. Returns true only if ALL conditions pass."""
+	for condition in conditions:
+		if not condition.evaluate(source if target == null else target, context):
 			return false
-	
-	if require_hp_above_percent > 0:
-		var hp_percent = (float(target.hp) / float(target.max_stats.get("hp", target.max_hp))) * 100.0
-		if hp_percent <= require_hp_above_percent:
-			return false
-	
-	if require_mp_below_percent > 0:
-		var mp_percent = (float(target.mp) / float(target.max_stats.get("mp", target.max_mp))) * 100.0
-		if mp_percent >= require_mp_below_percent:
-			return false
-	
-	for status in require_status:
-		if not target.effects.has(status):
-			return false
-	
-	for status in require_no_status:
-		if target.effects.has(status):
-			return false
-	
-	var turn_num = battle_context.get("turn_number", 0)
-	if require_turn_number_min > 0 and turn_num < require_turn_number_min:
-		return false
-	if require_turn_number_max > 0 and turn_num > require_turn_number_max:
-		return false
-	
 	return true
 
-
-func get_target_objects(source: Object, targets: Array, enemies: Array, battle_context: Dictionary) -> Array:
-	var result: Array = []
+func get_targets(source: Entity, allies: Array, enemies: Array, context: Dictionary = {}) -> Array:
+	"""Resolve TargetType to actual Entity instances."""
+	var targets: Array = []
 	
 	match target_type:
-		TargetType.NONE:
-			pass
 		TargetType.SELF:
-			result.append(source)
+			targets.append(source)
 		TargetType.SINGLE_ALLY:
-			if battle_context.has("selected_ally"):
-				result.append(battle_context["selected_ally"])
+			if context.has("selected_ally") and context["selected_ally"]:
+				targets.append(context["selected_ally"])
+			elif not allies.is_empty():
+				targets.append(allies[randi() % allies.size()])
 		TargetType.SINGLE_ENEMY:
-			if battle_context.has("selected_enemy"):
-				result.append(battle_context["selected_enemy"])
+			if context.has("selected_enemy") and context["selected_enemy"]:
+				targets.append(context["selected_enemy"])
+			elif not enemies.is_empty():
+				targets.append(enemies[randi() % enemies.size()])
 		TargetType.ALL_ALLIES:
-			result.assign(targets)
+			targets.assign(allies)
 		TargetType.ALL_ENEMIES:
-			result.assign(enemies)
+			targets.assign(enemies)
+		TargetType.PARTY:
+			for ally in allies:
+				if ally.role == Entity.Role.PARTY:
+					targets.append(ally)
 		TargetType.ENTIRE_BATTLE:
-			result.assign(targets)
-			result.append_array(enemies)
-		TargetType.ATTACKER:
-			result.append(source)
-		TargetType.DEFENDER:
-			if battle_context.has("defender"):
-				result.append(battle_context["defender"])
+			targets.assign(allies)
+			targets.append_array(enemies)
 	
-	return result
-
-
-func execute(source: Object, targets: Array, enemies: Array, battle_context: Dictionary = {}) -> bool:
-	if not check_conditions(source, source if targets.is_empty() else targets[0], battle_context):
-		return false
+	# Filter out dead targets if necessary
+	if not can_target_dead:
+		targets = targets.filter(func(e): return e.hp > 0)
 	
-	var actual_targets = get_target_objects(source, targets, enemies, battle_context)
-	if actual_targets.is_empty():
-		actual_targets = [source]
-	
-	for target in actual_targets:
-		if not is_instance_valid(target):
-			continue
-		
-		match effect_type:
-			EffectType.MODIFY_STAT:
-				_apply_stat_mod(target, stat_name, stat_value, stat_operation)
-			
-			EffectType.SET_STAT:
-				if stat_name in target:
-					target.set(stat_name, stat_value)
-			
-			EffectType.HEAL_HP:
-				var heal = heal_amount
-				if heal_percent > 0:
-					heal += floor(target.max_stats.get("hp", target.max_hp) * heal_percent)
-				target.hp = min(target.hp + heal, target.max_stats.get("hp", target.max_hp))
-			
-			EffectType.HEAL_MP:
-				var heal = heal_amount
-				if heal_percent > 0:
-					heal += floor(target.max_stats.get("mp", target.max_mp) * heal_percent)
-				target.mp = min(target.mp + heal, target.max_stats.get("mp", target.max_mp))
-			
-			EffectType.DAMAGE_HP:
-				var dmg = damage_amount
-				if damage_percent > 0:
-					dmg += floor(target.max_stats.get("hp", target.max_hp) * damage_percent)
-				target.hp = max(target.hp - dmg, 0)
-			
-			EffectType.DAMAGE_MP:
-				var dmg = damage_amount
-				if damage_percent > 0:
-					dmg += floor(target.max_stats.get("mp", target.max_mp) * damage_percent)
-				target.mp = max(target.mp - dmg, 0)
-			
-			EffectType.ADD_STATUS:
-				_apply_status_effect(target, status_effect, status_level, status_duration)
-			
-			EffectType.REMOVE_STATUS:
-				if target.effects.has(status_effect):
-					target.effects.erase(status_effect)
-			
-			EffectType.CLEAR_ALL_STATUS:
-				target.effects.clear()
-			
-			EffectType.SKIP_TURN:
-				target.skip_turn = true
-			
-			EffectType.EXTRA_TURN:
-				target.extra_turn = true
-			
-			EffectType.GAIN_XP:
-				if source.role == Entity.Role.PARTY:
-					source.xp += xp_amount
-			
-			EffectType.GAIN_CURRENCY:
-				if PlayerStats.has_method("add_currency"):
-					PlayerStats.add_currency(currency_amount, PlayerStats.CurrencyType.GOLD)
-			
-			EffectType.ADD_ITEM:
-				if item_reference and PlayerStats.has_method("add_item"):
-					PlayerStats.add_item(item_reference, item_quantity)
-			
-			EffectType.REMOVE_ITEM:
-				if item_reference and PlayerStats.has_method("remove_item"):
-					PlayerStats.remove_item(item_reference, item_quantity)
-			
-			EffectType.PLAY_ANIMATION:
-				if battle_context.has("battle_root") and animation_name != "":
-					var battle_root = battle_context["battle_root"]
-					if battle_root.has_method("play_animation"):
-						battle_root.play_animation(animation_name, target)
-			
-			EffectType.PLAY_SOUND:
-				if sound_path != "":
-					var audio = AudioStreamPlayer.new()
-					audio.stream = load(sound_path)
-					target.add_child(audio)
-					audio.play()
-					await target.get_tree().create_timer(0.5).timeout
-					audio.queue_free()
-			
-			EffectType.SHAKE_SCREEN:
-				if battle_context.has("battle_root"):
-					var battle_root = battle_context["battle_root"]
-					if battle_root.has_method("shake_camera"):
-						battle_root.shake_camera(shake_intensity)
-			
-			EffectType.FLASH_SCREEN:
-				if battle_context.has("battle_root"):
-					var battle_root = battle_context["battle_root"]
-					if battle_root.has_method("flash_screen"):
-						battle_root.flash_screen(flash_color, flash_duration)
-			
-			EffectType.CUSTOM_SCRIPT:
-				if custom_script_path != "":
-					var script = load(custom_script_path)
-					if script and script.has_method("execute"):
-						script.execute(source, target, battle_context)
-	
-	return true
+	return targets
 
+func serialize() -> Dictionary:
+	"""Serialize effect configuration for save/load."""
+	return {
+		"effect_id": effect_id,
+		"effect_name": effect_name,
+		"effect_type": effect_type,
+		"target_type": target_type,
+		"timing": timing,
+		"base_value": base_value,
+		"scaling_type": scaling_type,
+		"damage_type": damage_type,
+		"element": element,
+		"custom_data": custom_data,
+	}
 
-func _apply_status_effect(target: Object, effect: StatusEffect, level: int, duration: int):
-	## Applies a status effect matching the behavior of Global.effect enum
-	if not target.effects.has(effect):
-		target.effects[effect] = [0, 0]
-	target.effects[effect][0] = max(target.effects[effect][0], level)
-	target.effects[effect][1] = max(target.effects[effect][1], duration)
-	
-	# Apply immediate effects based on status type
-	match effect:
-		StatusEffect.Heal:
-			# Gradual HP restoration over time (handled in battle loop)
-			pass
-		
-		StatusEffect.Mana_Heal:
-			# Gradual MP restoration over time (handled in battle loop)
-			pass
-		
-		StatusEffect.Blind:
-			# Reduces accuracy - handled in attack calculation
-			pass
-		
-		StatusEffect.Poison:
-			# Damage over time - handled in battle loop
-			pass
-		
-		StatusEffect.Bleed:
-			# Stronger damage over time, not healable by items
-			pass
-		
-		StatusEffect.Power:
-			# Increases damage dealt - handled in damage calculation
-			pass
-		
-		StatusEffect.Tough:
-			# Increases defense - handled in damage calculation
-			pass
-		
-		StatusEffect.Focus:
-			# Increases accuracy - handled in hit calculation
-			pass
-		
-		StatusEffect.Defend:
-			# Reduces damage taken - handled in damage calculation
-			pass
-		
-		StatusEffect.Kill:
-			# Instakill chance - handled in attack execution
-			pass
-		
-		StatusEffect.Absorb:
-			# Increases max HP temporarily
-			_apply_absorption_bonus(target, level)
-		
-		StatusEffect.Revive:
-			# Revives knocked out ally
-			if target.hp <= 0:
-				target.hp = floor(target.max_stats.get("hp", target.max_hp) * 0.5)
-		
-		StatusEffect.Sick:
-			# Reduces healing effectiveness - handled in heal calculation
-			pass
-		
-		StatusEffect.Weak:
-			# Reduces damage dealt - handled in damage calculation
-			pass
-		
-		StatusEffect.Slow:
-			# Reduces speed/initiative - handled in turn order
-			pass
-		
-		StatusEffect.Sleep:
-			# Skips turns until hit - handled in turn execution
-			pass
-		
-		StatusEffect.Burn:
-			# Damage over time + reduces attack
-			pass
-		
-		StatusEffect.Freeze:
-			# Skips turns + damage over time
-			pass
-		
-		StatusEffect.Paralyzed:
-			# Chance to skip turn + reduces speed
-			pass
-		
-		StatusEffect.Shock:
-			# Random stat reductions
-			pass
-		
-		StatusEffect.Confuse:
-			# May cause attacking self or allies
-			pass
+func deserialize(data: Dictionary):
+	"""Deserialize effect configuration from save data."""
+	if data.has("effect_id"): effect_id = data["effect_id"]
+	if data.has("effect_name"): effect_name = data["effect_name"]
+	if data.has("effect_type"): effect_type = data["effect_type"]
+	if data.has("target_type"): target_type = data["target_type"]
+	if data.has("timing"): timing = data["timing"]
+	if data.has("base_value"): base_value = data["base_value"]
+	if data.has("scaling_type"): scaling_type = data["scaling_type"]
+	if data.has("damage_type"): damage_type = data["damage_type"]
+	if data.has("element"): element = data["element"]
+	if data.has("custom_data"): custom_data = data["custom_data"]
 
+# ==================== LEGACY COMPATIBILITY ====================
+# Keep old StatusEffect enum for backward compatibility during migration
 
-func _apply_stat_mod(target: Object, stat_name: String, value: float, operation: int):
-	if not stat_name in target:
-		return
-	
-	var current = target.get(stat_name)
-	var new_value: float = current
-	
-	match operation:
-		0:  # Add
-			new_value = current + value
-		1:  # Multiply
-			new_value = current * value
-		2:  # Set
-			new_value = value
-	
-	if stat_name in target.max_stats:
-		target.max_stats[stat_name] = int(new_value)
-	else:
-		target.set(stat_name, int(new_value))
+enum StatusEffect {
+	Heal, Mana_Heal, Blind, Poison, Bleed, Power, Tough, Focus, Speed,
+	Defend, Kill, Absorb, Revive, Sick, Weak, Slow, Sleep, Burn, Freeze,
+	Paralyzed, Shock, Confuse
+}
 
-
-func _apply_absorption_bonus(target: Object, level: int):
-	## Applies absorption bonus (increases max HP temporarily)
-	## Matches behavior from battle_effect_manager.gd
-	var bonus = floor(target.max_stats.get("hp", target.max_hp) * 0.1 * level)
-	target.max_stats["hp"] = target.max_stats.get("hp", target.max_hp) + bonus
-	target.hp = min(target.hp + bonus, target.max_stats["hp"])
-
-
-func _remove_absorption_bonus(target: Object, level: int):
-	## Removes absorption bonus when effect expires
-	var bonus = floor(target.max_stats.get("hp", target.max_hp) * 0.1 * level)
-	target.max_stats["hp"] = max(target.max_stats.get("hp", target.max_hp) - bonus, 1)
-	target.hp = min(target.hp, target.max_stats["hp"])
-
-
-func get_status_effect_name(effect: StatusEffect, level: int) -> String:
-	## Returns the display name for a status effect with level
-	## Matches behavior from battle_effect_manager.get_effect_name_with_level()
+func get_status_effect_name(effect: StatusEffect, level: int = 1) -> String:
+	"""Legacy function for backward compatibility."""
 	var names = {
+		StatusEffect.Heal: "Regen",
+		StatusEffect.Mana_Heal: "Mana Regen",
 		StatusEffect.Blind: "Blind",
 		StatusEffect.Poison: "Poison",
 		StatusEffect.Bleed: "Bleed",
-		StatusEffect.Power: "Power",
+		StatusEffect.Power: "Power Up",
 		StatusEffect.Tough: "Tough",
-		StatusEffect.Speed: "Speed",
 		StatusEffect.Focus: "Focus",
+		StatusEffect.Speed: "Haste",
 		StatusEffect.Defend: "Defend",
-		StatusEffect.Kill: "Kill",
-		StatusEffect.Absorb: "Absorption",
+		StatusEffect.Kill: "Death",
+		StatusEffect.Absorb: "Absorb",
 		StatusEffect.Revive: "Revive",
 		StatusEffect.Sick: "Sick",
 		StatusEffect.Weak: "Weak",
@@ -548,15 +430,9 @@ func get_status_effect_name(effect: StatusEffect, level: int) -> String:
 		StatusEffect.Freeze: "Freeze",
 		StatusEffect.Paralyzed: "Paralyzed",
 		StatusEffect.Shock: "Shock",
-		StatusEffect.Confuse: "Confuse",
-		StatusEffect.Heal: "Heal",
-		StatusEffect.Mana_Heal: "Mana Heal"
+		StatusEffect.Confuse: "Confused",
 	}
-	var base_name = names.get(effect, "Unknown")
+	var name = names.get(effect, "Unknown")
 	if level > 1:
-		var roman = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
-		if level <= 10:
-			base_name += " " + roman[level]
-		else:
-			base_name += " " + str(level)
-	return base_name
+		name += " " + str(level)
+	return name
