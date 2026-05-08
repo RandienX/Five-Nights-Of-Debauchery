@@ -208,9 +208,9 @@ func _recalculate_effective_stats():
 			var modifier = _stat_modifiers[mod_id]
 			if modifier.stat_key == stat_key:
 				match modifier.stacking_rule:
-					BattleEffect.StatModifier.StackingRule.ADDITIVE:
+					StatModifier.StackingRule.ADDITIVE:
 						modified_value += modifier.applied_delta
-					BattleEffect.StatModifier.StackingRule.MULTIPLICATIVE:
+					StatModifier.StackingRule.MULTIPLICATIVE:
 						modified_value *= (1.0 + modifier.applied_delta / 100.0)
 					_:
 						# OVERRIDE takes the highest value
@@ -232,7 +232,7 @@ func invalidate_stat_cache():
 
 # ==================== STAT MODIFIER SYSTEM ====================
 
-func apply_modifier(modifier_id: String, modifier: BattleEffect.StatModifier, source: Entity = null) -> bool:
+func apply_modifier(modifier_id: String, modifier: StatModifier, source: Entity = null) -> bool:
 	"""
 	Apply a stat modifier to this entity.
 	Returns true if successfully applied, false if blocked by stacking rules.
@@ -242,23 +242,23 @@ func apply_modifier(modifier_id: String, modifier: BattleEffect.StatModifier, so
 	if existing:
 		# Handle stacking
 		match modifier.stacking_rule:
-			BattleEffect.StatModifier.StackingRule.NONE:
+			StatModifier.StackingRule.NONE:
 				return false  # Cannot stack
-			BattleEffect.StatModifier.StackingRule.OVERRIDE:
+			StatModifier.StackingRule.OVERRIDE:
 				# Remove old, apply new
 				remove_modifier(modifier_id)
-			BattleEffect.StatModifier.StackingRule.EXTEND:
+			StatModifier.StackingRule.EXTEND:
 				# Add duration, keep higher value
 				existing.turns_remaining += modifier.duration_turns
 				if modifier.value > existing.value:
 					existing.value = modifier.value
 				invalidate_stat_cache()
 				return true
-			BattleEffect.StatModifier.StackingRule.REFRESH:
+			StatModifier.StackingRule.REFRESH:
 				# Reset duration
 				existing.turns_remaining = modifier.duration_turns
 				return true
-			BattleEffect.StatModifier.StackingRule.CAPPED:
+			StatModifier.StackingRule.CAPPED:
 				if existing.stack_count >= modifier.max_stacks:
 					return false
 				existing.stack_count += 1
@@ -304,7 +304,7 @@ func tick_modifiers() -> Array[String]:
 	for mod_id in _stat_modifiers.keys():
 		var modifier = _stat_modifiers[mod_id]
 		
-		if modifier.duration_type == BattleEffect.StatModifier.DurationType.TURNS:
+		if modifier.duration_type == StatModifier.DurationType.TURNS:
 			modifier.turns_remaining -= 1
 			
 			if modifier.turns_remaining <= 0:
@@ -327,7 +327,7 @@ func has_modifier(modifier_id: String) -> bool:
 # ==================== STATUS SYSTEM ====================
 
 func apply_status(
-	status_def: BattleEffect.StatusDefinition,
+	status_def: StatusDefinition,
 	stacks: int = 1,
 	duration: int = -1,
 	source: Entity = null
@@ -353,20 +353,20 @@ func apply_status(
 	if existing:
 		# Handle stacking based on rule
 		match status_def.stacking_rule:
-			BattleEffect.StatModifier.StackingRule.NONE:
+			StatModifier.StackingRule.NONE:
 				return false
-			BattleEffect.StatModifier.StackingRule.OVERRIDE:
+			StatModifier.StackingRule.OVERRIDE:
 				# Replace existing
 				_remove_status_internal(status_def.id, source)
-			BattleEffect.StatModifier.StackingRule.EXTEND:
+			StatModifier.StackingRule.EXTEND:
 				existing.duration += duration if duration > 0 else status_def.duration_value
 				existing.stacks = max(existing.stacks, stacks)
 				_apply_status_modifiers(existing)
 				return true
-			BattleEffect.StatModifier.StackingRule.REFRESH:
+			StatModifier.StackingRule.REFRESH:
 				existing.duration = duration if duration > 0 else status_def.duration_value
 				return true
-			BattleEffect.StatModifier.StackingRule.CAPPED:
+			StatModifier.StackingRule.CAPPED:
 				if existing.stacks >= status_def.max_stacks:
 					return false
 				existing.stacks += stacks
@@ -487,7 +487,7 @@ func tick_statuses() -> Array[String]:
 		var def = instance.definition
 		
 		# Handle duration
-		if def.duration_type == BattleEffect.StatusDefinition.DurationType.TURNS:
+		if def.duration_type == StatusDefinition.DurationType.TURNS:
 			instance.duration -= 1
 			
 			if instance.duration <= 0:
@@ -611,7 +611,7 @@ func serialize_state() -> Dictionary:
 	var modifiers_data = []
 	for mod_id in _stat_modifiers.keys():
 		var modifier = _stat_modifiers[mod_id]
-		if modifier.duration_type == BattleEffect.StatModifier.DurationType.PERMANENT:
+		if modifier.duration_type == StatModifier.DurationType.PERMANENT:
 			modifiers_data.append({
 				"modifier_id": mod_id,
 				"stat_key": modifier.stat_key,
@@ -738,7 +738,7 @@ func cleanup_battle_end(persist_statuses: bool = true):
 	var mod_to_remove: Array[String] = []
 	for mod_id in _stat_modifiers.keys():
 		var modifier = _stat_modifiers[mod_id]
-		if modifier.duration_type == BattleEffect.StatModifier.DurationType.BATTLE:
+		if modifier.duration_type == StatModifier.DurationType.BATTLE:
 			mod_to_remove.append(mod_id)
 	
 	for mod_id in mod_to_remove:
