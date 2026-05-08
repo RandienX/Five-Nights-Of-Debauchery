@@ -69,8 +69,7 @@ class ConditionRule extends Resource:
 	@export var check_stat: String = "hp"  # Stat to check (hp, mp, atk, etc.)
 	@export var operator: Operator = Operator.GREATER_THAN
 	@export var threshold_value: float = 0.0
-	@export var status_id: String = ""  # For HAS_STATUS checks (use string ID)
-	@export var compare_entity: String = "self"  # "self", "target", "source"
+	@export var status_to_check: BattleEffect.StatusDefinition = null  # For HAS_STATUS checks
 	@export var invert: bool = false  # Invert the result
 	
 	func evaluate(entity: Entity, context: Dictionary = {}) -> bool:
@@ -82,8 +81,8 @@ class ConditionRule extends Resource:
 		
 		# Special handling for status checks
 		if operator == Operator.HAS_STATUS or operator == Operator.NOT_HAS_STATUS:
-			if not status_id.is_empty():
-				result = entity.has_status(status_id)
+			if status_to_check:
+				result = entity.has_status(status_to_check.id)
 				if operator == Operator.NOT_HAS_STATUS:
 					result = not result
 			else:
@@ -94,17 +93,11 @@ class ConditionRule extends Resource:
 				"hp":
 					actual_value = float(entity.hp)
 				"hp_percent":
-					if entity.get_max_stat("hp") > 0:
-						actual_value = (float(entity.hp) / float(entity.get_max_stat("hp"))) * 100.0
-					else:
-						actual_value = 0.0
+					actual_value = (float(entity.hp) / float(entity.get_max_stat("hp"))) * 100.0
 				"mp":
 					actual_value = float(entity.mp)
 				"mp_percent":
-					if entity.get_max_stat("mp") > 0:
-						actual_value = (float(entity.mp) / float(entity.get_max_stat("mp"))) * 100.0
-					else:
-						actual_value = 0.0
+					actual_value = (float(entity.mp) / float(entity.get_max_stat("mp"))) * 100.0
 				_:
 					actual_value = float(entity.get_base_stat(check_stat))
 			
@@ -140,21 +133,9 @@ class StatModifier extends Resource:
 	
 	@export var stat_key: String = "atk"  # Which stat to modify
 	@export var value: float = 0.0        # Base modification value
-	@export var modifier_type: ModifierType = ModifierType.ADD
-	@export var duration_type: DurationType = DurationType.TURNS
-	@export var duration_turns: int = 3
-	@export var stacking_rule: StackingRule = StackingRule.OVERRIDE
-	@export var max_stacks: int = 99
-	@export var clamp_min: float = -9999
-	@export var clamp_max: float = 9999
-	@export var hidden: bool = false  # If true, don't show in UI
-	
-	enum ModifierType { 
-		ADD,               # Add flat value
-		MULTIPLY,          # Multiply current value
-		FLAT_SET,          # Set to exact value
-		PERCENT_ADD,       # Add percentage of base
-	}
+	@export var scaling_type: ScalingType = ScalingType.FLAT
+	@export var scale_stat: String = ""   # Stat to scale with (if STAT_SCALE)
+	@export var scale_factor: float = 1.0 # Multiplier for scaling
 	
 	enum DurationType {
 		INSTANT,           # Applied once, never removed
@@ -163,6 +144,10 @@ class StatModifier extends Resource:
 		PERMANENT,         # Persists outside battle
 		CUSTOM             # Custom duration logic
 	}
+	
+	@export var duration_type: DurationType = DurationType.TURNS
+	@export var duration_turns: int = 3
+	@export var stacking_rule: StackingRule = StackingRule.OVERRIDE
 	
 	enum StackingRule {
 		NONE,              # Cannot stack, ignore new applications
@@ -174,178 +159,45 @@ class StatModifier extends Resource:
 		CAPPED             # Stack up to max_stacks
 	}
 	
-	# Runtime tracking (not serialized by default)
+	@export var max_stacks: int = 99
+	@export var clamp_min: float = -9999
+	@export var clamp_max: float = 9999
+	
+	# Runtime tracking (not serialized)
 	var applied_delta: float = 0.0  # Track what we actually applied for reversal
 	var stack_count: int = 0
 	var turns_remaining: int = 0
-	var unique_id: String = ""
 	
-	func _init():
-		unique_id = str(randi()) + "_" + str(Time.get_ticks_msec())
-	
-	## Calculate the final modified value based on modifier type
-	func calculate_final_value(base_value: float, current_value: float) -> float:
-		var final_value: float = base_value
+	func calculate_final_value(source: Entity, target: Entity) -> float:
+		var final_value: float = value
 		
-		match modifier_type:
-			ModifierType.ADD:
-				final_value = current_value + value
-			ModifierType.MULTIPLY:
-				final_value = current_value * value
-			ModifierType.FLAT_SET:
-				final_value = value
-			ModifierType.PERCENT_ADD:
-				final_value = current_value + (base_value * (value / 100.0))
+		match scaling_type:
+			ScalingType.NONE:
+				pass
+			ScalingType.FLAT:
+				pass  # value is already flat
+			ScalingType.PERCENT_BASE:
+				var base_stat = target.get_base_stat(stat_key)
+				final_value = base_stat * (value / 100.0)
+			ScalingType.PERCENT_CURRENT:
+				var current_stat = target.get_effective_stat(stat_key)
+				final_value = current_stat * (value / 100.0)
+			ScalingType.LEVEL_SCALE:
+				final_value = value * source.level
+			ScalingType.STAT_SCALE:
+				if scale_stat != "":
+					var scale_value = source.get_base_stat(scale_stat)
+					final_value = value + (scale_value * scale_factor)
 		
 		return clamp(final_value, clamp_min, clamp_max)
 	
-	## Get the delta this modifier applies (for reversal)
-	func get_applied_delta(base_value: float, current_value: float) -> float:
-		var new_value = calculate_final_value(base_value, current_value)
-		return new_value - current_value
-	
-	## Serialize for save system
-	func serialize() -> Dictionary:
-		return {
-			"stat_key": stat_key,
-			"value": value,
-			"modifier_type": modifier_type,
-			"duration_type": duration_type,
-			"duration_turns": duration_turns,
-			"stacking_rule": stacking_rule,
-			"max_stacks": max_stacks,
-			"clamp_min": clamp_min,
-			"clamp_max": clamp_max,
-			"hidden": hidden,
-			"applied_delta": applied_delta,
-			"stack_count": stack_count,
-			"turns_remaining": turns_remaining,
-			"unique_id": unique_id
-		}
-	
-	## Deserialize from save system
-	func deserialize(data: Dictionary):
-		if data.has("stat_key"):
-			stat_key = data["stat_key"]
-		if data.has("value"):
-			value = data["value"]
-		if data.has("modifier_type"):
-			modifier_type = data["modifier_type"]
-		if data.has("duration_type"):
-			duration_type = data["duration_type"]
-		if data.has("duration_turns"):
-			duration_turns = data["duration_turns"]
-		if data.has("stacking_rule"):
-			stacking_rule = data["stacking_rule"]
-		if data.has("max_stacks"):
-			max_stacks = data["max_stacks"]
-		if data.has("clamp_min"):
-			clamp_min = data["clamp_min"]
-		if data.has("clamp_max"):
-			clamp_max = data["clamp_max"]
-		if data.has("hidden"):
-			hidden = data["hidden"]
-		if data.has("applied_delta"):
-			applied_delta = data["applied_delta"]
-		if data.has("stack_count"):
-			stack_count = data["stack_count"]
-		if data.has("turns_remaining"):
-			turns_remaining = data["turns_remaining"]
-		if data.has("unique_id"):
-			unique_id = data["unique_id"]
-	
-	## Create a runtime instance of this modifier
-	func create_instance(source_entity: Entity = null, target_entity: Entity = null) -> ModifierInstance:
-		var instance = ModifierInstance.new()
-		instance.source_definition = self
-		instance.stat_key = stat_key
-		instance.base_value = value
-		instance.modifier_type = modifier_type
-		instance.duration_type = duration_type
-		instance.turns_remaining = duration_turns
-		instance.stacking_rule = stacking_rule
-		instance.max_stacks = max_stacks
-		instance.clamp_min = clamp_min
-		instance.clamp_max = clamp_max
-		instance.hidden = hidden
-		instance.stack_count = 1
-		if source_entity:
-			instance.source_entity_ref = weakref(source_entity)
-		if target_entity:
-			instance.target_entity_ref = weakref(target_entity)
-		return instance
-
-
-## ModifierInstance.gd
-## Runtime instance of a StatModifier (not a Resource, used during battle)
-class_name ModifierInstance
-extends RefCounted
-
-var source_definition: StatModifier
-var stat_key: String
-var base_value: float
-var modifier_type: StatModifier.ModifierType
-var duration_type: StatModifier.DurationType
-var turns_remaining: int
-var stacking_rule: StatModifier.StackingRule
-var max_stacks: int
-var clamp_min: float
-var clamp_max: float
-var hidden: bool
-var stack_count: int = 1
-var applied_delta: float = 0.0
-var source_entity_ref: WeakRef
-var target_entity_ref: WeakRef
-var unique_id: String = ""
-
-func _init():
-	unique_id = str(randi()) + "_" + str(Time.get_ticks_msec())
-
-func get_source_entity() -> Entity:
-	if source_entity_ref == null:
-		return null
-	return source_entity_ref.get_ref() as Entity
-
-func get_target_entity() -> Entity:
-	if target_entity_ref == null:
-		return null
-	return target_entity_ref.get_ref() as Entity
-
-## Serialize this instance for save/load
-func serialize() -> Dictionary:
-	return {
-		"stat_key": stat_key,
-		"base_value": base_value,
-		"modifier_type": modifier_type,
-		"duration_type": duration_type,
-		"turns_remaining": turns_remaining,
-		"stacking_rule": stacking_rule,
-		"max_stacks": max_stacks,
-		"clamp_min": clamp_min,
-		"clamp_max": clamp_max,
-		"hidden": hidden,
-		"stack_count": stack_count,
-		"applied_delta": applied_delta,
-		"unique_id": unique_id
-	}
-
-## Deserialize from saved data
-static func deserialize(data: Dictionary) -> ModifierInstance:
-	var instance = ModifierInstance.new()
-	instance.stat_key = data.get("stat_key", "")
-	instance.base_value = data.get("base_value", 0.0)
-	instance.modifier_type = data.get("modifier_type", StatModifier.ModifierType.ADD)
-	instance.duration_type = data.get("duration_type", StatModifier.DurationType.TURNS)
-	instance.turns_remaining = data.get("turns_remaining", 3)
-	instance.stacking_rule = data.get("stacking_rule", StatModifier.StackingRule.OVERRIDE)
-	instance.max_stacks = data.get("max_stacks", 99)
-	instance.clamp_min = data.get("clamp_min", -9999)
-	instance.clamp_max = data.get("clamp_max", 9999)
-	instance.hidden = data.get("hidden", false)
-	instance.stack_count = data.get("stack_count", 1)
-	instance.applied_delta = data.get("applied_delta", 0.0)
-	instance.unique_id = data.get("unique_id", str(randi()) + "_" + str(Time.get_ticks_msec()))
-	return instance
+	func get_modifier_type() -> int:
+		# Returns 1 for buff, -1 for debuff, 0 for neutral
+		if value > 0:
+			return 1
+		elif value < 0:
+			return -1
+		return 0
 
 @resource_class_name("StatusDefinition")
 class StatusDefinition extends Resource:
@@ -368,7 +220,7 @@ class StatusDefinition extends Resource:
 	@export var duration_value: int = 3   # Turns or seconds depending on type
 	@export var persists_outside_battle: bool = false  # Survives battle end
 	
-	@export var stacking_rule: StatModifier.StackingRule = StatModifier.StackingRule.OVERRIDE
+	@export var stacking_rule: BattleEffect.StatModifier.StackingRule = BattleEffect.StatModifier.StackingRule.OVERRIDE
 	@export var max_stacks: int = 1
 	@export var can_be_removed: bool = true  # Can be cleansed/removed
 	
