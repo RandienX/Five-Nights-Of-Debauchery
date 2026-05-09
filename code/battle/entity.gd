@@ -354,33 +354,43 @@ func apply_status(
 	Returns:
 		true if status was applied, false if blocked (immunity, stacking rules, etc.)
 	"""
+	print("entity.gd: apply_status: START - status_id=%s, stacks=%d, duration=%d, source=%s" % [status_def.id, stacks, duration, source.name if source else "null"])
+	
 	# Check immunity
 	if not status_def.can_be_removed and has_status(status_def.id):
+		print("entity.gd: apply_status: status cannot be removed and already exists, returning false")
 		return false  # Already have an unremovable version
 	
 	var existing = _statuses.get(status_def.id)
 	
 	if existing:
+		print("entity.gd: apply_status: existing status found, handling stacking rule=%d" % status_def.stacking_rule)
 		# Handle stacking based on rule
 		match status_def.stacking_rule:
 			StatModifier.StackingRule.NONE:
+				print("entity.gd: apply_status: stacking rule NONE, returning false")
 				return false
 			StatModifier.StackingRule.OVERRIDE:
 				# Replace existing
+				print("entity.gd: apply_status: stacking rule OVERRIDE, removing existing")
 				_remove_status_internal(status_def.id, source)
 			StatModifier.StackingRule.EXTEND:
 				existing.duration += duration if duration > 0 else status_def.duration_value
 				existing.stacks = max(existing.stacks, stacks)
 				_apply_status_modifiers(existing)
+				print("entity.gd: apply_status: stacking rule EXTEND, new_duration=%d, new_stacks=%d" % [existing.duration, existing.stacks])
 				return true
 			StatModifier.StackingRule.REFRESH:
 				existing.duration = duration if duration > 0 else status_def.duration_value
+				print("entity.gd: apply_status: stacking rule REFRESH, new_duration=%d" % existing.duration)
 				return true
 			StatModifier.StackingRule.CAPPED:
 				if existing.stacks >= status_def.max_stacks:
+					print("entity.gd: apply_status: stacking rule CAPPED, max stacks reached (%d)" % status_def.max_stacks)
 					return false
 				existing.stacks += stacks
 				_apply_status_modifiers(existing)
+				print("entity.gd: apply_status: stacking rule CAPPED, new_stacks=%d" % existing.stacks)
 				return true
 	
 	# Create new status instance
@@ -393,15 +403,18 @@ func apply_status(
 	}
 	
 	_statuses[status_def.id] = status_instance
+	print("entity.gd: apply_status: created new status instance with duration=%d" % status_instance["duration"])
 	
 	# Apply stat modifiers from status
 	_apply_status_modifiers(status_instance)
 	
 	# Call on_apply callback if defined
 	if status_def.on_apply_callback != "" and source:
+		print("entity.gd: apply_status: calling on_apply callback=%s" % status_def.on_apply_callback)
 		_call_status_callback(status_def.on_apply_callback, status_instance, source)
 	
 	status_applied.emit(status_def.id, stacks)
+	print("entity.gd: apply_status: END - status applied successfully")
 	
 	return true
 
