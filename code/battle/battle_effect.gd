@@ -105,65 +105,91 @@ func get_scaled_value(source: Entity, target: Entity = null) -> float:
 	"""Calculate the final value based on scaling type."""
 	var final_value: float = base_value
 	
+	print("battle_effect.gd: get_scaled_value: calculating scaled value: source=%s, target=%s, base_value=%f, scaling_type=%d" % [source.name if source else "null", target.name if target else "null", base_value, scaling_type])
+	
 	match scaling_type:
 		ScalingType.NONE:
+			print("battle_effect.gd: get_scaled_value: scaling type NONE: final_value=%f" % final_value)
 			pass
 		ScalingType.FLAT:
+			print("battle_effect.gd: get_scaled_value: scaling type FLAT: final_value=%f" % final_value)
 			pass
 		ScalingType.PERCENT_BASE:
 			if target:
 				var base_hp = target.get_base_stat("hp")
 				final_value = base_hp * (base_value / 100.0)
+				print("battle_effect.gd: get_scaled_value: scaling type PERCENT_BASE: target_base_hp=%d, final_value=%f" % [base_hp, final_value])
 		ScalingType.PERCENT_CURRENT:
 			if target:
 				final_value = target.hp * (base_value / 100.0)
+				print("battle_effect.gd: get_scaled_value: scaling type PERCENT_CURRENT: target_current_hp=%d, final_value=%f" % [target.hp, final_value])
 		ScalingType.LEVEL_SCALE:
 			final_value = base_value * source.level
+			print("battle_effect.gd: get_scaled_value: scaling type LEVEL_SCALE: source_level=%d, final_value=%f" % [source.level, final_value])
 		ScalingType.STAT_SCALE:
 			# Would need additional config for which stat to scale with
+			print("battle_effect.gd: get_scaled_value: scaling type STAT_SCALE: not implemented")
 			pass
 	
 	return final_value
 
 func check_all_conditions(source: Entity, target: Entity, context: Dictionary = {}) -> bool:
 	"""Evaluate all conditions. Returns true only if ALL conditions pass."""
+	print("battle_effect.gd: check_all_conditions: checking conditions: source=%s, target=%s, condition_count=%d" % [source.name if source else "null", target.name if target else "null", conditions.size()])
 	for condition in conditions:
-		if not condition.evaluate(source if target == null else target, context):
+		var result = condition.evaluate(source if target == null else target, context)
+		print("battle_effect.gd: check_all_conditions: condition result: condition=%s, passed=%s" % [condition.get_class() if condition.has_method("get_class") else "unknown", result])
+		if not result:
+			print("battle_effect.gd: check_all_conditions: condition failed, returning false")
 			return false
+	print("battle_effect.gd: check_all_conditions: all conditions passed, returning true")
 	return true
 
 func get_targets(source: Entity, allies: Array, enemies: Array, context: Dictionary = {}) -> Array:
 	"""Resolve TargetType to actual Entity instances."""
 	var targets: Array = []
 	
+	print("battle_effect.gd: get_targets: resolving targets: source=%s, target_type=%d, allies_count=%d, enemies_count=%d" % [source.name if source else "null", target_type, allies.size(), enemies.size()])
+	
 	match target_type:
 		TargetType.SELF:
 			targets.append(source)
+			print("battle_effect.gd: get_targets: target type SELF: target=%s" % source.name)
 		TargetType.SINGLE_ALLY:
 			if context.has("selected_ally") and context["selected_ally"]:
 				targets.append(context["selected_ally"])
+				print("battle_effect.gd: get_targets: target type SINGLE_ALLY (selected): target=%s" % context["selected_ally"].name)
 			elif not allies.is_empty():
 				targets.append(allies[randi() % allies.size()])
+				print("battle_effect.gd: get_targets: target type SINGLE_ALLY (random): target=%s" % targets[0].name)
 		TargetType.SINGLE_ENEMY:
 			if context.has("selected_enemy") and context["selected_enemy"]:
 				targets.append(context["selected_enemy"])
+				print("battle_effect.gd: get_targets: target type SINGLE_ENEMY (selected): target=%s" % context["selected_enemy"].name)
 			elif not enemies.is_empty():
 				targets.append(enemies[randi() % enemies.size()])
+				print("battle_effect.gd: get_targets: target type SINGLE_ENEMY (random): target=%s" % targets[0].name)
 		TargetType.ALL_ALLIES:
 			targets.assign(allies)
+			print("battle_effect.gd: get_targets: target type ALL_ALLIES: count=%d" % targets.size())
 		TargetType.ALL_ENEMIES:
 			targets.assign(enemies)
+			print("battle_effect.gd: get_targets: target type ALL_ENEMIES: count=%d" % targets.size())
 		TargetType.PARTY:
 			for ally in allies:
 				if ally.role == Entity.Role.PARTY:
 					targets.append(ally)
+			print("battle_effect.gd: get_targets: target type PARTY: count=%d" % targets.size())
 		TargetType.ENTIRE_BATTLE:
 			targets.assign(allies)
 			targets.append_array(enemies)
+			print("battle_effect.gd: get_targets: target type ENTIRE_BATTLE: count=%d" % targets.size())
 	
 	# Filter out dead targets if necessary
 	if not can_target_dead:
-		targets = targets.filter(func(e): return e.hp > 0)
+		var filtered = targets.filter(func(e): return e.hp > 0)
+		print("battle_effect.gd: get_targets: filtering dead targets: before=%d, after=%d" % [targets.size(), filtered.size()])
+		targets = filtered
 	
 	return targets
 

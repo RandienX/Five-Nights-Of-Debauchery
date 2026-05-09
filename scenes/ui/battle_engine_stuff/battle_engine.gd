@@ -44,23 +44,31 @@ func _ready() -> void:
 		$Control/enemy_ui/bg.texture = battle.background
 
 func _setup_managers():
+	print("battle_engine.gd: _setup_managers: START")
 	effect_manager = EffectManager.new()
+	print("battle_engine.gd: _setup_managers: created EffectManager, initializing with party_count=%d, enemy_count=%d" % [party.size(), enemy_instances.size()])
 	effect_manager.initialize(party, enemy_instances)
 	
 	item_manager = ItemManager.new()
+	print("battle_engine.gd: _setup_managers: created ItemManager")
 	item_manager.setup_items_ui(self)
 	
 	skill_manager = SkillManager.new()
+	print("battle_engine.gd: _setup_managers: created SkillManager")
 	skill_manager.setup_skills_ui(self)
 	
 	death_manager = DeathManager.new()
+	print("battle_engine.gd: _setup_managers: created DeathManager")
 	death_manager.setup(self, battle)
 	
 	log_manager = LogManager.new()
+	print("battle_engine.gd: _setup_managers: created LogManager")
 	log_manager.setup(self, effect_manager)
 	
 	attack_executor = AttackExecutor.new()
+	print("battle_engine.gd: _setup_managers: created AttackExecutor")
 	attack_executor.setup(self, death_manager, effect_manager, log_manager, battle)
+	print("battle_engine.gd: _setup_managers: END - all managers initialized")
 
 func setup_enemies():
 	enemy_instances.clear()

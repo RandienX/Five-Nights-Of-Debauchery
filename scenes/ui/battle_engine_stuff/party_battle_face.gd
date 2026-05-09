@@ -52,15 +52,20 @@ func _process(_delta: float) -> void:
 
 ## Updates status effects display from BattleTypes.BattleActor
 func update_effects_ui() -> void:
+	print("party_battle_face.gd: update_effects_ui: START - party_member=%s" % (party_member.name if party_member else "null"))
 	for child in effect_container.get_children():
 		child.queue_free()
 	
 	if party_member:
 		# Use new status system API
+		var active_status_ids = party_member.get_active_status_ids()
+		print("party_battle_face.gd: update_effects_ui: active_status_count=%d, statuses=%s" % [active_status_ids.size(), active_status_ids])
 		for status_id in party_member.get_active_status_ids():
 			var stacks = party_member.get_status_stacks(status_id)
 			var duration = party_member.get_status_duration(status_id)
 			var status_data = party_member._statuses.get(status_id)
+			
+			print("party_battle_face.gd: update_effects_ui: processing status=%s, stacks=%d, duration=%d" % [status_id, stacks, duration])
 
 			if status_data and status_data.has("definition"):
 				var status_def = status_data["definition"] as StatusDefinition
@@ -68,6 +73,7 @@ func update_effects_ui() -> void:
 				# Create icon using status definition's icon if available
 				var icon: TextureRect
 				if status_def.icon != null:
+					print("party_battle_face.gd: update_effects_ui: creating icon for status=%s" % status_id)
 					icon = create_effect_icon_from_texture(status_def.icon)
 
 				if icon:
@@ -88,6 +94,9 @@ func update_effects_ui() -> void:
 						icon.tooltip_text = "%s\nDuration: %d turn(s)" % [status_def.name if not status_def.name.is_empty() else status_id, duration]
 
 						effect_container.add_child(icon)
+						print("party_battle_face.gd: update_effects_ui: added icon for status=%s with stacks=%d" % [status_id, stacks])
+	
+	print("party_battle_face.gd: update_effects_ui: END")
 
 ## Creates an effect icon from a Texture2D resource
 func create_effect_icon_from_texture(tex: Texture2D) -> TextureRect:
