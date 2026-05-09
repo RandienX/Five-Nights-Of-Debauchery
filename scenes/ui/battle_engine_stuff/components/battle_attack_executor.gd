@@ -162,6 +162,13 @@ func _handle_item_usage(attacker: Entity, targets: Array, atk: Skill) -> void:
 			root.update_party_ui()
 			for t in targets:
 				effect_manager.status_applied.emit(t, "", 0)
+			if not atk.on_hit_effects.is_empty():
+				print("battle_attack_executor.gd: _handle_item_usage: executing on_hit_effects, count=%d" % atk.on_hit_effects.size())
+				for effect in atk.on_hit_effects:
+					print("battle_attack_executor.gd: _handle_item_usage: executing effect=%s" % (effect.effect_name if effect else "null"))
+					for target in targets:
+						effect_manager.execute_effect(effect, attacker, {"selected_enemy": target})
+
 		else:
 			log_manager.add_to_battle_log("[color=#F44336]Item use failed![/color]")
 		
@@ -183,9 +190,7 @@ func _apply_on_use_effects(attacker: Object, targets: Array, atk: Skill) -> void
 
 
 func _handle_support_skill(attacker: Entity, alive: Array, atk: Skill) -> void:
-	if death_manager.game_over_active: 
-		print("battle_attack_executor.gd: _handle_support_skill: game over active, returning")
-		return
+	if death_manager.game_over_active: return
 	print("battle_attack_executor.gd: _handle_support_skill: START - attacker=%s, skill=%s" % [attacker.name, atk.skill_name])
 	"""Handle buffs/debuffs and other non-damaging skills via BattleEffectManager."""
 	var support_log = "[color=#FFD700]━━━ SKILL ━━━[/color]"
@@ -195,8 +200,7 @@ func _handle_support_skill(attacker: Entity, alive: Array, atk: Skill) -> void:
 		# Execute on_use effects already handled, now apply on_hit effects for self-buffs
 		for effect in atk.on_hit_effects:
 			print("battle_attack_executor.gd: _handle_support_skill: applying on_hit effect=%s to self" % (effect.effect_name if effect else "null"))
-			effect_manager.execute_effect(effect, attacker, {})
-			effect_manager.tick_all_statuses()  # Tick statuses after application
+			effect_manager.execute_effect(effect, attacker, {}, 0.0)
 		support_log += "\n[color=#4CAF50]" + attacker.name + "[/color] used [color=#2196F3]" + atk.skill_name + "[/color] on self"
 	elif atk.target_type == 2:  # Party
 		print("battle_attack_executor.gd: _handle_support_skill: target type PARTY")
@@ -205,8 +209,7 @@ func _handle_support_skill(attacker: Entity, alive: Array, atk: Skill) -> void:
 			if p.hp > 0:
 				for effect in atk.on_hit_effects:
 					print("battle_attack_executor.gd: _handle_support_skill: applying on_hit effect=%s to party member=%s" % [effect.effect_name if effect else "null", p.name])
-					effect_manager.execute_effect(effect, p, {})
-					effect_manager.tick_all_statuses()
+					effect_manager.execute_effect(effect, attacker, {}, 0.0)
 	
 	if atk.mana_cost > 0:
 		support_log += " [color=#9C27B0](" + str(atk.mana_cost) + " MP)[/color]"
@@ -344,40 +347,46 @@ func _cleanup_deaths(attacker: Entity, alive: Array) -> void:
 
 func _calculate_hit(attacker: Entity, target: Entity, atk: Skill) -> Dictionary:
 	var crit = randi_range(1, 10 if attacker.role == Entity.Role.ENEMY else 8) == 1
-	var base = (attacker.get_base_stat(&"atk") if attacker.role == Entity.Role.ENEMY else attacker.get_max_stat(&"atk")) * atk.attack_multiplier * atk.hit_damage_multiplier
-
+	var atk_stat = attacker.get_base_stat(&"atk")
+	var base = atk_stat * atk.attack_multiplier * atk.hit_damage_multiplier
+	
+	print("battle_attack_executor.gd: _calculate_hit: START - attacker=%s, target=%s, role=%d" % [attacker.name if attacker else "null", target.name if target else "null", attacker.role])
+	print("battle_attack_executor.gd: _calculate_hit: atk_stat=%d (effective), multiplier=%f, hit_dmg_mult=%f" % [atk_stat, atk.attack_multiplier, atk.hit_damage_multiplier])
 	# Get multipliers from status effects using new API
 	var power_mult = _get_status_multiplier(attacker, "power", 0.25)
 	var weak_mult = _get_status_multiplier(attacker, "weak", -0.25)
 	base *= power_mult * weak_mult
-
-	# Check for Power status duration
-	if attacker.has_status("power_buff"):
-		base *= 2
-
+	print("battle_attack_executor.gd: _calculate_hit: after status mults - base=%f, power_mult=%f, weak_mult=%f" % [base, power_mult, weak_mult])
+	# Check for Power status durationy
+	
 	base *= randf_range(0.86 if attacker.role == Entity.Role.ENEMY else 0.9, 1.16 if attacker.role == Entity.Role.ENEMY else 1.2)
 	if crit:
 		base *= 1.5
+		print("battle_attack_executor.gd: _calculate_hit: CRITICAL HIT! base=%f" % base)
 	base += atk.attack_bonus
-
+	
 	# Defense multipliers from statuses
 	var tough_mult = _get_status_multiplier(target, "tough", 0.2)
 	var sick_mult = _get_status_multiplier(target, "sick", -0.2)
-	var def_stat = target.get_max_stat(&"def") if attacker.role == Entity.Role.ENEMY else target.get_base_stat(&"def") * 2
-
+	var def_stat = target.get_base_stat(&"def")
+	print("battle_attack_executor.gd: _calculate_hit: def_stat=%d (effective), tough_mult=%f, sick_mult=%f" % [def_stat, tough_mult, sick_mult])
+	
 	# Check for Defend status
 	var defend_mult = 1.5 if target.has_status("defend") else 1.0
 	var def_mult = clampf(1.0 - (float(def_stat) / (100.0 / (tough_mult * sick_mult))), 0.0, 1.0)
 	def_mult /= defend_mult
 	def_mult = clampf(def_mult, 0.0, 1.0)
-
+	print("battle_attack_executor.gd: _calculate_hit: defend_mult=%f, def_mult=%f (before clamp)" % [defend_mult, def_mult])
+	
 	var dmg = max(0, floor(base * def_mult))
-
+	print("battle_attack_executor.gd: _calculate_hit: final dmg=%d (base=%f * def_mult=%f)" % [dmg, base, def_mult])
+	
 	# Accuracy multipliers from statuses
 	var focus_mult = _get_status_multiplier(attacker, "focus", 0.15)
-	var blind_mult = _get_status_multiplier(target, "blind", -0.5, true)
+	var blind_mult = _get_status_multiplier(target, "blind", -0.5)
 	var hit = randf() <= (atk.accuracy * focus_mult * blind_mult)
-
+	print("battle_attack_executor.gd: _calculate_hit: hit=%s (accuracy=%f * focus_mult=%f * blind_mult=%f)" % ["true" if hit else "false", atk.accuracy, focus_mult, blind_mult])
+	
 	return {
 			"dmg": dmg,
 			"crit": crit,

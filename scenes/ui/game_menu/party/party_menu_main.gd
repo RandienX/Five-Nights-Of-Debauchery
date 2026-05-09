@@ -165,7 +165,7 @@ func _update_detail_panel() -> void:
 	update_equipment_grid(member)
 	_update_skills_list(member)
 
-func _update_stats_grid(member) -> void:
+func _update_stats_grid(member: Entity) -> void:
 	# Clear existing stat labels
 	for child in stats_grid.get_children():
 		child.queue_free()
@@ -174,7 +174,13 @@ func _update_stats_grid(member) -> void:
 	
 	for stat_name in stat_names:
 		var label = Label.new()
-		label.text = stat_name.to_upper() + ": " + str(member.get_base_stat(stat_name))
+		
+		var bonuses = 0
+		for statMod in member._stat_modifiers.values():
+			if statMod.stat_key == str(stat_name):
+				bonuses = statMod.applied_delta * statMod.stack_count
+			
+		label.text = stat_name.to_upper() + ": " + str(int(member.get_base_stat(stat_name) + bonuses))
 		stats_grid.add_child(label)
 
 func update_equipment_grid(member) -> void:

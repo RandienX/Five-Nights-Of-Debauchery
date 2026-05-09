@@ -48,6 +48,8 @@ func _setup_managers():
 	effect_manager = EffectManager.new()
 	print("battle_engine.gd: _setup_managers: created EffectManager, initializing with party_count=%d, enemy_count=%d" % [party.size(), enemy_instances.size()])
 	effect_manager.initialize(party, enemy_instances)
+	effect_manager.status_applied.connect(_on_status_applied)
+	print("battle_engine.gd: _setup_managers: connected status_applied signal to _on_status_applied")
 	
 	item_manager = ItemManager.new()
 	print("battle_engine.gd: _setup_managers: created ItemManager")
@@ -69,7 +71,31 @@ func _setup_managers():
 	print("battle_engine.gd: _setup_managers: created AttackExecutor")
 	attack_executor.setup(self, death_manager, effect_manager, log_manager, battle)
 	print("battle_engine.gd: _setup_managers: END - all managers initialized")
+	
+func _on_status_applied(entity: Entity, status_id: String, stacks: int) -> void:
+	print("battle_engine.gd: _on_status_applied: entity=%s, status_id=%s, stacks=%d" % [entity.name if entity else "null", status_id, stacks])
+	# Update UI for both party and enemies
+	_update_all_battle_faces()
 
+func _update_all_battle_faces() -> void:
+	print("battle_engine.gd: _update_all_battle_faces: updating all party and enemy UIs")
+	# Update party faces
+	var party_container = $Control/gui/HBoxContainer2/party
+	if party_container:
+		for i in range(party_container.get_child_count()):
+			var ui = party_container.get_child(i)
+			if ui.has_method("update_effects_ui"):
+				ui.update_effects_ui()
+				print("battle_engine.gd: _update_all_battle_faces: updated party face %d" % i)
+	# Update enemy faces
+	var enemy_container = $Control/enemy_ui/enemies
+	if enemy_container:
+		for i in range(enemy_container.get_child_count()):
+			var ui = enemy_container.get_child(i)
+			if ui.has_method("update_effects_ui"):
+				ui.update_effects_ui()
+				print("battle_engine.gd: _update_all_battle_faces: updated enemy face %d" % i)
+								
 func setup_enemies():
 	enemy_instances.clear()
 	enemies_by_slot.clear()
@@ -109,11 +135,11 @@ func setup_initiative() -> Array[Entity]:
 			while rng in speed: rng += 1
 			speed[rng] = e
 	for p in party:
-		var ai = p.base_stats[&"speed"] if p.base_stats.has(&"speed") else p.base_stats.get(&"speed", 10)
+		var spd = p.base_stats[&"speed"] if p.base_stats.has(&"speed") else p.base_stats.get(&"speed", 10)
 		var speed_mult = _get_status_multiplier(p, "speed", 0.15)
 		var slow_mult = _get_status_multiplier(p, "slow", -0.15)
 		var total_mult = speed_mult * slow_mult
-		var rng = randi_range(ceili(ai * 0.75), floori(ai * 1.25))
+		var rng = randi_range(ceili(spd * total_mult * 0.75), floori(spd * total_mult * 1.25))
 		while rng in speed: rng += 1
 		speed[rng] = p
 	var keys = speed.keys()
@@ -470,7 +496,7 @@ func add_enemy_attack(e: Entity):
 			total += p
 			if total == 0:
 				# Fallback: pick any alive party member
-				var alive_party = party.filter(func(p): return p and p.hp > 0)
+				var alive_party = party.filter(func(pa): return pa and pa.hp > 0)
 				if not alive_party.is_empty():
 					target = [alive_party[randi_range(0, alive_party.size()-1)]]
 				else:

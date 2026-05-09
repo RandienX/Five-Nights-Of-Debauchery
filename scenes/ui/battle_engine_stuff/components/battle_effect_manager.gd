@@ -147,6 +147,10 @@ func evaluate_conditions(effect: BattleEffect, source: Entity, target: Entity, c
 	Supports early-exit on first failure for performance.
 	"""
 	print("battle_effect_manager.gd: evaluate_conditions: evaluating conditions for effect=%s, source=%s, target=%s" % [effect.effect_name if effect else "null", source.name if source else "null", target.name if target else "null"])
+	if effect == null:
+		print("battle_effect_manager.gd: evaluate_conditions: effect is null, returning false")
+		return false
+	
 	var ctx = context_override if not context_override.is_empty() else _battle_context
 	
 	for condition in effect.conditions:
@@ -166,19 +170,6 @@ func evaluate_conditions(effect: BattleEffect, source: Entity, target: Entity, c
 	print("battle_effect_manager.gd: evaluate_conditions: all conditions passed, returning true")
 	return true
 
-func check_resistance(source: Entity, target: Entity, resist_stat: String = "magic", base_chance: float = 100.0) -> float:
-	"""
-	Calculate final apply chance after resistance check.
-	Returns 0-100% chance for effect to land.
-	"""
-	var resist_value = target.get_base_stat(resist_stat.to_lower())
-	var source_stat = source.get_base_stat("magic")
-	
-	# Simple formula: base_chance * (source_stat / (source_stat + resist_value))
-	var final_chance = base_chance * (float(source_stat) / float(max(1, source_stat + resist_value)))
-	
-	return clamp(final_chance, 0, 100)
-
 # ==================== EFFECT EXECUTION PIPELINE ====================
 
 func execute_effect(effect: BattleEffect, source: Entity, context_override: Dictionary = {}, delay_seconds: float = 0.0) -> void:
@@ -187,6 +178,10 @@ func execute_effect(effect: BattleEffect, source: Entity, context_override: Dict
 	Handles targeting, conditions, and effect type resolution.
 	"""
 	print("battle_effect_manager.gd: execute_effect: START - effect=%s, source=%s, delay=%f" % [effect.effect_name if effect else "null", source.name if source else "null", delay_seconds])
+	
+	if effect == null:
+		print("battle_effect_manager.gd: evaluate_conditions: effect is null, returning false")
+		return
 	
 	if delay_seconds > 0:
 		print("battle_effect_manager.gd: execute_effect: scheduling delayed execution")
@@ -355,12 +350,7 @@ func _handle_status_apply(effect: BattleEffect, source: Entity, targets: Array[E
 			continue
 		
 		# Check resistance
-		var apply_chance = check_resistance(
-			source, 
-			target, 
-			effect.status_resist_stat,
-			effect.status_apply_chance
-		)
+		var apply_chance = effect.status_apply_chance
 		
 		if randf() * 100 > apply_chance:
 			_log("Status %s resisted by %s" % [effect.status_ref.id, target.name])
