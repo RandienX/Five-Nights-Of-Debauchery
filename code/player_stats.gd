@@ -158,26 +158,23 @@ func remove_item(item: Item, amount: int = 1):
 	
 func use_item(item: Item, target: Array) -> bool:
 	if not item or target.size() <= 0:
-		print("1")
-		print(target)
 		return false
 	if item.type != 2:  # Not a consumable
-		print("2")
 		return false
 	
 	for t in target:
 		
 		# Apply revive effect
 		if item.revive_amount > 0 and t.hp <= 0:
-			t.hp = min(item.revive_amount, t.max_stats["hp"])
+			t.hp = min(item.revive_amount, t.max_stats[&"hp"])
 			
 		# Apply heal effects
-		if item.heal_amount > 0 and t.hp < t.max_stats["hp"] and t.hp > 0:
-			t.hp = min(t.hp + item.heal_amount, t.max_stats["hp"])
+		if item.heal_amount > 0 and t.hp < t.max_stats[&"hp"] and t.hp > 0:
+			t.hp = min(t.hp + item.heal_amount, t.max_stats[&"hp"])
 	
 		# Apply mana restore
-		if item.mana_amount > 0 and t.mp < t.max_stats["mp"]:
-			t.mp = min(t.mp + item.mana_amount, t.max_stats["mp"])
+		if item.mana_amount > 0 and t.mp < t.max_stats[&"mp"]:
+			t.mp = min(t.mp + item.mana_amount, t.max_stats[&"mp"])
 	
 	
 		# Remove status effects (heals_effects is Array[int] of effect enum values)

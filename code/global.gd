@@ -15,6 +15,9 @@ var scene_data: Dictionary = {}
 
 var loading = false
 
+func _ready() -> void:
+	pass
+
 func _process(delta: float) -> void:
 	time_played += delta
 
@@ -45,13 +48,12 @@ func load_save_data(data: Dictionary, scenes_data: Dictionary) -> void:
 	
 	loading = false
 
-
 func set_scene_data(data: Object):
 	var is_room = scene_data.find_key(data.room_name)
 	if is_room:
 		scene_data.merge({data.room_name: {"textboxes_deactivated": data.textboxes_deactivated}}, true)
 	else:
-		scene_data.assign({data.room_name: {"textboxes_deactivated": data.textboxes_deactivated}})
+		scene_data.merge({data.room_name: {"textboxes_deactivated": data.textboxes_deactivated}})
 
 func get_scenes_data():
 	return scene_data

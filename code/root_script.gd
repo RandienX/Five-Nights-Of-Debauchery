@@ -5,6 +5,8 @@ class_name RootScene
 @export var possible_battles: Array[Battle]
 @export_range(1, 1000) var enemy_intensity: int
 @export_range(1, 100) var enemy_agressiveness: int 
+@export var bg_music: AudioStreamMP3
+@export var bg_music_amp: float
 @export var player: CharacterBody2D
 @export var room_size: Rect2
 

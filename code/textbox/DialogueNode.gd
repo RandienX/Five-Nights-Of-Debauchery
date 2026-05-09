@@ -11,6 +11,7 @@ extends Resource
 @export_multiline var text: String = ""
 @export var speaker: String = ""
 @export var portrait: Texture2D
+@export var voiceline: AudioStream	
 
 @export_group("Flow Control")
 @export var next_label: String = ""  # Empty = end dialogue
@@ -30,6 +31,6 @@ func has_branches() -> bool:
 
 func has_choices() -> bool:
 	return not choices.is_empty()
-
+	
 func is_end_node() -> bool:
 	return next_label.is_empty() and branches.is_empty() and choices.is_empty()
