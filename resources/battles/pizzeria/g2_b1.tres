@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="Battle" load_steps=16 format=3 uid="uid://bhfnl537c8pxi"]
+
+[ext_resource type="Texture2D" uid="uid://dsolecv57wpem" path="res://assets/battleui/backgrounds/FNaF 1 - West Hall.png" id="1_co0a3"]
+[ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="2_co0a3"]
+[ext_resource type="Script" uid="uid://tjsyf20orwjt" path="res://code/battle/battle_end_condition.gd" id="3_r4cj1"]
+[ext_resource type="Script" uid="uid://cpuojkdrhbref" path="res://code/battle/battle_enemy_slot.gd" id="4_y3oy3"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="5_ogmn7"]
+[ext_resource type="Resource" uid="uid://dqu0dik6olrpu" path="res://resources/enemies/b_party_hat.tres" id="6_k84dl"]
+[ext_resource type="Resource" uid="uid://b7val374sectd" path="res://resources/enemies/y_party_hat.tres" id="6_r4cj1"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="7_f3y23"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="9_n7hsi"]
+[ext_resource type="AudioStream" uid="uid://b8b2magh1twoe" path="res://assets/sound/battle/Pepper Steak - OFF.mp3" id="9_y3oy3"]
+[ext_resource type="Script" uid="uid://c87a82v6g8ug3" path="res://code/battle/battle_phase.gd" id="10_pl382"]
+[ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="11_jdug4"]
+
+[sub_resource type="Resource" id="Resource_w3sal"]
+script = ExtResource("4_y3oy3")
+enemy = ExtResource("6_r4cj1")
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[sub_resource type="Resource" id="Resource_4a0t1"]
+script = ExtResource("4_y3oy3")
+enemy = ExtResource("6_k84dl")
+position_index = 2
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[sub_resource type="Resource" id="Resource_vx1ff"]
+script = ExtResource("4_y3oy3")
+enemy = ExtResource("6_r4cj1")
+position_index = 4
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[resource]
+script = ExtResource("11_jdug4")
+battle_name = "Beta Party Hat 3"
+enemies = Array[ExtResource("4_y3oy3")]([SubResource("Resource_w3sal"), SubResource("Resource_4a0t1"), SubResource("Resource_vx1ff")])
+background = ExtResource("1_co0a3")
+music = ExtResource("9_y3oy3")
+xp_multiplier = 1.1
+metadata/_custom_type_script = "uid://s2os42vdwf6y"

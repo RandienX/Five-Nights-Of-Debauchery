@@ -7,6 +7,7 @@ extends Area2D
 @export var textbox_node: CanvasLayer
 @export var once_per_session: bool = true
 @export var require_input_to_finish: bool = true
+@export var require_input_to_start: bool = false
 
 var _has_triggered: bool = false
 var _dialogue_runner: DialogueRunner
@@ -30,19 +31,25 @@ func _ready() -> void:
 		if not validation_errors.is_empty():
 			for err in validation_errors:
 				push_error("DialogueTriggerArea2D: %s" % err)
+				
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("use") and require_input_to_start:
+		if _player in get_overlapping_bodies():
+			if once_per_session and _has_triggered:
+				return
+			_has_triggered = true
+			_start_dialogue()
 
 func _on_body_entered(body: Node) -> void:
-	# Check if it's the player (if player_node_path is set)
 	if _player and body != _player:
 		return
 	
-	if once_per_session and _has_triggered:
+	if (once_per_session and _has_triggered) or require_input_to_start:
 		return
 	
 	_has_triggered = true
 	_start_dialogue()
-
 
 func _start_dialogue() -> void:
 	if not dialogue_data or dialogue_data.nodes.is_empty():
@@ -68,8 +75,11 @@ func _start_dialogue() -> void:
 	
 	# Start dialogue
 	_dialogue_runner.start(dialogue_data, DialogueConditionEvaluator.new())
+	
+	if name in get_tree().root.get_child(-1).textboxes_deactivated:
+		_on_dialogue_ended()
 
-func _on_dialogue_started(_data: DialogueData) -> void:
+func _on_dialogue_started(_data: Object) -> void:
 	# Disable player movement if you have a player reference
 	if _player:
 		_player.stop_move = true
@@ -80,13 +90,16 @@ func _on_dialogue_started(_data: DialogueData) -> void:
 func _on_node_displayed(node: DialogueNode) -> void:
 	_ui_instance.display_node(node)
 
-func _on_dialogue_ended(node: DialogueNode) -> void:
+func _on_dialogue_ended(node: DialogueNode = DialogueNode.new()) -> void:
 	_ui_instance.visible = false
 	
 	# Re-enable player movement
 	if _player:
 		_player.stop_move = false
 		_player.can_menu = true
+	
+	if once_per_session:
+		get_tree().root.get_child(-1).textboxes_deactivated.append(self.name)
 	
 	# Clean up
 	if _dialogue_runner:

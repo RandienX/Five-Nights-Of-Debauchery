@@ -8,9 +8,6 @@ class_name Skill
 @export var skill_name: String = ""
 @export_multiline var description: String = ""
 @export var icon: Texture2D
-
-@export_group("Type & Targeting")
-@export_enum("Attack", "Buff", "Debuff", "Heal", "Multiattack", "Item", "Custom") var attack_type: int = 0
 @export_enum("SingleEnemy", "Self", "Party", "AllEnemies", "SingleAlly", "RandomEnemy") var target_type: int = 0
 
 @export_group("Cost & Accuracy")
@@ -25,7 +22,7 @@ class_name Skill
 @export var damage_type: int = 0                 # 0=Physical, 1=Magical
 
 @export_group("Multiattack")
-@export var hit_count: int = 3
+@export var hit_count: int = 1
 @export var hit_damage_multiplier: float = 0.5
 
 @export_group("Effects")
@@ -35,7 +32,7 @@ class_name Skill
 @export var legacy_effects: Dictionary[BattleEffect.StatusEffect, Array] = {}  # {effect: [level, duration]}
 
 @export_group("Item Usage")
-@export var item_reference: Item
+@export var is_item_skill: bool = false
 
 @export_group("Visual & Audio")
 @export var animation_name: String = ""

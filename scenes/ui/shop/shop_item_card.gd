@@ -2,18 +2,14 @@
 extends MarginContainer
 class_name ShopItemCard
 ## ShopItemCard - Reusable UI component for displaying a single shop item
-## Shows icon, name, description, price, stock, and handles purchase interaction
-## 
-## EXTENDED FOR SELL MODE:
-## - Add SellItemCard class that extends this with sell-specific functionality
-## - Use setup_for_sell() to configure for selling inventory items
+## Shows icon, name, description, price, and handles purchase interaction
 
 signal purchase_requested(shop_item: ShopItem, quantity: int)
 signal sold(item: Item, quantity: int, currency_type: PlayerStats.CurrencyType, earnings: int)
 
 @onready var icon_texture: TextureRect = $HBoxContainer/Icon
 @onready var name_label: Label = $HBoxContainer/VBoxContainer/Name
-@onready var description_label: Label = $HBoxContainer/VBoxContainer/Desc
+@onready var description_label: Label = $HBoxContainer/VBoxContainer/ScrollContainer/Desc
 @onready var price_label: Label = $HBoxContainer/VBoxContainer/Price
 @onready var buy_button: Button = $HBoxContainer/VBoxContainer2/MarginContainer/Buy
 @onready var quantity_spinbox: SpinBox = $HBoxContainer/VBoxContainer2/SpinBox
@@ -30,197 +26,139 @@ var quantity: int = 1
 var is_sell_mode: bool = false
 
 
-func _ready() -> void:
-    if not is_sell_mode:
-        _update_visuals()
-
-
 ## Initialize for BUY mode (existing functionality)
 func init(item: ShopItem) -> void:
-    is_sell_mode = false
-    shop_item = item
-    _setup()
-    _update_visuals()
+	is_sell_mode = false
+	shop_item = item
+	_setup()
+	_update_visuals()
 
-
-## Setup for SELL mode - called by ShopUI when creating sell cards
-## @param item: The Item resource from PlayerStats.inventory
-## @param amount: The amount of this item in inventory
 func setup_for_sell(item: Item, amount: int) -> void:
-    is_sell_mode = true
-    sell_item = item
-    sell_quantity = amount
-    
-    # Get sell price from item's sell_price Dictionary
-    if item and item.sell_price is Dictionary:
-        # Default to GOLD, but could be configurable per-item
-        sell_price_value = item.sell_price.get(PlayerStats.CurrencyType.GOLD, 10)
-        sell_currency_type = PlayerStats.CurrencyType.GOLD
-    else:
-        sell_price_value = 10
-        sell_currency_type = PlayerStats.CurrencyType.GOLD
-    
-    _setup_sell_ui()
-
+	is_sell_mode = true
+	sell_item = item
+	sell_quantity = amount
+	
+	if item and item.sell_price is Dictionary:
+		sell_price_value = item.sell_price.get(PlayerStats.CurrencyType.GOLD, 10)
+		sell_currency_type = PlayerStats.CurrencyType.GOLD
+	else:
+		sell_price_value = 10
+		sell_currency_type = PlayerStats.CurrencyType.GOLD
+	
+	_setup_sell_ui()
 
 func _setup() -> void:
-    if not shop_item or not shop_item.item:
-        return
-    
-    # Icon
-    if shop_item.item.icon:
-        icon_texture.texture = shop_item.item.icon
-    elif shop_item.item.texture:
-        icon_texture.texture = shop_item.item.texture
-    else:
-        icon_texture.texture = null
-    
-    name_label.text = shop_item.item.item_name if shop_item.item.item_name != "" else "Unknown Item"
-    description_label.text = shop_item.item.description if shop_item.item.description != "" else "No description"
-    
-    var currency_symbol = _get_currency_symbol(shop_item.currency_type)
-    price_label.text = "%d %s" % [shop_item.price, currency_symbol]
-    
-    if shop_item.max_stock != -1:
-        quantity_spinbox.max_value = min(99, shop_item.current_stock)
-    else:
-        quantity_spinbox.max_value = 99
-
+	if not shop_item or not shop_item.item:
+		return
+	
+	# Icon
+	if shop_item.item.icon:
+		icon_texture.texture = shop_item.item.icon
+	elif shop_item.item.texture:
+		icon_texture.texture = shop_item.item.texture
+	else:
+		icon_texture.texture = null
+	
+	name_label.text = shop_item.item.item_name if shop_item.item.item_name != "" else "Unknown Item"
+	description_label.text = shop_item.item.description if shop_item.item.description != "" else "No description"
+	
+	var currency_symbol = _get_currency_symbol(shop_item.currency_type)
+	price_label.text = "%d %s" % [shop_item.price, currency_symbol]
 
 func _setup_sell_ui() -> void:
-    if not sell_item:
-        set_disabled(true)
-        return
-    
-    # Icon
-    if sell_item.icon:
-        icon_texture.texture = sell_item.icon
-    elif sell_item.texture:
-        icon_texture.texture = sell_item.texture
-    else:
-        icon_texture.texture = null
-    
-    name_label.text = sell_item.item_name if sell_item.item_name != "" else "Unknown Item"
-    description_label.text = sell_item.description if sell_item.description != "" else "No description"
-    
-    # Show sell price and quantity owned
-    var currency_symbol = _get_currency_symbol(sell_currency_type)
-    price_label.text = "Sell: %d %s each\nOwned: %d" % [sell_price_value, currency_symbol, sell_quantity]
-    
-    # Set spinbox max to inventory amount
-    quantity_spinbox.max_value = sell_quantity
-    quantity_spinbox.value = min(1, sell_quantity)
-    
-    # Update button text
-    if buy_button:
-        buy_button.text = "Sell"
-
+	# Icon
+	if sell_item.icon:
+		icon_texture.texture = sell_item.icon
+	elif sell_item.texture:
+		icon_texture.texture = sell_item.texture
+	else:
+		icon_texture.texture = null
+	
+	name_label.text = sell_item.item_name if sell_item.item_name != "" else "Unknown Item"
+	description_label.text = sell_item.description if sell_item.description != "" else "No description"
+	
+	var currency_symbol = _get_currency_symbol(sell_currency_type)
+	price_label.text = "Sell: %d %s each\nOwned: %d" % [sell_price_value, currency_symbol, sell_quantity]
+	
+	if buy_button:
+		buy_button.text = "Sell"
 
 ## Get currency symbol based on type
 func _get_currency_symbol(type: PlayerStats.CurrencyType) -> String:
-    match type:
-        PlayerStats.CurrencyType.GOLD:
-            return "G"
-        PlayerStats.CurrencyType.SHIT:
-            return "S"
-        PlayerStats.CurrencyType.FAZTOKENS:
-            return "FT"
-    return ""
-
+	match type:
+		PlayerStats.CurrencyType.GOLD:
+			return "G"
+		PlayerStats.CurrencyType.SHIT:
+			return "S"
+		PlayerStats.CurrencyType.FAZTOKENS:
+			return "FT"
+	return ""
 
 func _update_visuals() -> void:
-    if is_sell_mode:
-        _update_sell_visuals()
-        return
-    
-    if not shop_item:
-        set_disabled(true)
-        return
-    
-    var can_afford = shop_item._can_afford()
-    var has_stock = shop_item.has_stock()
-    
-    set_disabled(not has_stock or not can_afford)
-    
-    if not can_afford and has_stock:
-        price_label.modulate = Color.RED
-    else:
-        price_label.modulate = Color.WHITE
-
+	if is_sell_mode:
+		_update_sell_visuals()
+		return
+	if not shop_item:
+		set_disabled(true)
+		return
+	
+	var can_afford = shop_item._can_afford()
+	
+	if not is_sell_mode:
+		if not can_afford:
+			price_label.modulate = Color.RED
+		else:
+			price_label.modulate = Color.WHITE
 
 func _update_sell_visuals() -> void:
-    if not sell_item:
-        set_disabled(true)
-        return
-    
-    # Always enabled in sell mode (player can always sell)
-    set_disabled(false)
-    price_label.modulate = Color.GREEN  # Green to indicate earning
-
+	price_label.modulate = Color.GREEN  # Green to indicate earning
 
 func set_disabled(disabled: bool) -> void:
-    if buy_button:
-        buy_button.disabled = disabled
-    modulate.a = 0.5 if disabled else 1.0
-
+	if buy_button:
+		buy_button.disabled = disabled
+	modulate.a = 0.5 if disabled == true else 1.0
 
 func refresh() -> void:
-    if is_sell_mode:
-        _update_sell_visuals()
-        # Update quantity in case inventory changed
-        if PlayerStats and sell_item:
-            sell_quantity = PlayerStats.get_item_amount(sell_item)
-            quantity_spinbox.max_value = sell_quantity
-            quantity_spinbox.value = min(quantity_spinbox.value, sell_quantity)
-            var currency_symbol = _get_currency_symbol(sell_currency_type)
-            price_label.text = "Sell: %d %s each\nOwned: %d" % [sell_price_value, currency_symbol, sell_quantity]
-    else:
-        _update_visuals()
-        
-        # Update max quantity for bulk
-        if shop_item and shop_item.max_stock != -1:
-            quantity_spinbox.max_value = min(99, shop_item.current_stock)
-            quantity_spinbox.value = min(quantity_spinbox.value, quantity_spinbox.max_value)
-
-
+	if is_sell_mode:
+		_update_sell_visuals()
+		# Update quantity in case inventory changed
+		if PlayerStats and sell_item:
+			sell_quantity = PlayerStats.get_item_amount(sell_item)
+			var currency_symbol = _get_currency_symbol(sell_currency_type)
+			price_label.text = "Sell: %d %s each\nOwned: %d" % [sell_price_value, currency_symbol, sell_quantity]
+	else:
+		_update_visuals()
+		
 func _on_buy_pressed() -> void:
-    if is_sell_mode:
-        _on_sell_pressed()
-    else:
-        if shop_item and quantity_spinbox:
-            quantity = int(quantity_spinbox.value)
-            purchase_requested.emit(shop_item, quantity)
-
+	if is_sell_mode:
+		_on_sell_pressed()
+	else:
+		if shop_item and quantity_spinbox:
+			quantity = int(quantity_spinbox.value)
+			purchase_requested.emit(shop_item, quantity)
 
 func _on_sell_pressed() -> void:
-    if not sell_item or not quantity_spinbox:
-        return
-    
-    var qty_to_sell = int(quantity_spinbox.value)
-    if qty_to_sell <= 0 or qty_to_sell > sell_quantity:
-        push_warning("ShopItemCard: Invalid sell quantity")
-        return
-    
-    var total_earnings = sell_price_value * qty_to_sell
-    
-    # Emit sold signal with all necessary data
-    sold.emit(sell_item, qty_to_sell, sell_currency_type, total_earnings)
-
+	if not sell_item or not quantity_spinbox:
+		return
+	
+	var qty_to_sell = int(quantity_spinbox.value)
+	if qty_to_sell <= 0 or qty_to_sell > sell_quantity:
+		push_warning("ShopItemCard: Invalid sell quantity")
+		return
+	
+	var total_earnings = sell_price_value * qty_to_sell
+	
+	# Emit sold signal with all necessary data
+	sold.emit(sell_item, qty_to_sell, sell_currency_type, total_earnings)
 
 func on_currency_changed() -> void:
-    _update_visuals()
-
-
-func on_stock_changed() -> void:
-    refresh()
-
+	_update_visuals()
 
 ## Enable or disable bulk buying (show/hide spinbox)
 func enable_bulk_buy(enabled: bool) -> void:
-    if quantity_spinbox:
-        quantity_spinbox.visible = enabled
-
+	if quantity_spinbox:
+		quantity_spinbox.visible = enabled
 
 ## Check if this card is in sell mode
 func is_in_sell_mode() -> bool:
-    return is_sell_mode
+	return is_sell_mode

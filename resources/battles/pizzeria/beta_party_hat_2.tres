@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="Battle" load_steps=14 format=3 uid="uid://ipowsvu8u24u"]
+
+[ext_resource type="Texture2D" uid="uid://bevvexikdqtsr" path="res://assets/battleui/backgrounds/FNaF 1 - Backroom.png" id="1_h2t3o"]
+[ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="1_jgkxf"]
+[ext_resource type="Script" uid="uid://tjsyf20orwjt" path="res://code/battle/battle_end_condition.gd" id="2_5ey73"]
+[ext_resource type="Script" uid="uid://cpuojkdrhbref" path="res://code/battle/battle_enemy_slot.gd" id="3_am07k"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="4_50pt2"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="5_5d8hc"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="5_i7rkp"]
+[ext_resource type="Script" uid="uid://c87a82v6g8ug3" path="res://code/battle/battle_phase.gd" id="6_wabw5"]
+[ext_resource type="Resource" uid="uid://dqu0dik6olrpu" path="res://resources/enemies/b_party_hat.tres" id="6_xbk2d"]
+[ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="7_32ie4"]
+[ext_resource type="AudioStream" uid="uid://ewpyqkjyyvtp" path="res://assets/sound/battle/My Own Style.mp3" id="8_027lc"]
+
+[sub_resource type="Resource" id="Resource_h2t3o"]
+script = ExtResource("3_am07k")
+enemy = ExtResource("6_xbk2d")
+position_index = 1
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[sub_resource type="Resource" id="Resource_ykmfe"]
+script = ExtResource("3_am07k")
+enemy = ExtResource("6_xbk2d")
+position_index = 3
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[resource]
+script = ExtResource("7_32ie4")
+battle_name = "Beta Party Hat 2"
+enemies = Array[ExtResource("3_am07k")]([SubResource("Resource_h2t3o"), SubResource("Resource_ykmfe")])
+background = ExtResource("1_h2t3o")
+music = ExtResource("8_027lc")
+metadata/_custom_type_script = "uid://s2os42vdwf6y"

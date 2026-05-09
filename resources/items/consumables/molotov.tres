@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="Item" load_steps=4 format=3 uid="uid://yvj82upxou3h"]
+
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_uje7o"]
+[ext_resource type="Resource" uid="uid://drkdj81ctnimf" path="res://resources/attacks/item/molotov.tres" id="2_bhi66"]
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="2_he1pc"]
+
+[resource]
+script = ExtResource("2_he1pc")
+item_name = "Molotov Cocktail"
+description = "All Enemies will burn!!! By the slippery hand of Freddy Fuckboy."
+type = 2
+sell_price = Dictionary[int, int]({
+0: 100,
+1: 1000,
+2: 0
+})
+item_bonuses = Dictionary[String, int]({
+"atk": 0,
+"def": 0,
+"hp": 0,
+"magic": 0,
+"mp": 0,
+"speed": 0
+})
+is_item_attack = true
+item_attack = ExtResource("2_bhi66")
+metadata/_custom_type_script = "uid://dn31qme1ukrys"

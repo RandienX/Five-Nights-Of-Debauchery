@@ -15,6 +15,7 @@ var item_box_scene: PackedScene
 var item_target_type: int = 0  # 0 = enemy, 1 = party
 var saved_party_plan_index: int = 0
 var selected_party_member: int = 0
+var item_ref: Item
 
 func item_select_input(event):
 	if event.is_action_pressed("left"):
@@ -31,11 +32,10 @@ func item_select_input(event):
 		else:
 			var party_in_initiative = root.get_party_members_from_initiative()
 			selected_party_member = wrapi(selected_party_member + 1, 0, party_in_initiative.size())
-			print("DEBUG Input Right: selected_party_member = ", selected_party_member, " target = ", party_in_initiative[selected_party_member].name)
 			root.move_who_moves(selected_party_member)
 		root.get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("use"):
-		confirm_item_target()
+		await confirm_item_target()
 		root.get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_cancel"):
 		if item_target_type == 1:
@@ -85,9 +85,9 @@ func open_items_menu():
 	item_amounts.clear()
 
 	# Get items from Global inventory
-	for item in Global.inventory.keys():
+	for item in PlayerStats.inventory.keys():
 		if item and item.type == 2:
-			var amount = Global.inventory[item]
+			var amount = PlayerStats.inventory[item]
 			if amount > 0:
 				available_items.append(item)
 				item_amounts.append(amount)
@@ -139,7 +139,6 @@ func update_item_selection():
 	scroll.scroll_vertical = item_scroll_offset * 70
 
 func navigate_items(direction: int):
-	var columns = 2  
 	var new_index = current_item_index + direction
 	
 	if new_index < 0:
@@ -173,73 +172,115 @@ func select_item():
 	
 	var item = available_items[current_item_index]
 	
-	if item.type == 2:
-		if item.is_item_attack and item.item_attack:
-			item_target_type = 0
+	if item.is_item_attack and item.item_attack:
+		item_target_type = 0
+		items_container.visible = false
+		var item_attack = item.item_attack.duplicate()
+		if item_attack.target_type == 0: #SingleEnemy
 			root.state = root.states.OnItemSelect
-			items_container.visible = false
 			root.selected_enemy = root.previous_enemy if root.previous_enemy != 0 else 1
-			root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select enemy..."
+			root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select target..."
 			return
-		else:
-			item_target_type = 1
+		elif item_attack.target_type == 1: #Self 
+			root.add_attack(root.current_attacker, [root.current_attacker], item_attack)
+			root.action_history.append(root.current_attacker)
+			close_items_menu()
+			await root.advance_planning()
+		elif item_attack.target_type == 2: #Party
+			root.add_attack(root.current_attacker, root.party, item_attack)
+			root.action_history.append(root.current_attacker)
+			close_items_menu()
+			await root.advance_planning()
+		elif item_attack.target_type == 3: #AllEnemies
+			root.add_attack(root.current_attacker, root.enemy_instances, item_attack)
+			root.action_history.append(root.current_attacker)
+			close_items_menu()
+			await root.advance_planning()
+		elif item_attack.target_type == 4: #SingleAlly
 			root.state = root.states.OnItemSelect
-			
-			var party_in_initiative = root.get_party_members_from_initiative()
-			selected_party_member = 0
-			for i in range(party_in_initiative.size()):
-				if party_in_initiative[i] == root.current_attacker:
-					selected_party_member = i
-					break
-			
-			saved_party_plan_index = root.current_party_plan_index
-			items_container.visible = false
-			root.get_node("Control/gui/HBoxContainer2/party").visible = true
-			root.get_node("WhoMoves").visible = true
-			root.move_who_moves(selected_party_member)
-			root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select party member..."
+			root.selected_enemy = root.previous_enemy if root.previous_enemy != 0 else 1
+			root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select ally..."
 			return
+		elif item_attack.target_type == 5: #RandomEnemy
+			root.add_attack(root.current_attacker, root.enemy_instances[randi_range(0, root.enemy_instances.duplicate().size()-1)], item_attack)
+			root.action_history.append(root.current_attacker)
+			close_items_menu()
+			await root.advance_planning()
+		return
+	else:
+		item_target_type = 1
+		root.state = root.states.OnItemSelect
+		
+		var party_in_initiative = root.get_party_members_from_initiative()
+		selected_party_member = 0
+		for i in range(party_in_initiative.size()):
+			if party_in_initiative[i] == root.current_attacker:
+				selected_party_member = i
+				break
+		
+		saved_party_plan_index = root.current_party_plan_index
+		items_container.visible = false
+		root.get_node("Control/gui/HBoxContainer2/party").visible = true
+		root.get_node("WhoMoves").visible = true
+		root.move_who_moves(selected_party_member)
+		root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select party member..."
+		return
 
 func confirm_item_target():
 	var item = available_items[current_item_index]
 	
 	if item_target_type == 0:
 		if item.is_item_attack and item.item_attack:
-			var target = root.battle.get('enemy_pos'+str(root.selected_enemy))
+			var target = root.get_enemy_by_slot(root.selected_enemy)
 			if target and target.hp > 0:
 				var item_attack = item.item_attack.duplicate()
-				item_attack.item_reference = item
-				item_attack.name = item.item_name
-				
-				root.add_attack(root.current_attacker, [target], item_attack)
+				item_attack.skill_name = item.item_name
+				item_ref = item
+				if item_attack.target_type == 0: #SingleEnemy
+					if target and target.hp > 0:
+						root.add_attack(root.current_attacker, [target], item_attack)
+						root.action_history.append(root.current_attacker)
+						close_items_menu()
+						await root.advance_planning()
+				elif item_attack.target_type == 4: #SingleAlly
+					root.add_attack(root.current_attacker, [target], item_attack)
+					root.action_history.append(root.current_attacker)
+					close_items_menu()
+					await root.advance_planning()
+				root.get_node("WhoMoves").visible = true
+				root.move_who_moves(saved_party_plan_index)
 				root.action_history.append(root.current_attacker)
+				PlayerStats.remove_item(item, 1)
+				item_amounts[current_item_index] -= 1
+			else:
+				root.get_node("Control/enemy_ui/CenterContainer/output").text = "Invalid target!"
+				await root.get_tree().create_timer(0.5).timeout
 				close_items_menu()
-				root.advance_planning()
 	else:
 		var party_in_initiative = root.get_party_members_from_initiative()
 		selected_party_member = clamp(selected_party_member, 0, party_in_initiative.size() - 1)
 		var target = party_in_initiative[selected_party_member]
 		
 		if target and target.hp > 0:
-			var item_attack = Skill.new()
-			item_attack.name = item.item_name
-			item_attack.attack_type = 3
-			item_attack.target_type = 1
-			item_attack.mana_cost = 0
-			item_attack.item_reference = item
+			var item_attack = item.item_attack.duplicate() if item.is_item_attack and item.item_attack else null
+			if item_attack:
+				item_attack.item_reference = item
+				item_attack.skill_name = item.item_name
+				root.add_attack(root.current_attacker, [target], item_attack)
+				PlayerStats.remove_item(item, 1)
+				item_amounts[current_item_index] -= 1
+			else:
+				PlayerStats.use_item(item, [target])
 			
-			root.add_attack(root.current_attacker, [target], item_attack)
-			
-			root.get_node("WhoMoves.visible = true")
+			root.get_node("WhoMoves").visible = true
 			root.move_who_moves(saved_party_plan_index)
-			
 			root.action_history.append(root.current_attacker)
-			close_items_menu()
 			root.advance_planning()
+			close_items_menu()
 
 func close_items_menu():
 	items_container.visible = false
-	root.get_node("Control/gui/HBoxContainer2/party.visible = true")
-	root.get_node("WhoMoves.visible = true")
+	root.get_node("Control/gui/HBoxContainer2/party").visible = true
+	root.get_node("WhoMoves").visible = true
 	root.move_who_moves(saved_party_plan_index)
 	root.state = root.states.OnAction

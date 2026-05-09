@@ -1,16 +1,11 @@
-[gd_resource type="Resource" script_class="Skill" load_steps=2 format=3 uid="uid://b5yjitpcodq3o"]
+[gd_resource type="Resource" script_class="Skill" load_steps=3 format=3 uid="uid://b5yjitpcodq3o"]
 
 [ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_bgllm"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_rey4x"]
 
 [resource]
 script = ExtResource("1_bgllm")
-attack_type = 1
+skill_name = "Guitarist Inspiration"
 target_type = 2
 mana_cost = 25
-name = "Guitarist Inspiration"
-desc = "Heals party a decent bit and lifts party's spirits."
-effects = Dictionary[int, Array]({
-0: [25, 1],
-7: [1, 2]
-})
 metadata/_custom_type_script = "uid://o74imedfcjis"

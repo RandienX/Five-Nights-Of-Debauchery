@@ -1,0 +1,214 @@
+[gd_scene load_steps=6 format=3 uid="uid://dltckkr0ugpkd"]
+
+[ext_resource type="Script" uid="uid://b3wlt38nky0eq" path="res://scenes/ui/game_menu/party/party_menu_main.gd" id="1_nnuli"]
+[ext_resource type="PackedScene" uid="uid://dhu0rjvcqicb7" path="res://scenes/ui/game_menu/party/equipment_selection/equipment_selection.tscn" id="2_4iig4"]
+[ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="2_q1gli"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nnuli"]
+
+[sub_resource type="Theme" id="Theme_4iig4"]
+
+[node name="PartyMenu" type="Control" node_paths=PackedStringArray("members_container", "member_detail_panel", "member_name_label", "member_level_label", "member_portrait", "hp_progress", "mp_progress", "hp_label", "mp_label", "stats_grid", "equipment_container", "equipment_slots", "skills_list", "no_member_label")]
+layout_mode = 3
+anchor_right = 0.75000006
+anchor_bottom = 1.0
+offset_right = -6.1035156e-05
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_nnuli")
+members_container = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MembersContainer")
+member_detail_panel = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel")
+member_name_label = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/MemberNameLabel")
+member_level_label = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/MemberLevelLabel")
+member_portrait = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait")
+hp_progress = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer/HBoxContainer/HPProgress")
+mp_progress = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer/HBoxContainer2/MPProgress")
+hp_label = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer/HBoxContainer/HPLabel")
+mp_label = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer/HBoxContainer2/MPLabel")
+stats_grid = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/StatsGrid")
+equipment_container = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/EquipmentContainer")
+equipment_slots = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/EquipmentContainer/EquipmentSlots")
+skills_list = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/SkillsList")
+no_member_label = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/NoMemberLabel")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.994
+anchor_bottom = 1.0
+offset_right = -0.11199951
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Party"
+horizontal_alignment = 1
+
+[node name="HSplitContainer" type="HSplitContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+dragging_enabled = false
+
+[node name="MembersContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MemberDetailPanel" type="Panel" parent="MarginContainer/VBoxContainer/HSplitContainer"]
+self_modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel"]
+layout_mode = 0
+offset_right = 400.0
+offset_bottom = 563.0
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="NoMemberLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+text = "Select a party member to view details"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="MemberNameLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Member Name"
+horizontal_alignment = 1
+
+[node name="MemberLevelLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+text = "Level 1"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="MemberPortrait" type="TextureRect" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(96, 96)
+layout_mode = 2
+texture = SubResource("AtlasTexture_nnuli")
+stretch_mode = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait"]
+layout_mode = 0
+offset_left = 112.0
+offset_top = 20.0
+offset_right = 384.0
+offset_bottom = 76.0
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer"]
+layout_mode = 2
+
+[node name="HPProgress" type="ProgressBar" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(192, 24)
+layout_mode = 2
+step = 1.0
+value = 100.0
+show_percentage = false
+
+[node name="HPLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "100/100"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer"]
+layout_mode = 2
+
+[node name="MPProgress" type="ProgressBar" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(192, 24)
+layout_mode = 2
+theme = SubResource("Theme_4iig4")
+step = 1.0
+value = 100.0
+show_percentage = false
+
+[node name="MPLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+text = "50/50"
+
+[node name="StatsLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = " Stats:"
+
+[node name="StatsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(392, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/h_separation = 80
+columns = 3
+
+[node name="EquipmentLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = " Equipment:"
+
+[node name="EquipmentContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(392, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EquipmentSlots" type="GridContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/EquipmentContainer"]
+custom_minimum_size = Vector2(392, 0)
+layout_mode = 2
+columns = 2
+
+[node name="SkillsLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = " Skills:"
+
+[node name="SkillsList" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(392, 0)
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel"]
+z_index = -1
+layout_mode = 0
+offset_right = 400.0
+offset_bottom = 563.0
+texture = ExtResource("2_q1gli")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[node name="EquipmentSelection" parent="." instance=ExtResource("2_4iig4")]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+offset_right = 0.0

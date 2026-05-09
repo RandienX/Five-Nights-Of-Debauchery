@@ -13,7 +13,7 @@ extends Resource
 @export var enemies: Array[BattleEnemySlot]
 
 @export_group("Party Members (Optional)")
-@export var forced_party_members: Array[Party]  # Empty = use current party
+@export var forced_party_members: Array[Entity]  # Empty = use current party
 
 @export_group("Battle Settings")
 @export var background: Texture2D
@@ -70,8 +70,8 @@ func validate() -> Array[String]:
 	return errors
 
 
-func get_enemies() -> Array[Enemy]:
-	var result: Array[Enemy] = []
+func get_enemies() -> Array[Entity]:
+	var result: Array[Entity] = []
 	for slot in enemies:
 		if slot and slot.enemy:
 			result.append(slot.enemy.duplicate_deep())

@@ -59,13 +59,6 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 script = ExtResource("1_lvow5")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(116, 116)
-scale = Vector2(2.272727, 2.272727)
-texture = ExtResource("1_3yrrq")
-region_enabled = true
-region_rect = Rect2(0, 0, 96, 96)
-
 [node name="bg" type="Node2D" parent="."]
 position = Vector2(116, 116)
 scale = Vector2(2.2727268, 2.2727268)
@@ -91,6 +84,14 @@ offset_top = 51.333374
 offset_right = 49.333332
 offset_bottom = 93.333374
 color = Color(0.12955844, 0.12955847, 0.12955844, 1)
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+z_index = 5
+position = Vector2(117.00001, 115.00004)
+scale = Vector2(2.3125, 2.3125002)
+texture = ExtResource("1_3yrrq")
+region_enabled = true
+region_rect = Rect2(0, 0, 96, 96)
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 0

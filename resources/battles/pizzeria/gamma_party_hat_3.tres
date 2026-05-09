@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="Battle" load_steps=15 format=3 uid="uid://cfw5lt6sdnwb1"]
+
+[ext_resource type="Texture2D" uid="uid://dsolecv57wpem" path="res://assets/battleui/backgrounds/FNaF 1 - West Hall.png" id="1_6tjs8"]
+[ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="2_a22k7"]
+[ext_resource type="Script" uid="uid://tjsyf20orwjt" path="res://code/battle/battle_end_condition.gd" id="3_misnv"]
+[ext_resource type="Script" uid="uid://cpuojkdrhbref" path="res://code/battle/battle_enemy_slot.gd" id="4_8m08y"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="5_tocb8"]
+[ext_resource type="Resource" uid="uid://b7val374sectd" path="res://resources/enemies/y_party_hat.tres" id="6_6tjs8"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="7_1hjp8"]
+[ext_resource type="AudioStream" uid="uid://b8b2magh1twoe" path="res://assets/sound/battle/Pepper Steak - OFF.mp3" id="8_6tjs8"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="9_ykhp8"]
+[ext_resource type="Script" uid="uid://c87a82v6g8ug3" path="res://code/battle/battle_phase.gd" id="10_yxpua"]
+[ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="11_jvhhx"]
+
+[sub_resource type="Resource" id="Resource_w3sal"]
+script = ExtResource("4_8m08y")
+enemy = ExtResource("6_6tjs8")
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[sub_resource type="Resource" id="Resource_4a0t1"]
+script = ExtResource("4_8m08y")
+enemy = ExtResource("6_6tjs8")
+position_index = 2
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[sub_resource type="Resource" id="Resource_vx1ff"]
+script = ExtResource("4_8m08y")
+enemy = ExtResource("6_6tjs8")
+position_index = 4
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[resource]
+script = ExtResource("11_jvhhx")
+battle_name = "Gamma Party Hat 3"
+enemies = Array[ExtResource("4_8m08y")]([SubResource("Resource_w3sal"), SubResource("Resource_4a0t1"), SubResource("Resource_vx1ff")])
+background = ExtResource("1_6tjs8")
+music = ExtResource("8_6tjs8")
+xp_multiplier = 1.1
+metadata/_custom_type_script = "uid://s2os42vdwf6y"

@@ -21,6 +21,7 @@ config/icon="uid://diis85slboe5b"
 
 Global="*res://code/global.gd"
 Save="*res://code/saves.gd"
+SingletonSaveManager="*res://code/singleton_save_manager.gd"
 
 [display]
 

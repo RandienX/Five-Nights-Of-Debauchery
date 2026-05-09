@@ -1,11 +1,10 @@
-[gd_resource type="Resource" script_class="Skill" load_steps=2 format=3 uid="uid://cq600ldyq2j8g"]
+[gd_resource type="Resource" script_class="Skill" load_steps=3 format=3 uid="uid://cq600ldyq2j8g"]
 
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_ht30q"]
 [ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_wg5p0"]
 
 [resource]
 script = ExtResource("1_wg5p0")
-attack_type = 0
-target_type = 0
-name = "Check"
-desc = "Checks enemy hp and may tell you something about them."
+skill_name = "Check"
+level_to_unlock = 0
 metadata/_custom_type_script = "uid://o74imedfcjis"

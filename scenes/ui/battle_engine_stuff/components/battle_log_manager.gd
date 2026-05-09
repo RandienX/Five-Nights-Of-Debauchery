@@ -64,8 +64,8 @@ func update_battle_log_display() -> void:
 func print_outcome(atk: Object, targets: Array, attack: Skill, dmg: int, crit: bool, miss: bool, mp_cost: int = 0, effects_applied: Array = []):
 	var t = ""
 	if targets.size() > 0:
-		var attacker_color = "#4CAF50" if atk is Party else "#F44336"
-		var target_color = "#FF5722" if targets[0] is Enemy else "#4CAF50"
+		var attacker_color = "#4CAF50" if atk.role == Entity.Role.PARTY else "#F44336"
+		var target_color = "#FF5722" if targets[0].role == Entity.Role.ENEMY else "#4CAF50"
 		
 		if atk == targets[0]:
 			t = "[color=" + attacker_color + "]" + atk.name + "[/color] used [color=#2196F3]" + attack.name + "[/color] on self"

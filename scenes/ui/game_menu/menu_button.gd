@@ -12,5 +12,3 @@ func change_menu() -> void:
 			
 	if menu_path != "":
 		display.add_child(load(menu_path).instantiate())
-
-			

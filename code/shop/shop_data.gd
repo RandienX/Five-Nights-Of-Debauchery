@@ -68,22 +68,7 @@ func get_all_tags() -> Array[StringName]:
 	return tags
 
 
-## Restock all items in the shop
-func restock_all() -> void:
-	for shop_item in items:
-		shop_item.restock()
-
-
-## Get total value of all items in stock (for debugging/economy balancing)
-func get_total_stock_value() -> int:
-	var total = 0
-	for shop_item in items:
-		if shop_item.max_stock != -1:
-			total += shop_item.price * shop_item.current_stock
-	return total
-
-
-## Duplicate this shop data (for creating instances with independent stock)
+## Duplicate this shop data
 func duplicate_shop() -> ShopData:
 	var new_shop = ShopData.new()
 	new_shop.shop_id = shop_id
@@ -91,7 +76,6 @@ func duplicate_shop() -> ShopData:
 	new_shop.shop_description = shop_description
 	new_shop.categories = categories.duplicate()
 	
-	# Deep duplicate items so each shop instance has independent stock
 	for shop_item in items:
 		var new_item = shop_item.duplicate() as ShopItem
 		new_shop.items.append(new_item)

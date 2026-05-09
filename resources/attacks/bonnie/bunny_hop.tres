@@ -1,15 +1,13 @@
-[gd_resource type="Resource" script_class="Skill" load_steps=2 format=3 uid="uid://duj14sl0ett0i"]
+[gd_resource type="Resource" script_class="Skill" load_steps=3 format=3 uid="uid://duj14sl0ett0i"]
 
 [ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_okuf6"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_v8fga"]
 
 [resource]
 script = ExtResource("1_okuf6")
-attack_type = 2
-target_type = 0
+skill_name = "Bunny Hop"
 mana_cost = 15
-name = "Bunny Hop"
-desc = "Bonnie jumps 3 times on enemy head for a shitton of damage."
-attack_multiplier = 1.0
 attack_bonus = 1
+hit_count = 3
 hit_damage_multiplier = 0.6
 metadata/_custom_type_script = "uid://o74imedfcjis"

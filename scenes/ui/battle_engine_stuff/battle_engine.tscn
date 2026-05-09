@@ -1,8 +1,9 @@
-[gd_scene load_steps=20 format=3 uid="uid://ciu8rtat0ypho"]
+[gd_scene load_steps=21 format=3 uid="uid://ciu8rtat0ypho"]
 
 [ext_resource type="FontFile" uid="uid://bbkqbneky7jdt" path="res://assets/courbd.ttf" id="1_4ejce"]
 [ext_resource type="Script" uid="uid://dcmh5clht1ou8" path="res://scenes/ui/battle_engine_stuff/battle_engine.gd" id="1_mq0o5"]
 [ext_resource type="AudioStream" uid="uid://bnajx4f37io4r" path="res://assets/sound/battle/1-81.mp3" id="2_bhyi3"]
+[ext_resource type="Resource" uid="uid://d0alullmmxp3b" path="res://resources/battles/pizzeria/alpha_party_hat_1.tres" id="2_iptht"]
 [ext_resource type="Shader" uid="uid://78ytsnaia8ko" path="res://resources/battles/white_flash.tres" id="5_bhyi3"]
 [ext_resource type="Texture2D" uid="uid://cfoscxh3td7hk" path="res://assets/battleui/backgrounds/FNaF 1 - Dining Area.png" id="6_iptht"]
 [ext_resource type="Shader" uid="uid://c1n4qnyxnj208" path="res://scenes/ui/battle_engine_stuff/flash.tres" id="6_mq0o5"]
@@ -177,6 +178,7 @@ shader_parameter/FlashIntensity = 1.54400006682023
 
 [node name="BattleEngine" type="Node2D"]
 script = ExtResource("1_mq0o5")
+battle = ExtResource("2_iptht")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {

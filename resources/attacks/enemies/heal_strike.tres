@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Skill" load_steps=4 format=3 uid="uid://cgui3t54g0dw1"]
+
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_3cqip"]
+[ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="2_nyj3r"]
+
+[sub_resource type="Resource" id="Resource_3cqip"]
+script = ExtResource("1_3cqip")
+effect_type = 2
+heal_percent = 15.0
+damage_percent = 50.0
+heal_percent = 15.0
+metadata/_custom_type_script = "uid://ch7hoesea8vrf"
+
+[resource]
+script = ExtResource("2_nyj3r")
+skill_name = "Heal Strike"
+mana_cost = 15
+on_use_effects = Array[ExtResource("1_3cqip")]([SubResource("Resource_3cqip")])
+metadata/_custom_type_script = "uid://o74imedfcjis"

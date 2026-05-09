@@ -1,0 +1,99 @@
+[gd_resource type="Resource" script_class="ShopData" load_steps=23 format=3 uid="uid://bl6fq4p6ulpwx"]
+
+[ext_resource type="Script" uid="uid://b2nv155ae50jn" path="res://code/shop/shop_item.gd" id="1_n4ldh"]
+[ext_resource type="Resource" uid="uid://dlxeylilwh1gg" path="res://resources/items/consumables/tiny_pizza.tres" id="2_qyfhw"]
+[ext_resource type="Resource" uid="uid://b3qdog10ofahg" path="res://resources/items/consumables/small_pizza.tres" id="3_450q3"]
+[ext_resource type="Resource" uid="uid://bw0e1yparf4hs" path="res://resources/items/consumables/tiny_soda.tres" id="3_jnhrj"]
+[ext_resource type="Resource" uid="uid://ckt7kwce5bnkx" path="res://resources/items/consumables/degreaser.tres" id="4_cw18n"]
+[ext_resource type="Resource" uid="uid://blq4np0unbgga" path="res://resources/items/armor/EndoBodyA.tres" id="5_dxi5a"]
+[ext_resource type="Resource" uid="uid://dp1welb2vy3sa" path="res://resources/items/consumables/small_soda.tres" id="5_ebysb"]
+[ext_resource type="Resource" uid="uid://btt5e5gygccbm" path="res://resources/items/weapon/DragonDildo.tres" id="6_qyfhw"]
+[ext_resource type="Script" uid="uid://dqtfnwt45e6s6" path="res://code/shop/shop_data.gd" id="6_rirsh"]
+[ext_resource type="Resource" uid="uid://comuahi34o6sw" path="res://resources/items/armor/EndoBodyB.tres" id="8_0ijwn"]
+[ext_resource type="Resource" uid="uid://cl6s08n0unc3o" path="res://resources/items/weapon/Dildo6.tres" id="9_i2wwk"]
+[ext_resource type="Resource" uid="uid://yvj82upxou3h" path="res://resources/items/consumables/molotov.tres" id="11_m81lt"]
+
+[sub_resource type="Resource" id="Resource_fwt8y"]
+script = ExtResource("1_n4ldh")
+item = ExtResource("2_qyfhw")
+price = 15
+tags = Array[StringName]([&"consumable"])
+metadata/_custom_type_script = "uid://b2nv155ae50jn"
+
+[sub_resource type="Resource" id="Resource_qwjfq"]
+script = ExtResource("1_n4ldh")
+item = ExtResource("3_450q3")
+price = 40
+tags = Array[StringName]([&"consumable"])
+sort_order = 1
+metadata/_custom_type_script = "uid://b2nv155ae50jn"
+
+[sub_resource type="Resource" id="Resource_hj4dh"]
+script = ExtResource("1_n4ldh")
+item = ExtResource("3_jnhrj")
+price = 20
+tags = Array[StringName]([&"consumable"])
+sort_order = 2
+metadata/_custom_type_script = "uid://b2nv155ae50jn"
+
+[sub_resource type="Resource" id="Resource_ep0h4"]
+script = ExtResource("1_n4ldh")
+item = ExtResource("5_ebysb")
+tags = Array[StringName]([&"consumable"])
+sort_order = 3
+metadata/_custom_type_script = "uid://b2nv155ae50jn"
+
+[sub_resource type="Resource" id="Resource_gj6xf"]
+script = ExtResource("1_n4ldh")
+item = ExtResource("4_cw18n")
+tags = Array[StringName]([&"consumable"])
+sort_order = 4
+metadata/_custom_type_script = "uid://b2nv155ae50jn"
+
+[sub_resource type="Resource" id="Resource_h45c7"]
+script = ExtResource("1_n4ldh")
+item = ExtResource("5_dxi5a")
+tags = Array[StringName]([&"armor"])
+sort_order = 5
+metadata/_custom_type_script = "uid://b2nv155ae50jn"
+
+[sub_resource type="Resource" id="Resource_qxtrt"]
+script = ExtResource("1_n4ldh")
+item = ExtResource("8_0ijwn")
+price = 250
+tags = Array[StringName]([&"armor"])
+sort_order = 6
+metadata/_custom_type_script = "uid://b2nv155ae50jn"
+
+[sub_resource type="Resource" id="Resource_1o0p0"]
+script = ExtResource("1_n4ldh")
+item = ExtResource("9_i2wwk")
+price = 150
+tags = Array[StringName]([&"weapon"])
+sort_order = 7
+metadata/_custom_type_script = "uid://b2nv155ae50jn"
+
+[sub_resource type="Resource" id="Resource_jnhrj"]
+script = ExtResource("1_n4ldh")
+item = ExtResource("6_qyfhw")
+price = 1000
+tags = Array[StringName]([&"weapon"])
+sort_order = 7
+metadata/_custom_type_script = "uid://b2nv155ae50jn"
+
+[sub_resource type="Resource" id="Resource_sc8p0"]
+script = ExtResource("1_n4ldh")
+item = ExtResource("11_m81lt")
+price = 67
+tags = Array[StringName]([&"consumable"])
+sort_order = 8
+metadata/_custom_type_script = "uid://b2nv155ae50jn"
+
+[resource]
+script = ExtResource("6_rirsh")
+shop_id = &"bb_shop_1"
+shop_name = "Enragement Shop 1"
+shop_description = "bitch"
+items = Array[ExtResource("1_n4ldh")]([SubResource("Resource_fwt8y"), SubResource("Resource_qwjfq"), SubResource("Resource_hj4dh"), SubResource("Resource_ep0h4"), SubResource("Resource_gj6xf"), SubResource("Resource_h45c7"), SubResource("Resource_qxtrt"), SubResource("Resource_1o0p0"), SubResource("Resource_jnhrj"), SubResource("Resource_sc8p0")])
+categories = Array[StringName]([&"all", &"consumable", &"armor", &"weapon"])
+metadata/_custom_type_script = "uid://dqtfnwt45e6s6"

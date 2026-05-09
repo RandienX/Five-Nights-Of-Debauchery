@@ -16,57 +16,59 @@ var game_over_active: bool = false
 var game_over_overlay: ColorRect
 var game_over_texture: TextureRect
 var can_reload = false
-
-func setup_game_over_ui() -> void:
-	game_over_overlay = ColorRect.new()
-	game_over_overlay.name = "GameOverOverlay"
-	game_over_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	game_over_overlay.color = Color(0, 0, 0, 0)
-	game_over_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(game_over_overlay)
-
-	game_over_texture = TextureRect.new()
-	game_over_texture.name = "GameOverTexture"
-	game_over_texture.set_anchors_preset(Control.PRESET_CENTER)
-	game_over_texture.texture = load("res://assets/ui/game_over.png") if ResourceLoader.exists("res://assets/ui/game_over.png") else null
-	game_over_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	game_over_texture.modulate.a = 0
-	game_over_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(game_over_texture)
 	
 func check_enemy_death_and_xp():
-	if not root.are_all_enemies_defeated():
+	if root:
+		if not root.are_all_enemies_defeated():
+			return
+	else:
 		return
 	
-	var total_xp = 0
-	for e in root.enemy_instances:
-		if e:
-			total_xp += e.xp_reward
+	var total_xp = 0        
+	var total_currency = 0
+
+	# Calculate XP and currency rewards from all enemy slots (using override values if set)
+	for slot in root.battle.enemies:
+		if slot and slot.enemy:
+			total_xp += slot.get_xp_reward()
+			total_currency += slot.get_currency_reward()
+
+	if battle:
+		total_currency += battle.currency_reward
+	print("Total Currency From Battle", total_currency)
+	PlayerStats.add_currency(total_currency, PlayerStats.CurrencyType.GOLD)
+
 	for actor in root.initiative:
-		if actor is Party:
+		if actor.role == Entity.Role.PARTY:
 			actor.xp += total_xp
 			root.get_node("Control/enemy_ui/CenterContainer/output").text = actor.name + " gained " + str(total_xp) + " XP! "
 			while actor.xp >= actor.xp_to_level_up:
 				actor.xp -= actor.xp_to_level_up
 				actor.level += 1
-				actor.xp_to_level_up = ceil(actor.xp_to_level_up * actor.level_up_xp_multilpier)
-				for stat in ["hp", "mp", "atk", "def", "ai"]:
-					actor.max_stats[stat] += int(actor.level_up[stat] * actor.level)
-					actor.base_stats[stat] += int(actor.level_up[stat] * actor.level)
+				actor.xp_to_level_up = ceil(actor.xp_to_level_up * actor.level_up_xp_multiplier)
+				for stat in ["hp", "mp", "atk", "def", "speed"]:
+					actor.max_stats[stat] += int(actor.level_up_gains[stat] if actor.level_up_gains.has(stat) else 1)
+					actor.base_stats[stat] += int(actor.level_up_gains[stat] if actor.level_up_gains.has(stat) else 1)
 				actor.hp = actor.max_stats["hp"]
 				actor.mp = actor.max_stats["mp"]
 				root.get_node("Control/enemy_ui/CenterContainer/output").text = actor.name + " leveled up to " + str(actor.level) + "! "
 				await get_tree().create_timer(1.0).timeout
+				
+	
+	# Add currency reward to player
+	if total_currency > 0:
+		PlayerStats.add_currency(total_currency, PlayerStats.CurrencyType.GOLD)
+		root.get_node("Control/enemy_ui/CenterContainer/output").text += "Gained " + str(total_currency) + " gold!"
+		
 	await end_battle_victory()
 
 func end_battle_victory() -> void:
 	await root.get_tree().create_timer(1.0).timeout
-	Global.player_position = root.battle_start_position
 	Global.loading = true
 	root.get_tree().change_scene_to_file(Global.current_scene)
 	Global.loading = false
 
-func animate_enemy_death(e: Enemy) -> void:
+func animate_enemy_death(e: Entity) -> void:
 	if is_animating_death: return
 	is_animating_death = true
 	var slot = root.get_enemy_index(e)
@@ -100,26 +102,31 @@ func animate_enemy_death(e: Enemy) -> void:
 	is_animating_death = false
 
 func move_flash_to_next_enemy(slot: int):
-	for i in range(1, root.enemy_instances.size()):
-		var next = (slot + i) % root.enemy_instances.size()
-		if root.enemy_instances[next] and root.enemy_instances[next].hp > 0:
-			root.selected_enemy = next
+	for i in range(1, 5):
+		var next_slot = wrapi(slot + i, 0, 5)
+		var enemy_at_slot = root.get_enemy(next_slot)
+		if enemy_at_slot and enemy_at_slot.hp > 0:
+			root.selected_enemy = next_slot
 			return
 	root.selected_enemy = -1
 
-func death(obj):
+func death(obj: Entity):
 	for i in range(root.initiative.size()-1, -1, -1):
 		if root.initiative[i] == obj:
 			root.initiative.remove_at(i)
-			if root.attack_array.has(obj): root.attack_array.erase(obj)
-			if obj is Party and root.planning_phase and root.action_history.has(obj):
+			if root.attack_executor.attack_array.has(obj): root.attack_executor.attack_array.erase(obj)
+			if obj.role == Entity.Role.PARTY and root.planning_phase and root.action_history.has(obj):
+
 				root.action_history.erase(obj)
 				root.current_party_plan_index -= 1
+	if obj.role == Entity.Role.PARTY:
+		check_party_wipe()
 
 func check_party_wipe() -> void:
 	var alive = false
-	for p in Global.party:
+	for p in root.party:
 		if p.hp > 0:
+			print("!!!")
 			alive = true
 			break
 	if not alive:
@@ -128,18 +135,14 @@ func check_party_wipe() -> void:
 func trigger_game_over() -> void:
 	game_over_active = true
 	root.state = root.states.Waiting
-	root.get_node("Control/gui/HBoxContainer2").visible = false
-	root.get_node("Control/enemy_ui").visible = false
 	root.get_node("WhoMoves").visible = false
 	
-	var tween = create_tween()
-	tween.tween_property(game_over_overlay, "modulate:a", 1.0, 2.0)
-	await tween.finished
+	var gitgud = preload("res://scenes/ui/game_over.tscn").instantiate()
+	gitgud.z_index = 999
+	root.add_child(gitgud)
+	root.get_node("AudioStreamPlayer").autoplay = false
+	root.get_node("AudioStreamPlayer").playing = false
+	gitgud.get_node("AnimationPlayer").play("gitgud")
 	
-	if game_over_texture.texture:
-		tween = create_tween()
-		tween.tween_property(game_over_texture, "modulate:a", 1.0, 1.0)
-		await tween.finished
-	
-	await get_tree().create_timer(1.0).timeout
+	await root.get_tree().create_timer(1.5).timeout
 	can_reload = true

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="Item" load_steps=4 format=3 uid="uid://btt5e5gygccbm"]
+
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_v0p5c"]
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="2_3paas"]
+[ext_resource type="Texture2D" uid="uid://btxkp57bcjp4d" path="res://assets/item_textures/dragon_dildo.png" id="2_ngknq"]
+
+[resource]
+script = ExtResource("2_3paas")
+item_name = "Dragon Dildo"
+description = "The ultimate weapon of sex and devastation. Using it is a great time for all members of the family."
+texture = ExtResource("2_ngknq")
+icon = ExtResource("2_ngknq")
+sell_price = Dictionary[int, int]({
+0: -9999,
+1: -9999,
+2: -9999
+})
+item_bonuses = Dictionary[String, int]({
+"atk": 9999,
+"def": -9999,
+"hp": 0,
+"magic": 0,
+"mp": 0,
+"speed": 0
+})
+metadata/_custom_type_script = "uid://dn31qme1ukrys"

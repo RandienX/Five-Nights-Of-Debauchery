@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="Battle" load_steps=13 format=3 uid="uid://dk6da26u6uuj3"]
+
+[ext_resource type="Texture2D" uid="uid://dsolecv57wpem" path="res://assets/battleui/backgrounds/FNaF 1 - West Hall.png" id="1_l4k6w"]
+[ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="2_ycpmc"]
+[ext_resource type="Script" uid="uid://tjsyf20orwjt" path="res://code/battle/battle_end_condition.gd" id="3_de1jm"]
+[ext_resource type="Script" uid="uid://cpuojkdrhbref" path="res://code/battle/battle_enemy_slot.gd" id="4_3e2l8"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="5_in8xb"]
+[ext_resource type="Resource" uid="uid://b7val374sectd" path="res://resources/enemies/y_party_hat.tres" id="6_l4k6w"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="7_osqar"]
+[ext_resource type="AudioStream" uid="uid://b8b2magh1twoe" path="res://assets/sound/battle/Pepper Steak - OFF.mp3" id="8_ycpmc"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="9_p3dw7"]
+[ext_resource type="Script" uid="uid://c87a82v6g8ug3" path="res://code/battle/battle_phase.gd" id="10_w3ft5"]
+[ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="11_fc0r7"]
+
+[sub_resource type="Resource" id="Resource_w3sal"]
+script = ExtResource("4_3e2l8")
+enemy = ExtResource("6_l4k6w")
+position_index = 2
+metadata/_custom_type_script = "uid://cpuojkdrhbref"
+
+[resource]
+script = ExtResource("11_fc0r7")
+battle_name = "Gamma Party Hat 1"
+enemies = Array[ExtResource("4_3e2l8")]([SubResource("Resource_w3sal")])
+background = ExtResource("1_l4k6w")
+music = ExtResource("8_ycpmc")
+xp_multiplier = 0.9
+metadata/_custom_type_script = "uid://s2os42vdwf6y"

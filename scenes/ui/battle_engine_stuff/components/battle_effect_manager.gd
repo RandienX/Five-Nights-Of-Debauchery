@@ -1,251 +1,636 @@
-extends RefCounted
-class_name EffectManager
+extends Node
+class_name BattleEffectManager
 
-var root
-# === EFFECT SYSTEM ===
+## Centralized battle effect resolver with targeting, condition evaluation,
+## stat modification, and status system pipelines.
+## No _process polling - uses SceneTree timers for duration/tick effects.
 
-const EFFECT_ATLAS_PATH = "res://assets/battleui/status_effects.png"
-const EFFECT_TILE_SIZE = 64
-const EFFECT_COLS = 4
+# ==================== SIGNALS ====================
 
-var effect_durations: Dictionary = {}  # {target: {effect: [level, duration]}}
+signal effect_executed(effect: BattleEffect, targets: Array, success: bool)
+signal status_applied(entity: Entity, status_id: String, stacks: int)
+signal status_removed(entity: Entity, status_id: String)
+signal status_ticked(entity: Entity, status_id: String, remaining: int)
+signal modifier_expired(entity: Entity, modifier_id: String)
+stat_modification_applied(entity: Entity, stat_key: String, delta: int)
 
-func setup(battleroot):
-	root = battleroot
+# ==================== CONFIGURATION ====================
 
-func get_effect_level(target: Object, effect: BattleEffect.StatusEffect) -> int:
-	if target.effects.has(effect) and target.effects[effect].size() >= 1:
-		return target.effects[effect][0]
-	return 0
+@export var debug_logging: bool = false
+@export var auto_cleanup_on_battle_end: bool = true
 
-func get_effect_duration(target: Object, effect: BattleEffect.StatusEffect) -> int:
-	if target.effects.has(effect) and target.effects[effect].size() >= 2:
-		return target.effects[effect][1]
-	return 0
+# ==================== STATE ====================
 
-func get_effect_multiplier(target: Object, effect: BattleEffect.StatusEffect) -> float:
-	var level = get_effect_level(target, effect)
-	if level <= 0: return 1.0
+## Battle context arrays (set when battle starts)
+var _allies: Array[Entity] = []
+var _enemies: Array[Entity] = []
+var _battle_context: Dictionary = {}
 
-	match effect:
-		BattleEffect.StatusEffect.Power:
-			return 1.0 + (level * 0.25)
-		BattleEffect.StatusEffect.Tough:
-			return 1.0 + (level * 0.25)
-		BattleEffect.StatusEffect.Focus:
-			return 1.0 + (level * 0.05)
-		BattleEffect.StatusEffect.Speed:
-			return 1.0 + (level * 0.1)
-		BattleEffect.StatusEffect.Slow:
-			return 1.0 - (level * 0.1)
-		BattleEffect.StatusEffect.Blind:
-			return 1.0 - (level * 0.2)
-		BattleEffect.StatusEffect.Absorb:
-			return 1.0 + (level * 0.2)
-		BattleEffect.StatusEffect.Weak:
-			return 1.0 - (level * 0.2)
-		BattleEffect.StatusEffect.Sick:
-			return 1.0 - (level * 0.2)
-	return 1.0
+## Active timers for cleanup
+var _active_timers: Array[Timer] = []
 
-func remove_effect(target: Object, effect: BattleEffect.StatusEffect):
-	if target.effects.has(effect):
-		target.effects.erase(effect)
-	if effect_durations.has(target) and effect_durations[target].has(effect):
-		effect_durations[target].erase(effect)
+## Status registry lookup (set this to your status definition storage)
+var status_registry: Dictionary[String, BattleEffect.StatusDefinition] = {}
+
+## Effect execution queue for proper sequencing
+var _effect_queue: Array[Dictionary] = []
+
+# ==================== LIFECYCLE ====================
+
+func initialize(allies: Array[Entity], enemies: Array[Entity], context: Dictionary = {}):
+	"""
+	Initialize the manager for a new battle.
+	Call at battle start to set up context arrays.
+	"""
+	_allies = allies.filter(func(e): return e != null and is_instance_valid(e))
+	_enemies = enemies.filter(func(e): return e != null and is_instance_valid(e))
+	_battle_context = context.duplicate()
+	_battle_context["turn_number"] = _battle_context.get("turn_number", 0)
 	
-	var party_container = root.get_node("Control/gui/HBoxContainer2/party")
-	if target is Party:
-		for i in range(party_container.get_child_count()):
-			var ui = party_container.get_child(i)
-			if ui.has_method("update_effects_ui"):
-				ui.update_effects_ui()
-	else:
-		var slot = root.get_enemy_index(target)
-		if slot >= 0:
-			var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
-			if node:
-				var container = node.get_node_or_null("EffectContainer")
-				if container:
-					for child in container.get_children():
-						child.queue_free()
+	_log("BattleEffectManager initialized with %d allies, %d enemies" % [_allies.size(), _enemies.size()])
 
-func apply_effects(target: Object, atk: Skill):
-	if atk.on_hit_effects or atk.on_use_effects:
-		for effect in atk.on_hit_effects:
-			if effect.effect_type == 6:
-				var level = effect.status_level
-				var duration = effect.status_duration
-				apply_effect(target, effect.effect_type, level, duration)
+func cleanup():
+	"""
+	Clean up all resources, disconnect timers, clear references.
+	Call at battle end or when manager is no longer needed.
+	"""
+	# Stop and clear all timers
+	for timer in _active_timers:
+		if is_instance_valid(timer):
+			timer.stop()
+			timer.queue_free()
+	_active_timers.clear()
+	
+	# Clear context
+	_allies.clear()
+	_enemies.clear()
+	_battle_context.clear()
+	_effect_queue.clear()
+	
+	_log("BattleEffectManager cleaned up")
 
-func apply_effect(target: Object, effect: BattleEffect.StatusEffect, level: int, duration: int):
-	if not target.effects.has(effect):
-		target.effects[effect] = [0, 0]
+func _exit_tree():
+	cleanup()
 
-	target.effects[effect][0] = max(target.effects[effect][0], level)
-	target.effects[effect][1] = max(target.effects[effect][1], duration)
+# ==================== TARGETING SYSTEM ====================
 
-	if not effect_durations.has(target):
-		effect_durations[target] = {}
-	if not effect_durations[target].has(effect):
-		effect_durations[target][effect] = [level, duration]
-	else:
-		effect_durations[target][effect][0] = max(effect_durations[target][effect][0], level)
-		effect_durations[target][effect][1] = max(effect_durations[target][effect][1], duration)
+func resolve_targets(
+	effect: BattleEffect,
+	source: Entity,
+	context_override: Dictionary = {}
+) -> Array[Entity]:
+	"""
+	Resolve TargetType to actual Entity instances using battle context.
+	Returns array of valid targets.
+	"""
+	var ctx = context_override if not context_override.is_empty() else _battle_context
+	var targets: Array[Entity] = []
+	
+	match effect.target_type:
+		BattleEffect.TargetType.SELF:
+			targets.append(source)
+		
+		BattleEffect.TargetType.SINGLE_ALLY:
+			if ctx.has("selected_ally") and ctx["selected_ally"]:
+				targets.append(ctx["selected_ally"])
+			elif not _allies.is_empty():
+				# Pick random alive ally
+				var alive_allies = _allies.filter(func(e): return e.hp > 0)
+				if not alive_allies.is_empty():
+					targets.append(alive_allies[randi() % alive_allies.size()])
+		
+		BattleEffect.TargetType.SINGLE_ENEMY:
+			if ctx.has("selected_enemy") and ctx["selected_enemy"]:
+				targets.append(ctx["selected_enemy"])
+			elif not _enemies.is_empty():
+				# Pick random alive enemy
+				var alive_enemies = _enemies.filter(func(e): return e.hp > 0)
+				if not alive_enemies.is_empty():
+					targets.append(alive_enemies[randi() % alive_enemies.size()])
+		
+		BattleEffect.TargetType.ALL_ALLIES:
+			targets.assign(_allies.filter(func(e): return e.hp > 0 or effect.can_target_dead))
+		
+		BattleEffect.TargetType.ALL_ENEMIES:
+			targets.assign(_enemies.filter(func(e): return e.hp > 0 or effect.can_target_dead))
+		
+		BattleEffect.TargetType.PARTY:
+			for ally in _allies:
+				if ally.role == Entity.Role.PARTY and (ally.hp > 0 or effect.can_target_dead):
+					targets.append(ally)
+		
+		BattleEffect.TargetType.ENTIRE_BATTLE:
+			targets.assign(_allies.filter(func(e): return e.hp > 0 or effect.can_target_dead))
+			targets.append_array(_enemies.filter(func(e): return e.hp > 0 or effect.can_target_dead))
+	
+	# Apply line-of-sight filter if required
+	if effect.require_line_of_sight:
+		targets = targets.filter(func(t): return _check_line_of_sight(source, t))
+	
+	return targets
 
-func apply_effect_duration(target: Object, effect: BattleEffect.StatusEffect, level: int, duration: int):
-	if not target.effects.has(effect):
-		target.effects[effect] = [0, 0]
-		target.effects[effect][0] = max(target.effects[effect][0], level)
-		target.effects[effect][1] = max(target.effects[effect][1], duration)
+func _check_line_of_sight(source: Entity, target: Entity) -> bool:
+	"""Check if source has line of sight to target. Override for custom logic."""
+	# Default: always true. Override for grid-based or obstacle-based battles.
+	return true
 
-	if not effect_durations.has(target):
-		effect_durations[target] = {}
-	if not effect_durations[target].has(effect):
-		effect_durations[target][effect] = [level, duration]
-	else:
-		effect_durations[target][effect][0] = max(effect_durations[target][effect][0], level)
-		effect_durations[target][effect][1] = max(effect_durations[target][effect][1], duration)
+# ==================== CONDITION EVALUATION ====================
 
-	# Check for absorption effect
-	if effect == BattleEffect.StatusEffect.Absorb:
-		apply_absorption_bonus(target, level)
-
-	update_effect_ui(target)
-
-func apply_absorption_bonus(target: Object, level: int):
-	var bonus = floor(target.max_stats["hp"] * 0.1 * level)
-	target.max_stats["hp"] += bonus
-	target.hp = min(target.hp + bonus, target.max_stats["hp"])
-
-func remove_absorption_bonus(target: Object, level: int):
-	var bonus = floor(target.max_stats["hp"] * 0.1 * level)
-	target.max_stats["hp"] -= bonus
-	target.hp = min(target.hp, target.max_stats["hp"])
-
-func update_effects():
-	var targets_to_clean = []
-	for target in effect_durations.keys():
-		if not is_instance_valid(target):
-			targets_to_clean.append(target)
-			continue
-
-		var effects_to_remove = []
-		for effect in effect_durations[target].keys():
-			var data = effect_durations[target][effect]
-			var level = data[0]
-
-			match effect:
-				BattleEffect.StatusEffect.Heal:
-					if target.hp > 0:
-						target.hp = min(target.hp + floor(target.max_stats["hp"] * 0.05 * level), target.max_stats["hp"])
-				BattleEffect.StatusEffect.Mana_Heal:
-					if target.mp > 0:
-						target.mp = min(target.mp + floor(target.max_stats["mp"] * 0.05 * level), target.max_stats["mp"])
-				BattleEffect.StatusEffect.Revive:
-					if target.hp <= 0:
-						target.hp = floor(target.max_stats["hp"] * 0.5)
-						effects_to_remove.append(effect)
-						continue
-				BattleEffect.StatusEffect.Poison:
-					var dmg = floor(target.max_stats["hp"] * 0.1 * level)
-					target.hp -= dmg
-				BattleEffect.StatusEffect.Bleed:
-					var dmg = floor(target.max_stats["hp"] * 0.15 * level)
-					target.hp -= dmg
-
-			data[1] -= 1
-			if data[1] <= 0:
-				effects_to_remove.append(effect)
-				if effect == BattleEffect.StatusEffect.Absorb:
-					remove_absorption_bonus(target, level)
-
-		for effect in effects_to_remove:
-			effect_durations[target].erase(effect)
-			if target.effects.has(effect):
-				target.effects.erase(effect)
-
-			if effect_durations[target].is_empty():
-				targets_to_clean.append(target)
-
-	for target in targets_to_clean:
-		if effect_durations.has(target):
-			effect_durations.erase(target)
-
-	for actor in root.initiative:
-		if is_instance_valid(actor):
-			update_effect_ui(actor)
-
-func update_effect_ui(actor: Object) -> void:
-	var container: GridContainer = null
-	if actor is Party:
-		var party_container = root.get_node("Control/gui/HBoxContainer2/party")
-		for i in range(party_container.get_child_count()):
-			var ui = party_container.get_child(i)
-			if ui.has_method("setup") and ui.party_member == actor:
-				container = ui.effect_container
-				break
-	else:
-		var slot = root.get_enemy_index(actor)
-		if slot >= 0:
-			var node = root.get_node_or_null("Control/enemy_ui/enemies/enemy" + str(slot + 1))
-			if node:
-				container = node.get_node_or_null("EffectContainer")
-
-	if container:
-		for child in container.get_children():
-			child.queue_free()
-
-	if actor.effects:
-		for effect in actor.effects.keys():
-			var data = actor.effects[effect]
-			if data is Array and data.size() >= 2 and data[1] > 0:
-				var icon = create_effect_icon(effect)
-				if icon:
-					container.add_child(icon)
-
-func create_effect_icon(effect: BattleEffect.StatusEffect) -> TextureRect:
-	var icon = TextureRect.new()
-	icon.custom_minimum_size = Vector2(EFFECT_TILE_SIZE, EFFECT_TILE_SIZE)
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-
-	var atlas = AtlasTexture.new()
-	atlas.atlas = load(EFFECT_ATLAS_PATH)
-	var x = (effect as int % EFFECT_COLS) * EFFECT_TILE_SIZE
-	var y = floori((effect as int) / EFFECT_COLS) * EFFECT_TILE_SIZE
-	atlas.region = Rect2(x, y, EFFECT_TILE_SIZE, EFFECT_TILE_SIZE)
-	icon.texture = atlas
-	return icon
-
-func apply_damage_over_time():
-	for actor in root.initiative:
-		if not is_instance_valid(actor): continue
-
-		# Poison damage
-		var poison_level = get_effect_level(actor, BattleEffect.StatusEffect.Poison)
-		if poison_level > 0:
-			var poison_dmg = floor(actor.max_stats["hp"] * 0.1 * poison_level)
-			actor.hp -= poison_dmg
-			root.get_node("Control/enemy_ui/CenterContainer/output").text = actor.name + " takes " + str(poison_dmg) + " poison damage!"
-			await root.get_tree().create_timer(0.5).timeout
-
-		# Bleed damage (stronger, not healable by items)
-		var bleed_level = get_effect_level(actor, BattleEffect.StatusEffect.Bleed)
-		if bleed_level > 0:
-			var bleed_dmg = floor(actor.max_stats["hp"] * 0.15 * bleed_level)
-			actor.hp -= bleed_dmg
-			root.get_node("Control/enemy_ui/CenterContainer/output").text = actor.name + " takes " + str(bleed_dmg) + " bleed damage!"
-			await root.get_tree().create_timer(0.5).timeout
-
-func check_instakill(attacker: Object, target: Object) -> bool:
-	var kill_level = get_effect_level(attacker, BattleEffect.StatusEffect.Kill)
-	if kill_level > 0:
-		if target is Enemy and target.is_boss:
+func evaluate_conditions(
+	effect: BattleEffect,
+	source: Entity,
+	target: Entity,
+	context_override: Dictionary = {}
+) -> bool:
+	"""
+	Evaluate all conditions on an effect. Returns true only if ALL pass.
+	Supports early-exit on first failure for performance.
+	"""
+	var ctx = context_override if not context_override.is_empty() else _battle_context
+	
+	for condition in effect.conditions:
+		if not condition.evaluate(target, ctx):
+			_log("Condition failed: %s on %s" % [condition.check_stat, target.name])
 			return false
-	var kill_chance = 0.01 * kill_level  # 1% per level
-	if randf() < kill_chance:
-		return true
+	
+	# Additional legacy-style checks for backward compatibility
+	if _battle_context.has("turn_number"):
+		var turn = _battle_context["turn_number"]
+		# Could add turn-based conditions here if needed
+	
+	return true
+
+func check_resistance(
+	source: Entity,
+	target: Entity,
+	resist_stat: String = "magic",
+	base_chance: float = 100.0
+) -> float:
+	"""
+	Calculate final apply chance after resistance check.
+	Returns 0-100% chance for effect to land.
+	"""
+	var resist_value = target.get_base_stat(resist_stat.to_lower())
+	var source_stat = source.get_base_stat("magic")
+	
+	# Simple formula: base_chance * (source_stat / (source_stat + resist_value))
+	var final_chance = base_chance * (float(source_stat) / float(max(1, source_stat + resist_value)))
+	
+	return clamp(final_chance, 0, 100)
+
+# ==================== EFFECT EXECUTION PIPELINE ====================
+
+func execute_effect(
+	effect: BattleEffect,
+	source: Entity,
+	context_override: Dictionary = {},
+	delay_seconds: float = 0.0
+) -> void:
+	"""
+	Execute a single effect with optional delay.
+	Handles targeting, conditions, and effect type resolution.
+	"""
+	if delay_seconds > 0:
+		_schedule_effect(effect, source, context_override, delay_seconds)
+		return
+	
+	# Check conditions first
+	if not evaluate_conditions(effect, source, source, context_override):
+		_log("Effect %s blocked by conditions" % effect.effect_name)
+		effect_executed.emit(effect, [], false)
+		return
+	
+	# Resolve targets
+	var targets = resolve_targets(effect, source, context_override)
+	if targets.is_empty():
+		_log("Effect %s has no valid targets" % effect.effect_name)
+		effect_executed.emit(effect, [], false)
+		return
+	
+	# Execute based on effect type
+	var success = _execute_effect_by_type(effect, source, targets, context_override)
+	
+	effect_executed.emit(effect, targets, success)
+
+func _execute_effect_by_type(
+	effect: BattleEffect,
+	source: Entity,
+	targets: Array[Entity],
+	context: Dictionary
+) -> bool:
+	"""Route effect to appropriate handler based on type."""
+	match effect.effect_type:
+		BattleEffect.EffectType.DAMAGE:
+			return _handle_damage(effect, source, targets, context)
+		
+		BattleEffect.EffectType.HEAL:
+			return _handle_heal(effect, source, targets, context)
+		
+		BattleEffect.EffectType.BUFF, BattleEffect.EffectType.DEBUFF:
+			return _handle_stat_modifiers(effect, source, targets, context)
+		
+		BattleEffect.EffectType.STATUS_APPLY:
+			return _handle_status_apply(effect, source, targets, context)
+		
+		BattleEffect.EffectType.STATUS_REMOVE:
+			return _handle_status_remove(effect, source, targets, context)
+		
+		BattleEffect.EffectType.PARAMETER_CHANGE:
+			return _handle_parameter_change(effect, source, targets, context)
+		
+		BattleEffect.EffectType.UTILITY:
+			return _handle_utility(effect, source, targets, context)
+		
+		BattleEffect.EffectType.CUSTOM:
+			return _handle_custom(effect, source, targets, context)
+	
 	return false
 
-func get_effect_name_with_level(effect: BattleEffect.StatusEffect, level: int) -> String:
-	return BattleEffect.new().get_status_effect_name(effect, level)
+func _handle_damage(
+	effect: BattleEffect,
+	source: Entity,
+	targets: Array[Entity],
+	context: Dictionary
+) -> bool:
+	"""Handle damage effects with variance and critical support."""
+	var total_damage = 0
+	
+	for target in targets:
+		if not is_instance_valid(target) or target.hp <= 0:
+			continue
+		
+		# Calculate base damage
+		var base_dmg = effect.get_scaled_value(source, target)
+		
+		# Apply variance
+		if effect.variance_percent > 0:
+			var variance = randf_range(-effect.variance_percent, effect.variance_percent)
+			base_dmg *= (1.0 + variance)
+		
+		# Check for critical hit (could be expanded)
+		var is_critical = false  # Could add crit logic here
+		if is_critical:
+			base_dmg *= effect.critical_multiplier
+		
+		# Apply defense reduction (simplified)
+		var defense = target.get_effective_stat(&"def")
+		var final_dmg = max(1, int(base_dmg - defense * 0.5))
+		
+		# Deal damage
+		target.damage_hp(final_dmg)
+		total_damage += final_dmg
+		
+		_log("Dealt %d damage to %s" % [final_dmg, target.name])
+		
+		# Visual feedback
+		_trigger_visuals(effect, target)
+	
+	return total_damage > 0
+
+func _handle_heal(
+	effect: BattleEffect,
+	source: Entity,
+	targets: Array[Entity],
+	context: Dictionary
+) -> bool:
+	"""Handle healing effects."""
+	var total_healed = 0
+	
+	for target in targets:
+		if not is_instance_valid(target) or target.hp <= 0:
+			continue
+		
+		var heal_amount = int(effect.get_scaled_value(source, target))
+		var actual_heal = target.heal_hp(heal_amount)
+		total_healed += actual_heal
+		
+		_log("Healed %s for %d HP" % [target.name, actual_heal])
+		_trigger_visuals(effect, target)
+	
+	return total_healed > 0
+
+func _handle_stat_modifiers(
+	effect: BattleEffect,
+	source: Entity,
+	targets: Array[Entity],
+	context: Dictionary
+) -> bool:
+	"""Apply temporary stat buffs/debuffs."""
+	var applied_count = 0
+	
+	for target in targets:
+		if not is_instance_valid(target):
+			continue
+		
+		for mod in effect.stat_modifiers:
+			var mod_id = "effect_%s_%s" % [effect.effect_id.strip_edges(), mod.stat_key]
+			if target.apply_modifier(mod_id, mod, source):
+				applied_count += 1
+				stat_modification_applied.emit(
+					target, 
+					mod.stat_key, 
+					int(mod.applied_delta)
+				)
+				_log("Applied modifier %s to %s" % [mod_id, target.name])
+	
+	return applied_count > 0
+
+func _handle_status_apply(
+	effect: BattleEffect,
+	source: Entity,
+	targets: Array[Entity],
+	context: Dictionary
+) -> bool:
+	"""Apply status effects from status_ref definition."""
+	if not effect.status_ref:
+		push_warning("BattleEffect %s has STATUS_APPLY but no status_ref" % effect.effect_name)
+		return false
+	
+	var applied_count = 0
+	
+	for target in targets:
+		if not is_instance_valid(target):
+			continue
+		
+		# Check resistance
+		var apply_chance = check_resistance(
+			source, 
+			target, 
+			effect.status_resist_stat,
+			effect.status_apply_chance
+		)
+		
+		if randf() * 100 > apply_chance:
+			_log("Status %s resisted by %s" % [effect.status_ref.id, target.name])
+			continue
+		
+		# Apply status
+		var duration = effect.status_duration_override if effect.status_duration_override > 0 else -1
+		if target.apply_status(effect.status_ref, 1, duration, source):
+			applied_count += 1
+			status_applied.emit(target, effect.status_ref.id, 1)
+			_log("Applied status %s to %s" % [effect.status_ref.id, target.name])
+	
+	return applied_count > 0
+
+func _handle_status_remove(
+	effect: BattleEffect,
+	source: Entity,
+	targets: Array[Entity],
+	context: Dictionary
+) -> bool:
+	"""Remove status effects."""
+	var removed_count = 0
+	
+	for target in targets:
+		if not is_instance_valid(target):
+			continue
+		
+		if effect.status_ref:
+			# Remove specific status
+			if target.remove_status(effect.status_ref.id, source):
+				removed_count += 1
+				status_removed.emit(target, effect.status_ref.id)
+		else:
+			# Remove all removable statuses
+			removed_count += target.remove_all_statuses(true, source)
+	
+	return removed_count > 0
+
+func _handle_parameter_change(
+	effect: BattleEffect,
+	source: Entity,
+	targets: Array[Entity],
+	context: Dictionary
+) -> bool:
+	"""Permanent stat changes (level-up style)."""
+	var changed_count = 0
+	
+	for target in targets:
+		if not is_instance_valid(target):
+			continue
+		
+		for mod in effect.stat_modifiers:
+			if mod.duration_type == BattleEffect.StatModifier.DurationType.PERMANENT:
+				var stat_key = mod.stat_key.to_lower()
+				if target.base_stats.has(stat_key):
+					target.base_stats[stat_key] += int(mod.value)
+					target.invalidate_stat_cache()
+					changed_count += 1
+					_log("Permanently increased %s to %d" % [stat_key, target.base_stats[stat_key]])
+	
+	return changed_count > 0
+
+func _handle_utility(
+	effect: BattleEffect,
+	source: Entity,
+	targets: Array[Entity],
+	context: Dictionary
+) -> bool:
+	"""Utility effects: skip turn, extra turn, etc."""
+	var applied_count = 0
+	
+	for target in targets:
+		if not is_instance_valid(target):
+			continue
+		
+		# Check custom_data for utility type
+		var util_type = effect.custom_data.get("type", "")
+		
+		match util_type:
+			"skip_turn":
+				target.skip_turn = true
+				applied_count += 1
+			"extra_turn":
+				target.extra_turn = true
+				applied_count += 1
+			"defend":
+				target.is_defending = true
+				applied_count += 1
+			_:
+				# Default behavior based on effect_id
+				if "skip" in effect.effect_id.to_lower():
+					target.skip_turn = true
+					applied_count += 1
+				elif "extra" in effect.effect_id.to_lower():
+					target.extra_turn = true
+					applied_count += 1
+	
+	return applied_count > 0
+
+func _handle_custom(
+	effect: BattleEffect,
+	source: Entity,
+	targets: Array[Entity],
+	context: Dictionary
+) -> bool:
+	"""Run custom script for complex effects."""
+	if effect.custom_script_path == "":
+		return false
+	
+	var script = load(effect.custom_script_path)
+	if not script:
+		push_warning("Failed to load custom script: %s" % effect.custom_script_path)
+		return false
+	
+	var executed = false
+	for target in targets:
+		if script.has_method("execute"):
+			script.execute(source, target, context)
+			executed = true
+	
+	return executed
+
+func _trigger_visuals(effect: BattleEffect, target: Entity):
+	"""Trigger visual/audio feedback for an effect."""
+	# This would integrate with your battle UI system
+	# For now, just emit a signal that UI can listen to
+	pass
+
+# ==================== TIMING SYSTEM ====================
+
+func execute_effects_at_timing(
+	effects: Array[BattleEffect],
+	source: Entity,
+	timing: BattleEffect.Timing,
+	context: Dictionary = {}
+) -> void:
+	"""
+	Execute all effects matching the specified timing.
+	Call from battle loop at appropriate phases.
+	"""
+	for effect in effects:
+		if effect.timing == timing:
+			execute_effect(effect, source, context)
+
+func schedule_effect_tick(
+	effect: BattleEffect,
+	source: Entity,
+	targets: Array[Entity],
+	interval_seconds: float,
+	repeat_count: int = -1
+) -> Timer:
+	"""
+	Schedule a repeating effect using SceneTree timer (no _process polling).
+	Use repeat_count = -1 for infinite (must manually stop).
+	Returns the Timer for manual control.
+	"""
+	var timer = Timer.new()
+	timer.wait_time = interval_seconds
+	timer.autostart = true
+	timer.one_shot = false
+	
+	var ticks_remaining = repeat_count
+	var timer_callback = func():
+		if ticks_remaining != 0:
+			for target in targets:
+				if is_instance_valid(target):
+					_execute_effect_by_type(effect, source, [target], {})
+			
+			if ticks_remaining > 0:
+				ticks_remaining -= 1
+			
+			if ticks_remaining == 0:
+				timer.stop()
+				_active_timers.erase(timer)
+				timer.queue_free()
+	
+	timer.timeout.connect(timer_callback)
+	add_child(timer)
+	_active_timers.append(timer)
+	
+	return timer
+
+func _schedule_effect(
+	effect: BattleEffect,
+	source: Entity,
+	context: Dictionary,
+	delay_seconds: float
+):
+	"""Schedule a single delayed effect execution."""
+	var timer = Timer.new()
+	timer.wait_time = delay_seconds
+	timer.one_shot = true
+	
+	timer.timeout.connect(func():
+		execute_effect(effect, source, context)
+		if is_instance_valid(timer):
+			timer.queue_free()
+			_active_timers.erase(timer)
+	)
+	
+	add_child(timer)
+	_active_timers.append(timer)
+
+# ==================== STATUS TICKING ====================
+
+func tick_all_statuses():
+	"""
+	Tick all statuses on all entities.
+	Call once per turn during battle loop.
+	"""
+	for entity in _allies + _enemies:
+		if not is_instance_valid(entity):
+			continue
+		
+		# Tick statuses
+		var expired = entity.tick_statuses()
+		for status_id in expired:
+			status_removed.emit(entity, status_id)
+			_log("Status %s expired on %s" % [status_id, entity.name])
+		
+		# Tick modifiers
+		var expired_mods = entity.tick_modifiers()
+		for mod_id in expired_mods:
+			modifier_expired.emit(entity, mod_id)
+
+# ==================== UTILITY FUNCTIONS ====================
+
+func get_battle_context() -> Dictionary:
+	"""Get current battle context dictionary."""
+	return _battle_context.duplicate()
+
+func set_battle_context_value(key: String, value):
+	"""Set a value in the battle context."""
+	_battle_context[key] = value
+
+func get_all_entities() -> Array[Entity]:
+	"""Get all entities (allies + enemies)."""
+	return _allies + _enemies
+
+func get_alive_allies() -> Array[Entity]:
+	"""Get all living allies."""
+	return _allies.filter(func(e): return is_instance_valid(e) and e.hp > 0)
+
+func get_alive_enemies() -> Array[Entity]:
+	"""Get all living enemies."""
+	return _enemies.filter(func(e): return is_instance_valid(e) and e.hp > 0)
+
+func log_effect_execution(effect_name: String, success: bool):
+	"""Log effect execution for debugging."""
+	if debug_logging:
+		print("[BattleEffect] %s: %s" % [effect_name, "SUCCESS" if success else "FAILED"])
+
+func _log(message: String):
+	"""Internal logging with debug toggle."""
+	if debug_logging:
+		print("[BattleEffectManager] ", message)
+
+# ==================== SERIALIZATION HELPERS ====================
+
+func serialize_entity_states(entities: Array[Entity]) -> Array[Dictionary]:
+	"""Serialize all entity states for save system."""
+	var result: Array[Dictionary] = []
+	for entity in entities:
+		if is_instance_valid(entity):
+			result.append(entity.serialize_state())
+	return result
+
+func deserialize_entity_states(
+	entities: Array[Entity], 
+	data: Array[Dictionary]
+) -> void:
+	"""Restore entity states from save data."""
+	for i in range(min(entities.size(), data.size())):
+		if is_instance_valid(entities[i]):
+			entities[i].deserialize_state(data[i])

@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="Item" load_steps=4 format=3 uid="uid://comuahi34o6sw"]
+
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_l1bv0"]
+[ext_resource type="Texture2D" uid="uid://0c31mrug1r2w" path="res://assets/item_textures/EndoChestA.webp" id="2_f2nrl"]
+[ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="3_88h8h"]
+
+[resource]
+script = ExtResource("3_88h8h")
+item_name = "Endo Armor b"
+description = "Slightly better than the previous iteration. Addition of aluminium foil absorbs slightly more damage."
+texture = ExtResource("2_f2nrl")
+icon = ExtResource("2_f2nrl")
+type = 1
+sell_price = Dictionary[int, int]({
+0: 50,
+1: 25,
+2: 0
+})
+item_bonuses = Dictionary[String, int]({
+"ai": 0,
+"atk": 0,
+"cool": 0,
+"def": 5,
+"hp": 0,
+"mp": 0
+})
+armor_type = 1
+metadata/_custom_type_script = "uid://dn31qme1ukrys"

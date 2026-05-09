@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="Entity" load_steps=9 format=3 uid="uid://js76od81la8g"]
+
+[ext_resource type="Texture2D" uid="uid://cxpvgsefey5tp" path="res://assets/battlesprites/omegapartyhat.png" id="1_q0655"]
+[ext_resource type="Resource" uid="uid://bm2swlibbpbh4" path="res://resources/attacks/attack.tres" id="2_erhyv"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="3_q0655"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="4_1k7n8"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="5_pvup2"]
+[ext_resource type="Resource" uid="uid://cvrkbggxuxsyd" path="res://resources/attacks/enemies/bonk.tres" id="6_dardi"]
+[ext_resource type="Resource" uid="uid://cgui3t54g0dw1" path="res://resources/attacks/enemies/heal_strike.tres" id="7_1k7n8"]
+[ext_resource type="Resource" uid="uid://cdxn2sr63qtxh" path="res://resources/attacks/enemies/omega_beam.tres" id="8_pvup2"]
+
+[resource]
+script = ExtResource("5_pvup2")
+name = "Omega Party Hat"
+role = 1
+portrait = ExtResource("1_q0655")
+battle_sprite = ExtResource("1_q0655")
+back_sprite = ExtResource("1_q0655")
+path_to = "res://resources/enemies/o_party_hat.tres"
+base_stats = Dictionary[String, int]({
+"atk": 30,
+"def": 15,
+"hp": 300,
+"magic": 20,
+"mp": 75,
+"speed": 10
+})
+max_stats = Dictionary[String, int]({
+"atk": 30,
+"def": 15,
+"hp": 300,
+"magic": 20,
+"mp": 75,
+"speed": 10
+})
+hp = 300
+mp = 75
+skills = Dictionary[int, Array]({
+0: [ExtResource("6_dardi"), ExtResource("7_1k7n8"), ExtResource("8_pvup2")]
+})
+default_attack = ExtResource("2_erhyv")
+xp_reward = 100
+currency_reward = 40
+metadata/_custom_type_script = "uid://c2cret7fy87bn"

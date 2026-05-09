@@ -11,7 +11,7 @@ signal choice_available(choice: DialogueChoice)
 signal choice_selected(choice: DialogueChoice)
 signal dialogue_ended(last_node: Object)
 
-var data: DialogueData
+var data: Object #DialogueData
 var evaluator: DialogueConditionEvaluator
 var current_node: DialogueNode
 var current_label: String
@@ -114,7 +114,7 @@ func _run_effects(effects: Array[DialogueEffect]) -> void:
 		
 		match effect.effect_type:
 			DialogueEffect.EffectType.SET_VARIABLE:
-				_effect_set_variable(effect.param_string, effect.param_value)
+				_effect_set_variable(effect.param_string, str_to_var(effect.param_value))
 			
 			DialogueEffect.EffectType.ADD_ITEM:
 				_effect_add_item(effect.param_string, int(effect.param_value))
@@ -135,8 +135,8 @@ func _run_effects(effects: Array[DialogueEffect]) -> void:
 				_effect_complete_quest(effect.param_string)
 			
 			DialogueEffect.EffectType.TRIGGER_EVENT:
-				_effect_trigger_event(effect.param_string)
-			
+				_effect_trigger_event(effect.param_string, effect.param_value)
+				
 			DialogueEffect.EffectType.WAIT:
 				_effect_wait(effect.wait_seconds)
 			
@@ -144,7 +144,7 @@ func _run_effects(effects: Array[DialogueEffect]) -> void:
 				_effect_custom(effect)
 
 
-func _effect_set_variable(var_name: String, value: float) -> void:
+func _effect_set_variable(var_name: String, value) -> void:
 	if Global.get(var_name) != null:
 		Global[var_name] = value
 	if load(Global.current_scene).get(var_name) != null:
@@ -152,17 +152,17 @@ func _effect_set_variable(var_name: String, value: float) -> void:
 	if Global.battle_ref != null:
 		if Global.battle_ref.get(var_name) != null:
 			Global.battle_ref[var_name] = value
-	for i in Global.party:
+	for i in PlayerStats.party:
 		if i.get(var_name) != null:
 			i[var_name] = value
 
 func _effect_add_item(item_res_path: String, amount: int) -> void:
 	var item = load(item_res_path)
-	Global.add_item(item, amount)
+	PlayerStats.add_item(item, amount)
 
 func _effect_remove_item(item_res_path: String, amount: int) -> void:
 	var item = load(item_res_path)
-	Global.remove_item(item, amount)
+	PlayerStats.remove_item(item, amount)
 
 func _effect_add_status(status_id: String) -> void:
 	# Hook this to your status system
@@ -180,9 +180,10 @@ func _effect_complete_quest(quest_id: String) -> void:
 	# Hook this to your quest system
 	pass
 
-func _effect_trigger_event(event_name: String) -> void:
-	# Emit a signal or call a function
-	pass
+func _effect_trigger_event(event_name: String, event_var: String) -> void:
+	if event_name.to_lower() == "open shop" or event_name.to_lower() == "open_shop":
+		Global.shop_current = load(event_var)
+		get_tree().change_scene_to_file("res://scenes/ui/shop/shop.tscn")
 
 func _effect_wait(seconds: float) -> void:
 	# Pause dialogue - UI should handle this

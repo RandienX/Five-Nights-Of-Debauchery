@@ -1,19 +1,18 @@
 extends Button
 
+@onready var saves = $"../../save_box/Control"
+
+func _ready() -> void:
+	saves.global_position = Vector2(300, 64)
+	saves.scale = Vector2(0.8, 0.8)
+	saves.saving = false
+	saves.save_update()
+
 func _on_pressed() -> void:
-	if len($"../../save_box".get_children()) != 1:
-		var saves = preload("res://scenes/ui/game_menu/save/saves.tscn").instantiate()
-		saves.global_position = Vector2(300, 64)
-		saves.scale = Vector2(0.8, 0.8)
-		saves.saving = false
-		$"../../save_box".add_child(saves)
-		saves.save_update()
-	else:
-		$"../../save_box".get_children()[0].queue_free()
+	saves.visible = !saves.visible
+	$"../../settings".visible = false
 	
-
 var change_text = false
-
 func _on_mouse_entered() -> void:
 	change_text = true
 

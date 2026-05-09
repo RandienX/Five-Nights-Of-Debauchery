@@ -6,30 +6,102 @@ extends Node
 signal currency_changed(new_amount: int)
 signal stat_changed(stat_name: StringName, new_value: Variant)
 
-# Currency types - extensible for multiple currencies
 enum CurrencyType {GOLD, SHIT, FAZTOKENS}
 
-# Default currency amounts
 @export var gold: int = 100
 @export var shit: int = 0
 @export var tokens: int = 25
 
-# Generic stats dictionary for extensibility
 var stats: Dictionary[StringName, Variant] = {}
-var party: Array[Party] = [load("res://resources/party/freddy.tres").duplicate_deep(Resource.DEEP_DUPLICATE_ALL)]
-var inventory: Dictionary = {}
+var party: Array[Object] = [load("res://resources/party/freddy.tres").duplicate_deep(), load("res://resources/party/bonnie.tres").duplicate_deep()]
+var inventory: Dictionary[Item, int] = {}
+var player_position: Vector2 = Vector2(272, -82)
 
 func _ready() -> void:
-	add_item(preload("res://resources/items/consumables/small_soda.tres"), 5)
-	add_item(preload("res://resources/items/consumables/small_pizza.tres"), 5)
-	add_item(preload("res://resources/items/consumables/degreaser.tres"), 5)
-	add_item(preload("res://resources/items/armor/EndoBodyA.tres"), 1)
+	add_item(load("res://resources/items/consumables/small_pizza.tres") as Item, 5)
+	add_item(load("res://resources/items/consumables/small_soda.tres") as Item, 5)
+	add_item(load("res://resources/items/consumables/degreaser.tres") as Item, 5)
+	add_item(load("res://resources/items/consumables/molotov.tres") as Item, 1)
+	add_item(load("res://resources/items/consumables/attack_item.tres") as Item, 1)
+	add_item(load("res://resources/items/armor/EndoBodyA.tres") as Item, 1)
 	for p in party:
 		p.equip_stats_change()
-	# Initialize with some default stats if needed
-	stats["reputation"] = 0
 
-## Get currency amount by type
+# === Save/Load Data Management ===
+func get_save_data() -> Dictionary:
+	var data: Dictionary = {
+		"gold": gold,
+		"shit": shit,
+		"tokens": tokens,
+		"stats": stats,
+		"player_position": var_to_str(player_position),
+		"inventory": {},
+		"party": []
+	}
+	
+	# Serialize inventory (Item resources -> resource_path)
+	for item in inventory.keys():
+		if item and item.resource_path:
+			data["inventory"][item.resource_path] = inventory[item]
+	
+	# Serialize party members with their properties using SaveManager's serialization
+	for p in party:
+		if p is Resource:
+			var p_dict: Dictionary = {
+			}
+			# Serialize all storage properties
+			for prop in p.get_property_list():
+				if prop.usage & PROPERTY_USAGE_STORAGE:
+					var prop_name: String = prop.name
+					# Skip internal/resource management properties
+					if prop_name in ["script", "resource_local_to_scene", "resource_name", "_resource_type",
+					"metadata/_custom_type_script", "resource_scene_unique_id"]:
+						continue
+					if p.has_method("get") or prop_name in p:
+						var prop_value = p.get(prop_name)
+						# Use SaveManager's serialization for consistency
+						p_dict[prop_name] = SaveManager.serialize_value(prop_value, prop.type)
+			data["party"].append(p_dict)
+	
+	return data
+
+func load_save_data(data: Dictionary) -> void:
+	# Load currency
+	if data.has("gold"):
+		gold = data["gold"]
+	if data.has("shit"):
+		shit = data["shit"]
+	if data.has("tokens"):
+		tokens = data["tokens"]
+	
+	# Load player position
+	if data.has("player_position"):
+		player_position = str_to_var(data["player_position"])
+	
+	# Load inventory
+	if data.has("inventory"):
+		inventory.clear()
+		for path in data["inventory"].keys():
+			var item: Item = load(path)
+			if item:
+				inventory[item] = int(data["inventory"][path])
+	
+	# Load party
+	if data.has("party"):
+		party.clear()
+		for p_dict in data["party"]:
+			var base_entity: Entity = load(p_dict["path_to"])
+			if base_entity:
+				var resource: Entity = base_entity.duplicate_deep()
+				for prop_name in p_dict.keys():
+					var prop_value = SaveManager.deserialize_value(p_dict[prop_name])
+					if prop_name in resource:
+						resource.set(prop_name, prop_value)
+				# Re-initialize equipment effects after loading
+				resource.equip_stats_change()
+				party.append(resource)
+
+# === Currency Management ===
 func get_currency(type: CurrencyType = CurrencyType.GOLD) -> int:
 	match type:
 		CurrencyType.GOLD:
@@ -40,8 +112,6 @@ func get_currency(type: CurrencyType = CurrencyType.GOLD) -> int:
 			return tokens
 	return 0
 
-
-## Set currency amount by type, emits signal
 func set_currency(amount: int, type: CurrencyType = CurrencyType.GOLD) -> void:
 	match type:
 		CurrencyType.GOLD:
@@ -52,74 +122,90 @@ func set_currency(amount: int, type: CurrencyType = CurrencyType.GOLD) -> void:
 			tokens = max(0, amount)
 	currency_changed.emit(get_currency(type))
 
-
-## Add currency amount by type, emits signal
 func add_currency(amount: int, type: CurrencyType = CurrencyType.GOLD) -> void:
 	set_currency(get_currency(type) + amount, type)
 
-## Deduct currency amount by type, returns success/failure
-## Returns false if insufficient funds
 func deduct_currency(amount: int, type: CurrencyType = CurrencyType.GOLD) -> bool:
 	if get_currency(type) >= amount:
 		set_currency(get_currency(type) - amount, type)
 		return true
 	return false
 
-## Check if player has enough currency
 func has_currency(amount: int, type: CurrencyType = CurrencyType.GOLD) -> bool:
 	return get_currency(type) >= amount
 
-
-## Get a generic stat value
+# === Stats Management ===
 func get_stat(stat_name: StringName, default: Variant = null) -> Variant:
 	return stats.get(stat_name, default)
 
-
-## Set a generic stat value, emits signal
 func set_stat(stat_name: StringName, value: Variant) -> void:
 	stats[stat_name] = value
 	stat_changed.emit(stat_name, value)
 
-
-## Serialize stats for saving (called from Global.gd save system)
-func get_save_data() -> Dictionary:
-	return {
-		"gold": gold,
-		"shit": shit,
-		"tokens": tokens,
-		"stats": stats
-	}
-
-
-## Load stats from save data (called from Global.gd load system)
-func load_save_data(data: Dictionary) -> void:
-	for v in range(len(data)):
-		if self.has_meta(data.keys()[v]):
-			self[data.keys()[v]] = data[data.keys()[v]]
-
 # === Inventory Management ===
-func add_item(item: Resource, amount: int = 1):
+func add_item(item: Item, amount: int = 1):
 	if not inventory.has(item):
 		inventory[item] = 0
 	inventory[item] += amount
 
-func remove_item(item: Resource, amount: int = 1):
+func remove_item(item: Item, amount: int = 1):
 	if inventory.has(item):
 		inventory[item] -= amount
 		if inventory[item] <= 0:
 			inventory.erase(item)
 		return true
 	return false
-
-func has_item(item: Resource, amount: int = 1) -> bool:
+	
+func use_item(item: Item, target: Array) -> bool:
+	if not item or target.size() <= 0:
+		print("1")
+		print(target)
+		return false
+	if item.type != 2:  # Not a consumable
+		print("2")
+		return false
+	
+	for t in target:
+		
+		# Apply revive effect
+		if item.revive_amount > 0 and t.hp <= 0:
+			t.hp = min(item.revive_amount, t.max_stats["hp"])
+			
+		# Apply heal effects
+		if item.heal_amount > 0 and t.hp < t.max_stats["hp"] and t.hp > 0:
+			t.hp = min(t.hp + item.heal_amount, t.max_stats["hp"])
+	
+		# Apply mana restore
+		if item.mana_amount > 0 and t.mp < t.max_stats["mp"]:
+			t.mp = min(t.mp + item.mana_amount, t.max_stats["mp"])
+	
+	
+		# Remove status effects (heals_effects is Array[int] of effect enum values)
+		if item.heals_effects:
+			for effect_key in item.heals_effects:
+				if t.effects.has(effect_key):
+					t.effects.erase(effect_key)
+							
+		if item.consume_effects:
+			for effect in item.consume_effects:
+				# Process BattleEffect resources here if needed
+				pass
+	
+	remove_item(item, 1)
+	return true
+	
+func has_item(item: Item, amount: int = 1) -> bool:
 	if inventory.has(item):
 		return inventory[item] >= amount
 	return false
 
-func get_item_amount(item: Resource) -> int:
+func get_item_amount(item: Item) -> int:
 	if inventory.has(item):
 		return inventory[item]
 	return 0
 
 func clear_inventory():
 	inventory.clear()
+
+func get_inventory():
+	return inventory

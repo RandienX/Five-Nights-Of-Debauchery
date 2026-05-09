@@ -1,23 +1,26 @@
 extends CharacterBody2D
+
 @onready var menu := $Camera2D/CanvasLayer/game_menu
+@onready var camera := $Camera2D
+
 @export var stop_move := false
 @export var static_shader := true
 @export var can_menu := true
-@export var inbattle_cam := false
+
 func _ready() -> void:
 	$AnimatedSprite2D.play("idle1")
+	camera.global_position = global_position
 	$Camera2D/CanvasLayer/white_flash.visible = static_shader
-	$Camera2D/CanvasLayer/ColorRect.visible = static_shader
+	$Camera2D/CanvasLayer/shader/crt.visible = static_shader
 	$Camera2D/CanvasLayer/Label.visible = static_shader
-	if inbattle_cam:
-		$Camera2D.queue_free()
 	
 func _physics_process(delta: float) -> void:
 	movement(delta)
 	
 	move_and_slide()
 
-@export var move_speed: float = 50.0
+@export var move_speed: float = 10.0
+@export_range(1.0, 3.0) var sprint_mult: float = 1.75
 var acceleration = 500
 
 var current_direction: Vector2 = Vector2.ZERO
@@ -30,14 +33,15 @@ func movement(delta) -> void:
 		if direction.length() > 1.0:
 			direction = direction.normalized()
 		current_direction = direction
-		if Input.is_action_pressed("run"): velocity = velocity.move_toward(direction * 1.5 * move_speed, acceleration * 1.5 * delta)
+		if Input.is_action_pressed("run"): velocity = velocity.move_toward(direction * sprint_mult * move_speed, acceleration * 1.5 * delta)
 		else: velocity = velocity.move_toward(direction * move_speed, acceleration * delta)
 	else:
 		current_direction = Vector2.ZERO
 		velocity = Vector2.ZERO
 	
 	animate()
-	move_and_slide()
+	if global_position != null:
+		PlayerStats.player_position = global_position
 	
 var idle_state = 0
 
@@ -60,7 +64,7 @@ func textbox():
 	stop_move = true
 	can_menu = false
 
-@export var party: Array[Party]
+@export var party: Array[Entity]
 
 func _input(event: InputEvent) -> void:
 	if Input.is_action_just_pressed("menu") and can_menu:

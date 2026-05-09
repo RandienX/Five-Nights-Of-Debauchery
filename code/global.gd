@@ -6,110 +6,45 @@ enum AI {Dumb, Casual, Violent, Defensive, Intelligent, Flexible}
 var battle_ref: Node = null
 
 var battle_current = null
+var shop_current: ShopData = null
 
 #--Saved Variables--
 var time_played: float = 0.0
 var current_scene: String = "res://scenes/maps/1ab.tscn"
 var scene_data: Dictionary = {}
-var player_position: Vector2
 
 var loading = false
-
 
 func _process(delta: float) -> void:
 	time_played += delta
 
 # === Save Data Management ===
-func serialize_value(value: Variant) -> Variant:
-	if value is Resource:
-		return value.resource_path if value.resource_path != "" else null
-	elif value is Dictionary:
-		var new_dict = {}
-		for k in value.keys():
-			new_dict[serialize_value(k)] = serialize_value(value[k])
-		return new_dict
-	elif value is Array:
-		var new_arr = []
-		for v in value:
-			new_arr.append(serialize_value(v))
-		return new_arr
-	elif value is Vector2 or value is Color:
-		return var_to_str(value)
-	return value
-
-func deserialize_value(value: Variant) -> Variant:
-	if value is String and value.ends_with(".tres"):
-		return load(value)
-	elif value is String and (value.begins_with("Vector2") or value.begins_with("Color")):
-		return str_to_var(value)
-	elif value is Dictionary:
-		var new_dict = {}
-		for k in value.keys():
-			new_dict[deserialize_value(k)] = deserialize_value(value[k])
-		return new_dict
-	elif value is Array:
-		var new_arr = []
-		for v in value:
-			new_arr.append(deserialize_value(v))
-		return new_arr
-	return value
-
 func get_save_data() -> Dictionary:
-	var data = {"inventory": {}, "current_scene": current_scene, "player_position": player_position}
+	# Delegate to PlayerStats for comprehensive save data
+	if PlayerStats:
+		var stats = PlayerStats
+		return stats.get_save_data()
 	
-	for path in PlayerStats.inventory.keys():
-		data["inventory"][path.resource_path] = PlayerStats.inventory[path]
-	var p_data = []
-	for p in PlayerStats.party:
-		if p is Resource:
-			var p_dict = {"resource_path": p.path_to, "properties": {}}
-			for prop in p.get_property_list():
-				if prop.usage & PROPERTY_USAGE_STORAGE and prop in Party.new().get_script().get_script_property_list():
-					var prop_name = prop.name
-					var prop_value = p.get(prop_name)
-					p_dict["properties"][prop_name] = serialize_value(prop_value)
-			p_data.append(p_dict)
-	
-	data["party"] = p_data
-	
-	# Include PlayerStats data if available
-	if Engine.has_singleton("PlayerStats"):
-		var stats = Engine.get_singleton("PlayerStats")
-		data["player_stats"] = stats.get_save_data()
-	
-	return data
+	# Fallback if PlayerStats is not available
+	return {"inventory": {}, "current_scene": current_scene, "player_position": PlayerStats.player_position}
 
 func load_save_data(data: Dictionary, scenes_data: Dictionary) -> void:
-	var inv_data = data.get("inventory", {})
-	PlayerStats.inventory.clear()
-	for path in inv_data.keys():
-		var item = deserialize_value(path)
-		var amount = inv_data[path]
-		PlayerStats.inventory.merge({item: int(amount)})
-	PlayerStats.party.clear()
-	for p_dict in data.get("party", []):
-		var resource: Party = load(p_dict["resource_path"]).duplicate_deep()
-		if resource:
-			resource = resource.duplicate(true)
-			for prop_name in p_dict["properties"].keys():
-				var prop_value = deserialize_value(p_dict["properties"][prop_name])
-				if prop_name in resource:
-					resource.set(prop_name, prop_value)
-			PlayerStats.party.append(resource)
-			
 	loading = true
+	
+	# Load PlayerStats data (inventory, party, currency, stats, position)
+	if data.has("player_stats") or data.has("inventory") or data.has("party"):
+		PlayerStats.load_save_data(data)
+	
+	# Load current scene and player position if specified
 	if data.has("current_scene"):
 		var vector = str_to_var("Vector2" + data["player_position"])
-		player_position = vector
+		PlayerStats.player_position = vector
 		get_tree().change_scene_to_file(data["current_scene"])
-	scene_data = scenes_data
-	await get_tree().create_timer(0.03).timeout
-	loading = false
+		scene_data = scenes_data
+		await get_tree().create_timer(0.03).timeout
 	
-	# Load PlayerStats data if available
-	if data.has("player_stats") and Engine.has_singleton("PlayerStats"):
-		var stats = Engine.get_singleton("PlayerStats")
-		stats.load_save_data(data["player_stats"])
+	loading = false
+
 
 func set_scene_data(data: Object):
 	var is_room = scene_data.find_key(data.room_name)
@@ -122,23 +57,7 @@ func get_scenes_data():
 	return scene_data
 
 func reload_last_save() -> void:
-	var file = FileAccess.open("user://save.save", FileAccess.READ)
-	if not file:
-		get_tree().change_scene_to_file(current_scene)
-		return
-	var json = file.get_as_text()
-	file.close()
-	var data = JSON.parse_string(json)
-	if data:
-		var scenes_file = FileAccess.open("user://scene_data.save", FileAccess.READ)
-		var scenes_data = {}
-		if scenes_file:
-			var scenes_json = scenes_file.get_as_text()
-			scenes_file.close()
-			scenes_data = JSON.parse_string(scenes_json) if scenes_json else {}
-		load_save_data(data, scenes_data)
-	else:
-		get_tree().change_scene_to_file(current_scene)
+	Save.load_game(SaveManager.last_slot)
 
 # === Item Usage ===
 func use_item(item: Resource, target: Object) -> bool:
@@ -157,10 +76,10 @@ func use_item(item: Resource, target: Object) -> bool:
 				if target.hp <= 0:
 					target.hp = 1
 				elif target.hp > 0:
-					if target is Party:
+					if target.role == Entity.Role.PARTY:
 						target.hp = target.max_stats["hp"]
-					elif target is Enemy:
-						target.hp = target.max_hp
+					elif target.role == Entity.Role.ENEMY:
+						target.hp = target.max_stats["hp"]
 			if effect_data is Array and effect_data.size() >= 2:
 				var level = effect_data[0]
 				var duration = effect_data[1]
@@ -196,8 +115,11 @@ func apply_effect(target: Object, effect: int, level: int, duration: int):
 # === Tools ===
 func lower_font(target: Label):
 	target.theme.default_font_size = 48
-	while target.theme.default_font.get_string_size(target.text, target.horizontal_alignment, -1, target.theme.default_font_size).x > target.custom_minimum_size.x:
-		target.default_font_size -= 1
+	for i in range(48): 
+		if target.theme.default_font.get_string_size(target.text, target.horizontal_alignment, -1, target.theme.default_font_size).x > target.custom_minimum_size.x:
+			target.theme.default_font_size -= 1
+		else:
+			return
 
 # === Mics ===
 func load_battle(battle: Battle):

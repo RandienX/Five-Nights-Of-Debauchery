@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="Entity" load_steps=8 format=3 uid="uid://b7val374sectd"]
+
+[ext_resource type="Texture2D" uid="uid://bqltgkv6ynnep" path="res://assets/battlesprites/Party Hat 3.png" id="1_1bcmh"]
+[ext_resource type="Resource" uid="uid://bm2swlibbpbh4" path="res://resources/attacks/attack.tres" id="2_36dsc"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="3_vuifj"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="4_xib6y"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="5_4px6p"]
+[ext_resource type="Resource" uid="uid://cvrkbggxuxsyd" path="res://resources/attacks/enemies/bonk.tres" id="6_5bqu0"]
+[ext_resource type="Resource" uid="uid://c74il16vv2c7f" path="res://resources/attacks/enemies/quick_strike.tres" id="7_36dsc"]
+
+[resource]
+script = ExtResource("5_4px6p")
+name = "Gamma Party Hat"
+role = 1
+portrait = ExtResource("1_1bcmh")
+battle_sprite = ExtResource("1_1bcmh")
+back_sprite = ExtResource("1_1bcmh")
+path_to = "res://resources/enemies/y_party_hat.tres"
+base_stats = Dictionary[String, int]({
+"atk": 18,
+"def": 9,
+"hp": 180,
+"magic": 10,
+"mp": 40,
+"speed": 8
+})
+max_stats = Dictionary[String, int]({
+"atk": 10,
+"def": 4,
+"hp": 100,
+"magic": 5,
+"mp": 20,
+"speed": 10
+})
+hp = 180
+mp = 40
+skills = Dictionary[int, Array]({
+0: [ExtResource("6_5bqu0"), ExtResource("7_36dsc")]
+})
+default_attack = ExtResource("2_36dsc")
+xp_reward = 60
+currency_reward = 15
+metadata/_custom_type_script = "uid://c2cret7fy87bn"

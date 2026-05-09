@@ -1,52 +1,10 @@
-[gd_scene load_steps=16 format=3 uid="uid://duee2xl28nl3p"]
+[gd_scene load_steps=6 format=3 uid="uid://duee2xl28nl3p"]
 
 [ext_resource type="Script" uid="uid://d8n1r58k2vo5" path="res://scenes/ui/shop/shop.gd" id="1_b72a6"]
 [ext_resource type="Texture2D" uid="uid://cfoscxh3td7hk" path="res://assets/battleui/backgrounds/FNaF 1 - Dining Area.png" id="1_h6h54"]
-[ext_resource type="Script" uid="uid://b2nv155ae50jn" path="res://code/shop/shop_item.gd" id="2_6mwi1"]
 [ext_resource type="Texture2D" uid="uid://bly8f2c01poij" path="res://assets/menu/shop/bb_shop.png" id="2_14h7y"]
-[ext_resource type="Resource" uid="uid://dlxeylilwh1gg" path="res://resources/items/consumables/small_pizza.tres" id="3_evphj"]
-[ext_resource type="Script" uid="uid://dqtfnwt45e6s6" path="res://code/shop/shop_data.gd" id="3_o4tlq"]
+[ext_resource type="Resource" uid="uid://bl6fq4p6ulpwx" path="res://resources/shopdata/bb/bb_shop_1.tres" id="2_robsg"]
 [ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="3_robsg"]
-[ext_resource type="Resource" uid="uid://bw0e1yparf4hs" path="res://resources/items/consumables/small_soda.tres" id="4_6vsgs"]
-[ext_resource type="Resource" uid="uid://ckt7kwce5bnkx" path="res://resources/items/consumables/degreaser.tres" id="5_0cijk"]
-[ext_resource type="Resource" uid="uid://blq4np0unbgga" path="res://resources/items/armor/EndoBodyA.tres" id="6_8gq3t"]
-
-[sub_resource type="Resource" id="Resource_fwt8y"]
-script = ExtResource("2_6mwi1")
-item = ExtResource("3_evphj")
-price = 15
-tags = Array[StringName]([&"consumable"])
-metadata/_custom_type_script = "uid://b2nv155ae50jn"
-
-[sub_resource type="Resource" id="Resource_hj4dh"]
-script = ExtResource("2_6mwi1")
-item = ExtResource("4_6vsgs")
-price = 20
-tags = Array[StringName]([&"consumable"])
-sort_order = 1
-metadata/_custom_type_script = "uid://b2nv155ae50jn"
-
-[sub_resource type="Resource" id="Resource_gj6xf"]
-script = ExtResource("2_6mwi1")
-item = ExtResource("5_0cijk")
-tags = Array[StringName]([&"consumable"])
-sort_order = 2
-metadata/_custom_type_script = "uid://b2nv155ae50jn"
-
-[sub_resource type="Resource" id="Resource_h45c7"]
-script = ExtResource("2_6mwi1")
-item = ExtResource("6_8gq3t")
-tags = Array[StringName]([&"armor"])
-sort_order = 3
-metadata/_custom_type_script = "uid://b2nv155ae50jn"
-
-[sub_resource type="Resource" id="Resource_1q0x5"]
-script = ExtResource("3_o4tlq")
-shop_name = "Enragement Shop Pizzaria"
-shop_description = "bitch"
-items = Array[ExtResource("2_6mwi1")]([SubResource("Resource_fwt8y"), SubResource("Resource_hj4dh"), SubResource("Resource_gj6xf"), SubResource("Resource_h45c7")])
-categories = Array[StringName]([&"all", &"consumable", &"armor", &"weapon"])
-metadata/_custom_type_script = "uid://dqtfnwt45e6s6"
 
 [node name="Control" type="Control"]
 layout_mode = 3
@@ -56,7 +14,17 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_b72a6")
-current_shop_data = SubResource("Resource_1q0x5")
+current_shop_data = ExtResource("2_robsg")
+talk_responses = Dictionary[String, String]({
+"Fatherless piece of shit": "Yes. I am fatherless, my papa didn't come back from the supermatket to get milk, I even bought the milk myself, but he didn't come back... (you see the 6 years expired milk on the shelf)",
+"Give me free shit": "I am a respectable business if you want free shit i can shit into your hands, still with a price but small.",
+"Inhale my dong
+ enragement child.": "Fuck off you intermediate product from a bear to a hunk of metal.",
+"What do you think about the
+ economical situation of
+ Slovakia in 2001?": "Here's my take on Slovakia's economic situation in 2001:GDP Growth: Slovakia's economy grew by approximately 2.9–3.3% in 2001, a notable recovery from the sluggish 0.8% growth in 2000. This marked the beginning of a stronger growth trajectory that would accelerate in subsequent years.Inflation: Consumer price inflation remained elevated at around 7.1–7.3% for the year , though it showed signs of moderation compared to 2000's 12.2%. The National Bank of Slovakia targeted year-end inflation between 6.0–8.5%.Unemployment: This was a major challenge. Unemployment peaked at approximately 19.2% in 2001, reflecting the social costs of structural reforms and macroeconomic stabilization policies.Key Reforms: 2001 was a pivotal year for market-oriented reforms under Prime Minister Mikuláš Dzurinda's government. Major initiatives included:    Banking sector restructuring and privatization (e.g., Slovenská sporiteľňa acquired by Austria's Erste Bank)    Continued privatization of state assets (telecommunications, steel industry)    Legislative alignment with EU and OECD standards    Introduction of measures to attract foreign direct investmentExternal Factors: Export growth remained strong (~10%), though concerns emerged about a potential slowdown in EU demand following the global economic deceleration in late 2001. Outlook: Despite high unemployment and inflation, 2001 laid the groundwork for Slovakia's \"Tatra Tiger\" growth period (2002–2008), driven by FDI inflows, EU accession preparations, and structural reforms.In short: 2001 was a transitional year—modest growth, persistent macroeconomic imbalances, but critical reforms positioning Slovakia for stronger performance ahead."
+})
+default_response = "nigger"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 clip_contents = true
@@ -210,12 +178,6 @@ theme_override_font_sizes/bold_italics_font_size = 21
 theme_override_font_sizes/italics_font_size = 21
 theme_override_font_sizes/mono_font_size = 21
 bbcode_enabled = true
-text = "BB TALK BOX"
-
-[node name="QuestionContainer" type="VBoxContainer" parent="HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/MarginContainer/ColorRect"]
-layout_mode = 0
-offset_right = 384.0
-offset_bottom = 150.0
 
 [node name="ColorRect" type="ColorRect" parent="HBoxContainer"]
 custom_minimum_size = Vector2(288, 0)
@@ -264,8 +226,10 @@ layout_mode = 2
 [node name="Currencies" type="Label" parent="HBoxContainer/ColorRect/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
-text = "Gold:
-Shit:
-FazTokens:"
+text = "Gold: 100
+Shit: 0
+FazTokens: 25"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[connection signal="pressed" from="HBoxContainer/VBoxContainer/HBoxContainer/ColorRect/buttons/VBoxContainer/Exit" to="." method="_on_exit_pressed"]

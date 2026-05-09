@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=4 uid="uid://boxlcoa7yx6um"]
+[gd_scene load_steps=15 format=4 uid="uid://boxlcoa7yx6um"]
 
 [ext_resource type="Script" uid="uid://875oleikcbyw" path="res://scenes/ui/game_menu/menu.gd" id="1_t8iaa"]
 [ext_resource type="Texture2D" uid="uid://c6t3yqacgcfe1" path="res://assets/menu/Window.png" id="2_88hgd"]
@@ -6,7 +6,6 @@
 [ext_resource type="FontFile" uid="uid://bbkqbneky7jdt" path="res://assets/courbd.ttf" id="3_n4xiy"]
 [ext_resource type="Script" uid="uid://jghaqibniequ" path="res://scenes/ui/game_menu/menu_button.gd" id="4_45a32"]
 [ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="5_075ci"]
-[ext_resource type="Script" uid="uid://x7ypkmxlnbhh" path="res://scenes/ui/game_menu/menu_back_button.gd" id="6_88hgd"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_288ov"]
 texture = ExtResource("2_88hgd")
@@ -107,7 +106,7 @@ theme_override_font_sizes/font_size = 28
 text = "Party"
 flat = true
 script = ExtResource("4_45a32")
-menu_path = "res://scenes/ui/game_menu/party/party_menu.tscn"
+menu_path = "res://scenes/ui/game_menu/party/party.tscn"
 
 [node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/HSplitContainer/categories/party"]
 z_index = -1
@@ -177,6 +176,7 @@ theme_override_font_sizes/font_size = 28
 text = "Settings"
 flat = true
 script = ExtResource("4_45a32")
+menu_path = "res://scenes/ui/game_menu/settings/settings.tscn"
 id = 3
 
 [node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/HSplitContainer/categories/settings"]
@@ -215,18 +215,19 @@ patch_margin_top = 5
 patch_margin_right = 5
 patch_margin_bottom = 5
 
-[node name="back" type="Button" parent="MarginContainer/HSplitContainer/categories"]
+[node name="extras" type="Button" parent="MarginContainer/HSplitContainer/categories"]
 material = SubResource("ShaderMaterial_f6rfk")
 custom_minimum_size = Vector2(180, 87)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("3_n4xiy")
 theme_override_font_sizes/font_size = 28
-text = "Back"
+text = "Extras"
 flat = true
-script = ExtResource("6_88hgd")
+script = ExtResource("4_45a32")
+menu_path = "res://scenes/ui/game_menu/extras/extras.tscn"
 id = 5
 
-[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/HSplitContainer/categories/back"]
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/HSplitContainer/categories/extras"]
 z_index = -1
 use_parent_material = true
 layout_mode = 0
@@ -247,4 +248,4 @@ mouse_filter = 2
 [connection signal="pressed" from="MarginContainer/HSplitContainer/categories/quests" to="MarginContainer/HSplitContainer/categories/quests" method="change_menu"]
 [connection signal="pressed" from="MarginContainer/HSplitContainer/categories/settings" to="MarginContainer/HSplitContainer/categories/settings" method="change_menu"]
 [connection signal="pressed" from="MarginContainer/HSplitContainer/categories/save" to="MarginContainer/HSplitContainer/categories/save" method="change_menu"]
-[connection signal="pressed" from="MarginContainer/HSplitContainer/categories/back" to="MarginContainer/HSplitContainer/categories/back" method="back"]
+[connection signal="pressed" from="MarginContainer/HSplitContainer/categories/extras" to="MarginContainer/HSplitContainer/categories/extras" method="change_menu"]

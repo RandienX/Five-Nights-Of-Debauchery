@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="Entity" load_steps=6 format=3 uid="uid://jacdqq8darrf"]
+
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_c2520"]
+[ext_resource type="Texture2D" uid="uid://cgsaxwoxv55ux" path="res://assets/battlesprites/Party Hat.png" id="1_vdjy6"]
+[ext_resource type="Resource" uid="uid://bm2swlibbpbh4" path="res://resources/attacks/attack.tres" id="2_rrxtr"]
+[ext_resource type="Script" uid="uid://c3x5tbne416sl" path="res://code/battle/battle_item_drop.gd" id="3_vdjy6"]
+[ext_resource type="Script" uid="uid://c2cret7fy87bn" path="res://code/battle/entity.gd" id="4_rrxtr"]
+
+[resource]
+script = ExtResource("4_rrxtr")
+name = "Alpha Party Hat"
+description = "Weakest of the pack, tries to appear strong whilst whining from being screamed at."
+role = 1
+portrait = ExtResource("1_vdjy6")
+battle_sprite = ExtResource("1_vdjy6")
+back_sprite = ExtResource("1_vdjy6")
+path_to = "res://resources/enemies/a_party_hat.tres"
+base_stats = Dictionary[String, int]({
+"atk": 5,
+"def": 1,
+"hp": 50,
+"magic": 0,
+"mp": 50,
+"speed": 3
+})
+hp = 50
+default_attack = ExtResource("2_rrxtr")
+ai_type = 0
+currency_reward = 1
+metadata/_custom_type_script = "uid://c2cret7fy87bn"

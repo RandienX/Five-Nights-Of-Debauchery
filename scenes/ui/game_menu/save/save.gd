@@ -6,7 +6,7 @@ extends Control
 var saving = true
 
 func _ready() -> void:
-	display()
+		display()
 
 func _process(delta: float) -> void:
 	save_name = $texture/margin/vbox/text/savename.text
@@ -24,11 +24,15 @@ func _on_button_pressed() -> void:
 
 func display():
 	var save_data = Save.get_slot_info(id)
-	if save_data["exists"] == true:
-		$texture/margin/vbox/text/savename.text = save_data["name"]
-		$texture/margin/vbox/text/time.text = Save.format_time(save_data["time"])
-		if "current_scene" in save_data["global_data"].keys():
-			if load(save_data["global_data"]["current_scene"]).instantiate().room_name:
-				$texture/margin/vbox/roomname.text = load(save_data["global_data"]["current_scene"]).instantiate().room_name
+	if save_data.exists:
+		$texture/margin/vbox/text/savename.text = save_data.save_name
+		$texture/margin/vbox/text/time.text = Save.format_time(save_data["time_played"])
+		var scene_path = save_data["current_scene"]
+		if ResourceLoader.exists(scene_path):
+			var scene = load(scene_path)
+			if scene:
+				$texture/margin/vbox/roomname.text = scene.instantiate().room_name
+			else:
+				$texture/margin/vbox/roomname.text = "Unknown Room"
 		else:
-			$texture/margin/vbox/roomname.text = "Err - Error"
+			$texture/margin/vbox/roomname.text = "Unknown Room"

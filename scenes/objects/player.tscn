@@ -69,7 +69,7 @@ _data = {
 }
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h5uus"]
-size = Vector2(16, 14)
+size = Vector2(16, 15.5)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_tuyoq"]
 atlas = ExtResource("2_qhqgy")
@@ -190,20 +190,21 @@ animations = [{
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ksjmp"]
 shader = ExtResource("3_54rde")
-shader_parameter/resolution = Vector2(915, 824)
+shader_parameter/resolution = Vector2(864, 648)
+shader_parameter/brightness = 0.30000001425
 shader_parameter/scan_line_amount = 0.310000014725
-shader_parameter/scan_line_strength = -6.9669997609325
-shader_parameter/warp_amount = 0.3210000152475
+shader_parameter/scan_line_strength = -7.4509997839225
+shader_parameter/warp_amount = 0.294000013965
 shader_parameter/noise_amount = 0.30000001192093
-shader_parameter/interference_amount = 0.338000016055
+shader_parameter/interference_amount = 0.2890000137275
 shader_parameter/grille_amount = 0.1110000052725
-shader_parameter/grille_size = 2.1270000535325
-shader_parameter/vignette_amount = 0.4890000232275
-shader_parameter/vignette_intensity = 0.4330000205675
-shader_parameter/aberation_amount = 0.3230000153425
+shader_parameter/grille_size = 1.8630000409925
+shader_parameter/vignette_amount = 0.258000012255
+shader_parameter/vignette_intensity = 0.3450000163875
+shader_parameter/aberation_amount = 0.2790000132525
 shader_parameter/roll_line_amount = 0.1330000063175
-shader_parameter/roll_speed = -0.41499963971249976
-shader_parameter/pixel_strength = -2.9469999499824997
+shader_parameter/roll_speed = -0.5909996480724997
+shader_parameter/pixel_strength = -4.0
 
 [node name="player" type="CharacterBody2D"]
 script = ExtResource("1_g2els")
@@ -214,7 +215,7 @@ libraries = {
 }
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 24)
+position = Vector2(0, 24.25)
 shape = SubResource("RectangleShape2D_h5uus")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
@@ -230,9 +231,9 @@ zoom = Vector2(1.5, 1.5)
 limit_left = -32
 limit_top = -224
 limit_right = 544
-limit_bottom = 448
+limit_bottom = 672
 position_smoothing_enabled = true
-position_smoothing_speed = 3.0
+position_smoothing_speed = 8.0
 
 [node name="Fnaf1OfficeRunningSfxMadeWithVoicemod" type="AudioStreamPlayer2D" parent="Camera2D"]
 position = Vector2(-16, 225)
@@ -253,19 +254,33 @@ theme_override_font_sizes/font_size = 32
 text = "TECH_DEMO_2   v0.2"
 horizontal_alignment = 2
 
-[node name="ColorRect" type="ColorRect" parent="Camera2D/CanvasLayer"]
+[node name="shader" type="Control" parent="Camera2D/CanvasLayer"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="crt" type="ColorRect" parent="Camera2D/CanvasLayer/shader"]
+modulate = Color(0, 0, 0, 1)
 material = SubResource("ShaderMaterial_ksjmp")
+layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -432.0
-offset_top = -324.0
-offset_right = 432.0
-offset_bottom = 324.0
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 844.0
+offset_bottom = 628.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="blue_tint" type="ColorRect" parent="Camera2D/CanvasLayer/shader"]
+layout_mode = 0
+offset_right = 864.0
+offset_bottom = 648.0
+color = Color(0.019607844, 0.039215688, 0.11764706, 0.54901963)
 
 [node name="white_flash" type="ColorRect" parent="Camera2D/CanvasLayer"]
 self_modulate = Color(1, 1, 1, 0)

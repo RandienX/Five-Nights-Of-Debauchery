@@ -61,7 +61,7 @@ func _hide_ui() -> void:
 func _show_ui() -> void:
 	visible = true
 
-func _on_dialogue_started(_data: DialogueUI) -> void:
+func _on_dialogue_started(_data: Object) -> void:
 	print("=== DEBUG START ===")
 	print("Target Object: ", _data)
 	print("Target Script: ", _data.get_script())

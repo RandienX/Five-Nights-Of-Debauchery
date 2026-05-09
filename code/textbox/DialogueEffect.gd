@@ -23,7 +23,7 @@ enum EffectType {
 var effect_type: int = 0
 
 @export var param_string: String = ""      # var_name, item_id, status_id, quest_id, event_name
-@export var param_value: float = 0.0       # value, amount
+@export var param_value: String = ""       # value, amount
 @export var wait_seconds: float = 1.0      # For WAIT type
 @export var custom_script: String = ""     # Path to custom effect script
 

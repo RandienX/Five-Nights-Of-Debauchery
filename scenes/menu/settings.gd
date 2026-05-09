@@ -1,16 +1,8 @@
 extends Button
 
 func _on_pressed() -> void:
-	if $".." == get_tree().root.get_node("menu/buttons"):
-		$"../../settings_anim".play("fade_in_settings")
-		await get_tree().create_timer(1).timeout
-		$"..".visible = false
-		get_tree().root.get_node("menu/settings").visible = true
-	elif $".." == get_tree().root.get_node("menu/settings"):
-		$"../../settings_anim".play("fade_in_button")
-		await get_tree().create_timer(1).timeout
-		$"..".visible = false
-		get_tree().root.get_node("menu/buttons").visible = true
+	$"../../settings".visible = !$"../../settings".visible
+	$"../../save_box/Control".visible = false
 
 var change_text = false
 
