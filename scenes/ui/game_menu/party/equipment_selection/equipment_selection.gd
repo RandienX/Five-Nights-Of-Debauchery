@@ -156,6 +156,7 @@ func _on_item_selected(item: Item) -> void:
 		target_member.equip_stats_change()
 	
 	visible = false
+	$"../MarginContainer".visible = true
 	$"..".refresh()
 	$"..".update_equipment_grid(target_member)
 
@@ -170,10 +171,12 @@ func _on_unequip_button_pressed() -> void:
 		target_member.equip_stats_change()
 	
 	visible = false
+	$"../MarginContainer".visible = true
 	$"..".refresh()
 	$"..".update_equipment_grid(target_member)
 
 func _on_cancel_button_pressed() -> void:
 	visible = false
+	$"../MarginContainer".visible = true
 	$"..".refresh()
 	$"..".update_equipment_grid(target_member)

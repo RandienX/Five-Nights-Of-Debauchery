@@ -1,5 +1,5 @@
 extends Node
-class_name BattleEffectManager
+class_name EffectManager
 
 ## Centralized battle effect resolver with targeting, condition evaluation,
 ## stat modification, and status system pipelines.
@@ -12,7 +12,7 @@ signal status_applied(entity: Entity, status_id: String, stacks: int)
 signal status_removed(entity: Entity, status_id: String)
 signal status_ticked(entity: Entity, status_id: String, remaining: int)
 signal modifier_expired(entity: Entity, modifier_id: String)
-stat_modification_applied(entity: Entity, stat_key: String, delta: int)
+signal stat_modification_applied(entity: Entity, stat_key: String, delta: int)
 
 # ==================== CONFIGURATION ====================
 
@@ -22,27 +22,27 @@ stat_modification_applied(entity: Entity, stat_key: String, delta: int)
 # ==================== STATE ====================
 
 ## Battle context arrays (set when battle starts)
-var _allies: Array[Entity] = []
-var _enemies: Array[Entity] = []
+var _allies: Array = []
+var _enemies: Array = []
 var _battle_context: Dictionary = {}
 
 ## Active timers for cleanup
 var _active_timers: Array[Timer] = []
 
 ## Status registry lookup (set this to your status definition storage)
-var status_registry: Dictionary[String, BattleEffect.StatusDefinition] = {}
+var status_registry: Dictionary[String, StatusDefinition] = {}
 
 ## Effect execution queue for proper sequencing
 var _effect_queue: Array[Dictionary] = []
 
 # ==================== LIFECYCLE ====================
 
-func initialize(allies: Array[Entity], enemies: Array[Entity], context: Dictionary = {}):
+func initialize(party: Array, enemies: Array, context: Dictionary = {}):
 	"""
 	Initialize the manager for a new battle.
 	Call at battle start to set up context arrays.
 	"""
-	_allies = allies.filter(func(e): return e != null and is_instance_valid(e))
+	_allies = party.filter(func(e): return e != null and is_instance_valid(e))
 	_enemies = enemies.filter(func(e): return e != null and is_instance_valid(e))
 	_battle_context = context.duplicate()
 	_battle_context["turn_number"] = _battle_context.get("turn_number", 0)
@@ -74,11 +74,7 @@ func _exit_tree():
 
 # ==================== TARGETING SYSTEM ====================
 
-func resolve_targets(
-	effect: BattleEffect,
-	source: Entity,
-	context_override: Dictionary = {}
-) -> Array[Entity]:
+func resolve_targets(effect: BattleEffect, source: Entity, context_override: Dictionary = {}) -> Array[Entity]:
 	"""
 	Resolve TargetType to actual Entity instances using battle context.
 	Returns array of valid targets.
@@ -123,10 +119,6 @@ func resolve_targets(
 			targets.assign(_allies.filter(func(e): return e.hp > 0 or effect.can_target_dead))
 			targets.append_array(_enemies.filter(func(e): return e.hp > 0 or effect.can_target_dead))
 	
-	# Apply line-of-sight filter if required
-	if effect.require_line_of_sight:
-		targets = targets.filter(func(t): return _check_line_of_sight(source, t))
-	
 	return targets
 
 func _check_line_of_sight(source: Entity, target: Entity) -> bool:
@@ -136,12 +128,7 @@ func _check_line_of_sight(source: Entity, target: Entity) -> bool:
 
 # ==================== CONDITION EVALUATION ====================
 
-func evaluate_conditions(
-	effect: BattleEffect,
-	source: Entity,
-	target: Entity,
-	context_override: Dictionary = {}
-) -> bool:
+func evaluate_conditions(effect: BattleEffect, source: Entity, target: Entity, context_override: Dictionary) -> bool:
 	"""
 	Evaluate all conditions on an effect. Returns true only if ALL pass.
 	Supports early-exit on first failure for performance.
@@ -160,12 +147,7 @@ func evaluate_conditions(
 	
 	return true
 
-func check_resistance(
-	source: Entity,
-	target: Entity,
-	resist_stat: String = "magic",
-	base_chance: float = 100.0
-) -> float:
+func check_resistance(source: Entity, target: Entity, resist_stat: String = "magic", base_chance: float = 100.0) -> float:
 	"""
 	Calculate final apply chance after resistance check.
 	Returns 0-100% chance for effect to land.
@@ -180,12 +162,7 @@ func check_resistance(
 
 # ==================== EFFECT EXECUTION PIPELINE ====================
 
-func execute_effect(
-	effect: BattleEffect,
-	source: Entity,
-	context_override: Dictionary = {},
-	delay_seconds: float = 0.0
-) -> void:
+func execute_effect(effect: BattleEffect, source: Entity, context_override: Dictionary = {}, delay_seconds: float = 0.0) -> void:
 	"""
 	Execute a single effect with optional delay.
 	Handles targeting, conditions, and effect type resolution.
@@ -212,12 +189,7 @@ func execute_effect(
 	
 	effect_executed.emit(effect, targets, success)
 
-func _execute_effect_by_type(
-	effect: BattleEffect,
-	source: Entity,
-	targets: Array[Entity],
-	context: Dictionary
-) -> bool:
+func _execute_effect_by_type(effect: BattleEffect, source: Entity, targets: Array[Entity], context: Dictionary) -> bool:
 	"""Route effect to appropriate handler based on type."""
 	match effect.effect_type:
 		BattleEffect.EffectType.DAMAGE:
@@ -246,12 +218,7 @@ func _execute_effect_by_type(
 	
 	return false
 
-func _handle_damage(
-	effect: BattleEffect,
-	source: Entity,
-	targets: Array[Entity],
-	context: Dictionary
-) -> bool:
+func _handle_damage(effect: BattleEffect, source: Entity, targets: Array[Entity], context: Dictionary) -> bool:
 	"""Handle damage effects with variance and critical support."""
 	var total_damage = 0
 	
@@ -287,12 +254,7 @@ func _handle_damage(
 	
 	return total_damage > 0
 
-func _handle_heal(
-	effect: BattleEffect,
-	source: Entity,
-	targets: Array[Entity],
-	context: Dictionary
-) -> bool:
+func _handle_heal(effect: BattleEffect, source: Entity, targets: Array[Entity], context: Dictionary) -> bool:
 	"""Handle healing effects."""
 	var total_healed = 0
 	
@@ -309,12 +271,7 @@ func _handle_heal(
 	
 	return total_healed > 0
 
-func _handle_stat_modifiers(
-	effect: BattleEffect,
-	source: Entity,
-	targets: Array[Entity],
-	context: Dictionary
-) -> bool:
+func _handle_stat_modifiers(effect: BattleEffect, source: Entity, targets: Array[Entity], context: Dictionary) -> bool:
 	"""Apply temporary stat buffs/debuffs."""
 	var applied_count = 0
 	
@@ -335,12 +292,7 @@ func _handle_stat_modifiers(
 	
 	return applied_count > 0
 
-func _handle_status_apply(
-	effect: BattleEffect,
-	source: Entity,
-	targets: Array[Entity],
-	context: Dictionary
-) -> bool:
+func _handle_status_apply(effect: BattleEffect, source: Entity, targets: Array[Entity], context: Dictionary) -> bool:
 	"""Apply status effects from status_ref definition."""
 	if not effect.status_ref:
 		push_warning("BattleEffect %s has STATUS_APPLY but no status_ref" % effect.effect_name)
@@ -373,12 +325,7 @@ func _handle_status_apply(
 	
 	return applied_count > 0
 
-func _handle_status_remove(
-	effect: BattleEffect,
-	source: Entity,
-	targets: Array[Entity],
-	context: Dictionary
-) -> bool:
+func _handle_status_remove(effect: BattleEffect, source: Entity, targets: Array[Entity], context: Dictionary) -> bool:
 	"""Remove status effects."""
 	var removed_count = 0
 	
@@ -397,12 +344,7 @@ func _handle_status_remove(
 	
 	return removed_count > 0
 
-func _handle_parameter_change(
-	effect: BattleEffect,
-	source: Entity,
-	targets: Array[Entity],
-	context: Dictionary
-) -> bool:
+func _handle_parameter_change(effect: BattleEffect, source: Entity, targets: Array[Entity], context: Dictionary) -> bool:
 	"""Permanent stat changes (level-up style)."""
 	var changed_count = 0
 	
@@ -411,7 +353,7 @@ func _handle_parameter_change(
 			continue
 		
 		for mod in effect.stat_modifiers:
-			if mod.duration_type == BattleEffect.StatModifier.DurationType.PERMANENT:
+			if mod.duration_type == StatModifier.DurationType.PERMANENT:
 				var stat_key = mod.stat_key.to_lower()
 				if target.base_stats.has(stat_key):
 					target.base_stats[stat_key] += int(mod.value)
@@ -421,12 +363,7 @@ func _handle_parameter_change(
 	
 	return changed_count > 0
 
-func _handle_utility(
-	effect: BattleEffect,
-	source: Entity,
-	targets: Array[Entity],
-	context: Dictionary
-) -> bool:
+func _handle_utility(effect: BattleEffect, source: Entity, targets: Array[Entity], context: Dictionary) -> bool:
 	"""Utility effects: skip turn, extra turn, etc."""
 	var applied_count = 0
 	
@@ -458,12 +395,7 @@ func _handle_utility(
 	
 	return applied_count > 0
 
-func _handle_custom(
-	effect: BattleEffect,
-	source: Entity,
-	targets: Array[Entity],
-	context: Dictionary
-) -> bool:
+func _handle_custom(effect: BattleEffect, source: Entity, targets: Array[Entity], context: Dictionary) -> bool:
 	"""Run custom script for complex effects."""
 	if effect.custom_script_path == "":
 		return false
@@ -489,12 +421,7 @@ func _trigger_visuals(effect: BattleEffect, target: Entity):
 
 # ==================== TIMING SYSTEM ====================
 
-func execute_effects_at_timing(
-	effects: Array[BattleEffect],
-	source: Entity,
-	timing: BattleEffect.Timing,
-	context: Dictionary = {}
-) -> void:
+func execute_effects_at_timing(effects: Array[BattleEffect], source: Entity, timing: BattleEffect.Timing, context: Dictionary = {}) -> void:
 	"""
 	Execute all effects matching the specified timing.
 	Call from battle loop at appropriate phases.
@@ -541,12 +468,7 @@ func schedule_effect_tick(
 	
 	return timer
 
-func _schedule_effect(
-	effect: BattleEffect,
-	source: Entity,
-	context: Dictionary,
-	delay_seconds: float
-):
+func _schedule_effect(effect: BattleEffect, source: Entity, context: Dictionary, delay_seconds: float):
 	"""Schedule a single delayed effect execution."""
 	var timer = Timer.new()
 	timer.wait_time = delay_seconds

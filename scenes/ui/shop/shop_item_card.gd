@@ -106,8 +106,10 @@ func _update_visuals() -> void:
 	
 	if not is_sell_mode:
 		if not can_afford:
+			set_disabled(true)
 			price_label.modulate = Color.RED
 		else:
+			set_disabled(false)
 			price_label.modulate = Color.WHITE
 
 func _update_sell_visuals() -> void:

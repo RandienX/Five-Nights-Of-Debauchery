@@ -1,9 +1,20 @@
-[gd_scene load_steps=3 format=3 uid="uid://dhu0rjvcqicb7"]
+[gd_scene load_steps=6 format=3 uid="uid://dhu0rjvcqicb7"]
 
 [ext_resource type="Script" uid="uid://dutdq7hjy6fe2" path="res://scenes/ui/game_menu/party/equipment_selection/equipment_selection.gd" id="1_equip"]
+[ext_resource type="Texture2D" uid="uid://c6t3yqacgcfe1" path="res://assets/menu/Window.png" id="2_njb03"]
+[ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="3_v182l"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wt8uq"]
-bg_color = Color(0.15686275, 0.16078432, 0.15686275, 1)
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4x7s8"]
+texture = ExtResource("2_njb03")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+1:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_18og1"]
+tile_size = Vector2i(64, 64)
+sources/0 = SubResource("TileSetAtlasSource_4x7s8")
 
 [node name="EquipmentSelection" type="Control"]
 custom_minimum_size = Vector2(648, 0)
@@ -15,7 +26,12 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_equip")
 
+[node name="TileMapLayer" type="TileMapLayer" parent="."]
+scale = Vector2(2, 2)
+tile_set = SubResource("TileSet_18og1")
+
 [node name="Panel" type="Panel" parent="."]
+self_modulate = Color(1, 1, 1, 0)
 custom_minimum_size = Vector2(616, 616)
 layout_mode = 1
 anchors_preset = 8
@@ -29,7 +45,6 @@ offset_right = 308.0
 offset_bottom = 308.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_wt8uq")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -39,9 +54,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 32
-theme_override_constants/margin_top = 32
+theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 32
-theme_override_constants/margin_bottom = 32
+theme_override_constants/margin_bottom = 16
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
@@ -70,22 +85,44 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="ItemsPanel" type="Panel" parent="MarginContainer/VBoxContainer/HSplitContainer"]
-custom_minimum_size = Vector2(262, 0)
+self_modulate = Color(1, 1, 1, 0)
+z_index = 1
+custom_minimum_size = Vector2(285, 0)
 layout_mode = 2
 
 [node name="ItemsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/ItemsPanel"]
-layout_mode = 0
+layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/VBoxContainer/HSplitContainer/ItemsPanel"]
+z_index = -1
+layout_mode = 0
+offset_right = 285.0
+offset_bottom = 398.0
+texture = ExtResource("3_v182l")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
 
 [node name="CurrentEquipPanel" type="Panel" parent="MarginContainer/VBoxContainer/HSplitContainer"]
+self_modulate = Color(1, 1, 1, 0)
+z_index = 1
 layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/CurrentEquipPanel"]
-layout_mode = 0
-offset_right = 262.0
-offset_bottom = 54.0
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.058000002
+anchor_right = 0.058000002
+offset_left = -17.226004
+offset_right = 274.774
+offset_bottom = 216.0
 theme_override_constants/separation = 12
 
 [node name="CurrentLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/CurrentEquipPanel/VBoxContainer"]
@@ -110,20 +147,58 @@ size_flags_vertical = 2
 text = "Stats"
 editable = false
 
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/VBoxContainer/HSplitContainer/CurrentEquipPanel"]
+z_index = -1
+layout_mode = 0
+offset_left = 1.7539978
+offset_right = 292.754
+offset_bottom = 398.0
+texture = ExtResource("3_v182l")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
 [node name="UnequipButton" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+z_index = 1
 custom_minimum_size = Vector2(150, 45)
 layout_mode = 2
 text = "Unequip"
+flat = true
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/VBoxContainer/HBoxContainer/UnequipButton"]
+z_index = -1
+layout_mode = 0
+offset_right = 150.0
+offset_bottom = 45.0
+texture = ExtResource("3_v182l")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
 
 [node name="CancelButton" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+z_index = 1
 custom_minimum_size = Vector2(150, 45)
 layout_mode = 2
 text = "Cancel"
+flat = true
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/VBoxContainer/HBoxContainer/CancelButton"]
+z_index = -1
+layout_mode = 0
+offset_right = 150.0
+offset_bottom = 45.0
+texture = ExtResource("3_v182l")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
 
 [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/UnequipButton" to="." method="_on_unequip_button_pressed"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/CancelButton" to="." method="_on_cancel_button_pressed"]

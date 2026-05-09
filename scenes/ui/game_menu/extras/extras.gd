@@ -8,6 +8,7 @@ func _on_back_pressed() -> void:
 			c.queue_free()
 		$"../../../..".layer_down = 0
 		$"../../../..".visible = false
+		$"../../../../../../..".stop_move = false
 
 func _on_exit_pressed() -> void:
 	# Exit to main menu

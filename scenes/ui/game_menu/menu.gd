@@ -8,7 +8,7 @@ var layer_down = 0
 var pending_item: Item = null  # For item usage from inventory
 
 func _ready() -> void:
-		pass # Replace with function body.
+	$gold.text = "Gold: " + str(PlayerStats.gold)
 
 func open_party_for_item(item: Item) -> void:
 	"""Open party menu for item target selection"""
@@ -26,7 +26,7 @@ func _on_party_member_selected_for_item(member: Resource) -> void:
 	if pending_item and member:
 		var entity_member = member as Entity
 		if entity_member:
-			PlayerStats.use_item(pending_item, entity_member)
+			PlayerStats.use_item(pending_item, [entity_member])
 			open_inventory()
 
 func open_inventory() -> void:

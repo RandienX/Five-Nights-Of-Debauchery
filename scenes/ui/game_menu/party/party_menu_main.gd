@@ -6,6 +6,7 @@ signal party_member_selected(member: Resource)
 @export var member_detail_panel: Panel
 @export var member_name_label: Label
 @export var member_level_label: Label
+@export var member_description_label: Label
 @export var member_portrait: TextureRect
 @export var hp_progress: ProgressBar
 @export var mp_progress: ProgressBar
@@ -39,6 +40,8 @@ const SLOT_DISPLAY_NAMES = {
 func _ready() -> void:
 	_refresh_party_display()
 	_update_detail_panel()
+	if not party_members.is_empty():
+		_select_member(0)
 
 func _refresh_party_display() -> void:
 	for btn in member_buttons:
@@ -66,6 +69,8 @@ func _refresh_party_display() -> void:
 				btn.icon.region = member.portrait_rect
 		
 		btn.pressed.connect(_on_member_button_pressed.bind(i))
+		if $"../../../..".pending_item != null:
+			party_member_selected.connect(_on_member_button_pressed.bind(party_members[selected_member_index]))
 		members_container.add_child(btn)
 		member_buttons.append(btn)
 		
@@ -78,9 +83,6 @@ func _refresh_party_display() -> void:
 		npr.patch_margin_bottom = 5
 		npr.z_index = -1
 		btn.add_child(npr)
-	
-	if not party_members.is_empty():
-		_select_member(0)
 
 func _on_member_button_pressed(index: int) -> void:
 	_select_member(index)
@@ -104,6 +106,7 @@ func _update_detail_panel() -> void:
 		no_member_label.visible = true
 		member_name_label.visible = false
 		member_level_label.visible = false
+		member_description_label.visible = false
 		member_portrait.visible = false
 		hp_progress.visible = false
 		mp_progress.visible = false
@@ -117,6 +120,7 @@ func _update_detail_panel() -> void:
 	no_member_label.visible = false
 	member_name_label.visible = true
 	member_level_label.visible = true
+	member_description_label.visible = true
 	member_portrait.visible = true
 	hp_progress.visible = true
 	mp_progress.visible = true
@@ -126,12 +130,15 @@ func _update_detail_panel() -> void:
 	equipment_container.visible = true
 	skills_list.visible = true
 	
-	var member: Resource = party_members[selected_member_index]
+	var member: Entity = party_members[selected_member_index]
 	
-	var member_name = member.get("name") if ("name" in member or member.has_meta("name")) else "Member " + str(selected_member_index + 1)
+	var member_name = member.get("name") if "name" in member else "Member " + str(selected_member_index + 1)
 	member_name_label.text = member_name
 	var member_level = member.get("level") if "level" in member else 1
 	member_level_label.text = "Level " + str(member_level)
+	
+	var member_desc = member.get("description") if "description" in member else "Member " + str(selected_member_index + 1) + " has no description."
+	member_description_label.text = member_desc
 	
 	var portrait = member.get("portrait") if "portrait" in member else null
 	if portrait:
@@ -142,9 +149,9 @@ func _update_detail_panel() -> void:
 		member_portrait.texture = null
 	
 	var current_hp = member.get("hp") if "hp" in member else 100
-	var max_hp = member.get("max_stats").get("hp") if "max_stats" in member else 100
+	var max_hp = member.get_max_stat(&"hp")
 	var current_mp = member.get("mp") if "mp" in member else 50
-	var max_mp = member.get("max_stats").get("mp") if "max_stats" in member else 50
+	var max_mp = member.get_max_stat(&"mp")
 	
 	hp_progress.max_value = max_hp
 	hp_progress.value = current_hp
@@ -158,20 +165,19 @@ func _update_detail_panel() -> void:
 	update_equipment_grid(member)
 	_update_skills_list(member)
 
-func _update_stats_grid(member: Resource) -> void:
+func _update_stats_grid(member) -> void:
 	# Clear existing stat labels
 	for child in stats_grid.get_children():
 		child.queue_free()
 	
-	var max_stats = member.get("max_stats") if "max_stats" in member else {}
-	var stat_names = ["hp", "mp", "atk", "def", "speed", "magic"]
+	var stat_names = [&"hp", &"mp", &"atk", &"def", &"speed", &"magic"]
 	
 	for stat_name in stat_names:
 		var label = Label.new()
-		label.text = stat_name.to_upper() + ": " + str(max_stats.get(stat_name, 0))
+		label.text = stat_name.to_upper() + ": " + str(member.get_base_stat(stat_name))
 		stats_grid.add_child(label)
 
-func update_equipment_grid(member: Resource) -> void:
+func update_equipment_grid(member) -> void:
 	for child in equipment_slots.get_children():
 		child.queue_free()
 	equipment_slot_buttons.clear()
@@ -203,6 +209,7 @@ func update_equipment_grid(member: Resource) -> void:
 func on_equipment_slot_pressed(slot: String) -> void:
 	var member: Entity = party_members[selected_member_index] as Entity
 	equip_select.setup(member, slot)
+	$MarginContainer.visible = false
 
 func _on_equip_button_pressed() -> void:
 	var member: Entity = party_members[selected_member_index] as Entity
@@ -213,6 +220,7 @@ func _on_equip_button_pressed() -> void:
 			break
 	
 	equip_select.setup(member, target_slot)
+	$MarginContainer.visible = false
 
 func _update_skills_list(member: Resource) -> void:
 	for child in skills_list.get_children():

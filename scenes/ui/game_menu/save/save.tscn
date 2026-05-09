@@ -70,7 +70,6 @@ layout_mode = 2
 [node name="savename" type="LineEdit" parent="texture/margin/vbox/text"]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
-placeholder_text = "save name"
 
 [node name="time" type="Label" parent="texture/margin/vbox/text"]
 custom_minimum_size = Vector2(436, 0)
