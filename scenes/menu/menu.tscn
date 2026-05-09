@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://dnsq0e6j3twp0"]
+[gd_scene format=3 uid="uid://dnsq0e6j3twp0"]
 
 [ext_resource type="AudioStream" uid="uid://1kog2vg13n1n" path="res://assets/sound/menu_sound.mp3" id="1_k48pe"]
 [ext_resource type="Texture2D" uid="uid://diis85slboe5b" path="res://assets/menu/anod.png" id="2_kaijy"]
@@ -144,34 +144,28 @@ shader_parameter/roll_line_amount = 0.2000000095
 shader_parameter/roll_speed = 0.4700004023250006
 shader_parameter/pixel_strength = -1.9599999031
 
-[node name="menu" type="Node2D"]
+[node name="menu" type="Node2D" unique_id=992592405]
 
-[node name="MenuSound" type="AudioStreamPlayer" parent="."]
+[node name="MenuSound" type="AudioStreamPlayer" parent="." unique_id=1169643218]
 stream = ExtResource("1_k48pe")
 autoplay = true
 parameters/looping = true
 
-[node name="bg" type="Sprite2D" parent="."]
+[node name="bg" type="Sprite2D" parent="." unique_id=1880572784]
 position = Vector2(431.45, 319.9)
 scale = Vector2(1.589, 1.59)
 texture = ExtResource("2_kaijy")
 
-[node name="button_anim" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_i6lef")
-}
+[node name="button_anim" type="AnimationPlayer" parent="." unique_id=66124331]
+libraries/ = SubResource("AnimationLibrary_i6lef")
 
-[node name="settings_anim" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_i6lef")
-}
+[node name="settings_anim" type="AnimationPlayer" parent="." unique_id=275498085]
+libraries/ = SubResource("AnimationLibrary_i6lef")
 
-[node name="control_anim" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_i6lef")
-}
+[node name="control_anim" type="AnimationPlayer" parent="." unique_id=382906170]
+libraries/ = SubResource("AnimationLibrary_i6lef")
 
-[node name="Control" parent="." instance=ExtResource("4_y4i35")]
+[node name="Control" parent="." unique_id=1083126606 instance=ExtResource("4_y4i35")]
 visible = false
 anchors_preset = 4
 anchor_top = 0.5
@@ -183,7 +177,7 @@ offset_right = 39.0
 offset_bottom = 628.0
 grow_horizontal = 1
 
-[node name="Back" type="Button" parent="Control"]
+[node name="Back" type="Button" parent="Control" unique_id=1196776681]
 modulate = Color(0.78352344, 0.7835234, 0.7835234, 1)
 layout_mode = 1
 anchors_preset = 2
@@ -200,17 +194,18 @@ flat = true
 alignment = 0
 script = ExtResource("8_2j8sj")
 
-[node name="settings" parent="." instance=ExtResource("6_kaijy")]
+[node name="settings" parent="." unique_id=804707631 instance=ExtResource("6_kaijy")]
 visible = false
-offset_left = 313.0
-offset_top = 227.00003
-offset_right = 953.0
-offset_bottom = 227.00003
+custom_minimum_size = Vector2(640, 480)
+offset_left = 315.0
+offset_top = 121.0
+offset_right = 955.0
+offset_bottom = 601.0
 scale = Vector2(0.86, 0.86)
 
-[node name="buttons" type="Node2D" parent="."]
+[node name="buttons" type="Node2D" parent="." unique_id=625900616]
 
-[node name="Start" type="Button" parent="buttons"]
+[node name="Start" type="Button" parent="buttons" unique_id=2124246267]
 modulate = Color(0.78352344, 0.7835234, 0.7835234, 1)
 offset_left = 12.0
 offset_top = 373.0
@@ -223,7 +218,7 @@ flat = true
 alignment = 0
 script = ExtResource("9_55a8x")
 
-[node name="Load" type="Button" parent="buttons"]
+[node name="Load" type="Button" parent="buttons" unique_id=73795438]
 offset_left = 12.0
 offset_top = 416.0
 offset_right = 232.0
@@ -236,7 +231,7 @@ flat = true
 alignment = 0
 script = ExtResource("9_kaijy")
 
-[node name="Settings" type="Button" parent="buttons"]
+[node name="Settings" type="Button" parent="buttons" unique_id=1832044926]
 modulate = Color(0.78352344, 0.7835234, 0.7835234, 1)
 offset_left = 11.0
 offset_top = 458.0
@@ -249,7 +244,7 @@ flat = true
 alignment = 0
 script = ExtResource("6_64m6r")
 
-[node name="Exit" type="Button" parent="buttons"]
+[node name="Exit" type="Button" parent="buttons" unique_id=591572909]
 modulate = Color(0.78352344, 0.7835234, 0.7835234, 1)
 offset_left = 10.0
 offset_top = 506.0
@@ -262,17 +257,17 @@ flat = true
 alignment = 0
 script = ExtResource("10_rrod7")
 
-[node name="save_box" type="Control" parent="."]
+[node name="save_box" type="Control" parent="." unique_id=742179412]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
 
-[node name="Control" parent="save_box" instance=ExtResource("11_kaijy")]
+[node name="Control" parent="save_box" unique_id=180567913 instance=ExtResource("11_kaijy")]
 visible = false
 layout_mode = 1
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="ColorRect" type="ColorRect" parent="." unique_id=847580219]
 material = SubResource("ShaderMaterial_g3eks")
 offset_left = 1.0
 offset_top = 12.0
