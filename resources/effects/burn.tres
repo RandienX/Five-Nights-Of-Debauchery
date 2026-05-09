@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="BattleEffect" format=3 uid="uid://bb0nspvf0okpq"]
+
+[ext_resource type="Script" uid="uid://bdv44ymylf45" path="res://code/battle/battle_effect_condition.gd" id="1_burn_cond"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="2_burn_eff"]
+[ext_resource type="Script" uid="uid://bdxyu3e5w0856" path="res://code/battle/battle_effect_status_definition.gd" id="3_burn_stat"]
+[ext_resource type="Script" uid="uid://btu5sgbysqdfq" path="res://code/battle/battle_effect_stat_modifier.gd" id="3_tspkb"]
+[ext_resource type="Texture2D" uid="uid://bq6thf27xq8y0" path="res://assets/battleui/status_effects.png" id="4_42o4e"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lejns"]
+atlas = ExtResource("4_42o4e")
+region = Rect2(64, 256, 64, 64)
+
+[sub_resource type="Resource" id="Resource_1xfkj"]
+script = ExtResource("3_tspkb")
+stat_key = "hp"
+value = 5.0
+scaling_type = 3
+metadata/_custom_type_script = "uid://btu5sgbysqdfq"
+
+[sub_resource type="Resource" id="Resource_m8xcb"]
+script = ExtResource("3_burn_stat")
+id = "burn"
+name = "Burn"
+icon = SubResource("AtlasTexture_lejns")
+stat_modifiers = Array[ExtResource("3_tspkb")]([SubResource("Resource_1xfkj")])
+metadata/_custom_type_script = "uid://bdxyu3e5w0856"
+
+[resource]
+script = ExtResource("2_burn_eff")
+effect_id = "burn"
+effect_name = "Burn"
+effect_type = 4
+timing = 1
+base_value = 5.0
+scaling_type = 3
+status_ref = SubResource("Resource_m8xcb")
+status_duration_override = 3
+status_apply_chance = 90.0
+metadata/_custom_type_script = "uid://ch7hoesea8vrf"

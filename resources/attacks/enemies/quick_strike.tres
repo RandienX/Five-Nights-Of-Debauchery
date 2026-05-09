@@ -2,6 +2,47 @@
 
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_21jrh"]
 [ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="2_dxpta"]
+[ext_resource type="Script" uid="uid://bdv44ymylf45" path="res://code/battle/battle_effect_condition.gd" id="2_l587w"]
+[ext_resource type="Script" uid="uid://btu5sgbysqdfq" path="res://code/battle/battle_effect_stat_modifier.gd" id="3_xx2jq"]
+[ext_resource type="Script" uid="uid://bdxyu3e5w0856" path="res://code/battle/battle_effect_status_definition.gd" id="4_wgk3i"]
+
+[sub_resource type="Resource" id="Resource_6o8qk"]
+script = ExtResource("2_l587w")
+metadata/_custom_type_script = "uid://bdv44ymylf45"
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_ly6fq"]
+load_path = "res://.godot/imported/status_effects.png-fcd38a4ff737350621b0d8d9a406c397.ctex"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bwth6"]
+atlas = SubResource("CompressedTexture2D_ly6fq")
+region = Rect2(192, 64, 64, 64)
+
+[sub_resource type="Resource" id="Resource_ja8jv"]
+script = ExtResource("3_xx2jq")
+stat_key = "speed"
+value = 150.0
+scaling_type = 2
+metadata/_custom_type_script = "uid://btu5sgbysqdfq"
+
+[sub_resource type="Resource" id="Resource_n8n2m"]
+script = ExtResource("4_wgk3i")
+id = "speed"
+name = "Speed"
+icon = SubResource("AtlasTexture_bwth6")
+is_positive = true
+max_stacks = 0
+stat_modifiers = Array[ExtResource("3_xx2jq")]([SubResource("Resource_ja8jv")])
+metadata/_custom_type_script = "uid://bdxyu3e5w0856"
+
+[sub_resource type="Resource" id="Resource_xx2x5"]
+script = ExtResource("1_21jrh")
+effect_id = "speed"
+effect_name = "Speed"
+effect_type = 4
+description = "Adds 50% speed"
+status_ref = SubResource("Resource_n8n2m")
+conditions = Array[ExtResource("2_l587w")]([SubResource("Resource_6o8qk")])
+metadata/_custom_type_script = "uid://ch7hoesea8vrf"
 
 [resource]
 script = ExtResource("2_dxpta")
@@ -13,4 +54,5 @@ attack_multiplier = 2.0
 attack_bonus = -2
 hit_count = 2
 hit_damage_multiplier = 0.75
+on_use_effects = Array[ExtResource("1_21jrh")]([SubResource("Resource_xx2x5")])
 metadata/_custom_type_script = "uid://o74imedfcjis"

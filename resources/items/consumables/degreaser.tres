@@ -1,12 +1,21 @@
-[gd_resource type="Resource" script_class="Item" load_steps=3 format=3 uid="uid://ckt7kwce5bnkx"]
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://ckt7kwce5bnkx"]
 
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_fqg53"]
 [ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="1_xassu"]
+[ext_resource type="Script" uid="uid://bdv44ymylf45" path="res://code/battle/battle_effect_condition.gd" id="2_7fcw6"]
+[ext_resource type="Script" uid="uid://btu5sgbysqdfq" path="res://code/battle/battle_effect_stat_modifier.gd" id="3_44j8c"]
+
+[sub_resource type="Resource" id="Resource_78ec8"]
+script = ExtResource("1_fqg53")
+effect_id = "remove_poison"
+effect_name = "RemovePoison"
+effect_type = 5
+metadata/_custom_type_script = "uid://ch7hoesea8vrf"
 
 [resource]
 script = ExtResource("1_xassu")
 item_name = "Degreaser"
 description = "It um... Gets rid of many kinds of grease... Yes even the sticky white ones in Foxy's Cove."
 type = 2
-heals_effects = Array[int]([3, 20])
+consume_effects = Array[ExtResource("1_fqg53")]([SubResource("Resource_78ec8")])
 metadata/_custom_type_script = "uid://dn31qme1ukrys"
