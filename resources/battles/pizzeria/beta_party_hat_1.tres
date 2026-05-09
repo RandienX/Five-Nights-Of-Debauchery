@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Battle" load_steps=13 format=3 uid="uid://jvs5l0db7omo"]
+[gd_resource type="Resource" script_class="Battle" format=3 uid="uid://jvs5l0db7omo"]
 
 [ext_resource type="Texture2D" uid="uid://bevvexikdqtsr" path="res://assets/battleui/backgrounds/FNaF 1 - Backroom.png" id="1_h2t3o"]
 [ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="2_ykmfe"]

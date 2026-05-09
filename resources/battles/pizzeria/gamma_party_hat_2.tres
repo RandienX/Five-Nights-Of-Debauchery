@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Battle" load_steps=14 format=3 uid="uid://clfi17lu28dwy"]
+[gd_resource type="Resource" script_class="Battle" format=3 uid="uid://clfi17lu28dwy"]
 
 [ext_resource type="Texture2D" uid="uid://dsolecv57wpem" path="res://assets/battleui/backgrounds/FNaF 1 - West Hall.png" id="1_6umev"]
 [ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="2_br5if"]

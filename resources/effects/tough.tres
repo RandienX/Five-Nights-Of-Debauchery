@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="BattleEffect" format=3 uid="uid://dlvvu0lpq6atk"]
+
+[ext_resource type="Script" uid="uid://bdv44ymylf45" path="res://code/battle/battle_effect_condition.gd" id="1_2pig0"]
+[ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="2_bldtd"]
+[ext_resource type="Script" uid="uid://btu5sgbysqdfq" path="res://code/battle/battle_effect_stat_modifier.gd" id="3_sl8dg"]
+[ext_resource type="Script" uid="uid://bdxyu3e5w0856" path="res://code/battle/battle_effect_status_definition.gd" id="4_an4dx"]
+
+[sub_resource type="Resource" id="Resource_6x86p"]
+script = ExtResource("1_2pig0")
+metadata/_custom_type_script = "uid://bdv44ymylf45"
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_7q01b"]
+load_path = "res://.godot/imported/status_effects.png-fcd38a4ff737350621b0d8d9a406c397.ctex"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ug0f2"]
+atlas = SubResource("CompressedTexture2D_7q01b")
+region = Rect2(128, 64, 64, 64)
+
+[sub_resource type="Resource" id="Resource_bjmiw"]
+script = ExtResource("3_sl8dg")
+stat_key = "def"
+value = 150.0
+scaling_type = 2
+metadata/_custom_type_script = "uid://btu5sgbysqdfq"
+
+[sub_resource type="Resource" id="Resource_1ruh0"]
+script = ExtResource("4_an4dx")
+id = "tough"
+name = "Tough"
+icon = SubResource("AtlasTexture_ug0f2")
+is_positive = true
+max_stacks = 0
+stat_modifiers = Array[ExtResource("3_sl8dg")]([SubResource("Resource_bjmiw")])
+metadata/_custom_type_script = "uid://bdxyu3e5w0856"
+
+[resource]
+script = ExtResource("2_bldtd")
+effect_id = "power"
+effect_name = "Power"
+effect_type = 2
+target_type = 5
+description = "Adds 50% strength"
+status_ref = SubResource("Resource_1ruh0")
+conditions = Array[ExtResource("1_2pig0")]([SubResource("Resource_6x86p")])
+metadata/_custom_type_script = "uid://ch7hoesea8vrf"

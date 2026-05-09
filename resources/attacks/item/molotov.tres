@@ -1,19 +1,20 @@
-[gd_resource type="Resource" script_class="Skill" load_steps=4 format=3 uid="uid://drkdj81ctnimf"]
+[gd_resource type="Resource" script_class="Skill" format=3 uid="uid://drkdj81ctnimf"]
 
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_8gdb6"]
+[ext_resource type="Script" uid="uid://bdv44ymylf45" path="res://code/battle/battle_effect_condition.gd" id="2_l2y56"]
 [ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="2_t8ci4"]
+[ext_resource type="Script" uid="uid://btu5sgbysqdfq" path="res://code/battle/battle_effect_stat_modifier.gd" id="3_hgy13"]
 
 [sub_resource type="Resource" id="Resource_8gdb6"]
 script = ExtResource("1_8gdb6")
-effect_type = 6
-status_effect = 17
-status_level = 2
-status_duration = 5
-chance_percent = 90.0
-status_effect = 17
-status_level = 2
-status_duration = 5
-chance_percent = 90.0
+effect_id = "molotov"
+effect_name = "Molotov"
+effect_type = 3
+target_type = 4
+timing = 1
+base_value = 10.0
+status_duration_override = 3
+status_apply_chance = 90.0
 metadata/_custom_type_script = "uid://ch7hoesea8vrf"
 
 [resource]

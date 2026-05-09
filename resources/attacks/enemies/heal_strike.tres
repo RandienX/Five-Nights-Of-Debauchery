@@ -1,14 +1,19 @@
-[gd_resource type="Resource" script_class="Skill" load_steps=4 format=3 uid="uid://cgui3t54g0dw1"]
+[gd_resource type="Resource" script_class="Skill" format=3 uid="uid://cgui3t54g0dw1"]
 
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_3cqip"]
+[ext_resource type="Script" uid="uid://bdv44ymylf45" path="res://code/battle/battle_effect_condition.gd" id="2_dasxh"]
 [ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="2_nyj3r"]
+[ext_resource type="Script" uid="uid://btu5sgbysqdfq" path="res://code/battle/battle_effect_stat_modifier.gd" id="3_ek7bw"]
 
 [sub_resource type="Resource" id="Resource_3cqip"]
 script = ExtResource("1_3cqip")
-effect_type = 2
-heal_percent = 15.0
-damage_percent = 50.0
-heal_percent = 15.0
+effect_id = "heal"
+effect_name = "Heal"
+effect_type = 1
+base_value = 15.0
+scaling_type = 2
+critical_multiplier = 1.0
+status_apply_chance = 85.0
 metadata/_custom_type_script = "uid://ch7hoesea8vrf"
 
 [resource]

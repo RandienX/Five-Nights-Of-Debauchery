@@ -1,11 +1,58 @@
-[gd_resource type="Resource" script_class="Skill" load_steps=3 format=3 uid="uid://57rsbbakliog"]
+[gd_resource type="Resource" script_class="Skill" format=3 uid="uid://57rsbbakliog"]
 
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_1260s"]
 [ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_sei50"]
+[ext_resource type="Script" uid="uid://bdv44ymylf45" path="res://code/battle/battle_effect_condition.gd" id="2_cexbe"]
+[ext_resource type="Script" uid="uid://btu5sgbysqdfq" path="res://code/battle/battle_effect_stat_modifier.gd" id="3_hqqf8"]
+[ext_resource type="Texture2D" uid="uid://bq6thf27xq8y0" path="res://assets/battleui/status_effects.png" id="4_kck8j"]
+[ext_resource type="Script" uid="uid://bdxyu3e5w0856" path="res://code/battle/battle_effect_status_definition.gd" id="5_3x5wt"]
+
+[sub_resource type="Resource" id="Resource_b3sl6"]
+script = ExtResource("3_hqqf8")
+stat_key = ""
+value = 10.0
+scale_stat = "mp"
+scale_factor = 0.0
+duration_type = 3
+duration_turns = 1
+stacking_rule = 3
+max_stacks = 999
+metadata/_custom_type_script = "uid://btu5sgbysqdfq"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n38kx"]
+atlas = ExtResource("4_kck8j")
+region = Rect2(64, 128, 64, 64)
+
+[sub_resource type="Resource" id="Resource_epe33"]
+script = ExtResource("3_hqqf8")
+stat_key = "def"
+value = 200.0
+scaling_type = 2
+metadata/_custom_type_script = "uid://btu5sgbysqdfq"
+
+[sub_resource type="Resource" id="Resource_vulc5"]
+script = ExtResource("5_3x5wt")
+id = "defend"
+name = "Defend"
+icon = SubResource("AtlasTexture_n38kx")
+duration_value = 1
+can_be_removed = false
+stat_modifiers = Array[ExtResource("3_hqqf8")]([SubResource("Resource_epe33")])
+metadata/_custom_type_script = "uid://bdxyu3e5w0856"
+
+[sub_resource type="Resource" id="Resource_w1453"]
+script = ExtResource("1_1260s")
+effect_id = "defend"
+effect_name = "Defend"
+effect_type = 2
+timing = 3
+stat_modifiers = Array[ExtResource("3_hqqf8")]([SubResource("Resource_b3sl6")])
+status_ref = SubResource("Resource_vulc5")
+metadata/_custom_type_script = "uid://ch7hoesea8vrf"
 
 [resource]
 script = ExtResource("1_sei50")
 skill_name = "Defend"
 target_type = 1
-level_to_unlock = 0
+on_use_effects = Array[ExtResource("1_1260s")]([SubResource("Resource_w1453")])
 metadata/_custom_type_script = "uid://o74imedfcjis"

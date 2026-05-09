@@ -1,19 +1,44 @@
-[gd_resource type="Resource" script_class="Skill" load_steps=4 format=3 uid="uid://ccoqwn1j6sjps"]
+[gd_resource type="Resource" script_class="Skill" format=3 uid="uid://ccoqwn1j6sjps"]
 
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_blisn"]
 [ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_y8bik"]
+[ext_resource type="Script" uid="uid://bdv44ymylf45" path="res://code/battle/battle_effect_condition.gd" id="2_6eoq1"]
+[ext_resource type="Script" uid="uid://btu5sgbysqdfq" path="res://code/battle/battle_effect_stat_modifier.gd" id="3_bhjoc"]
+[ext_resource type="Texture2D" uid="uid://bq6thf27xq8y0" path="res://assets/battleui/status_effects.png" id="4_tsqir"]
+[ext_resource type="Script" uid="uid://bdxyu3e5w0856" path="res://code/battle/battle_effect_status_definition.gd" id="5_vyauu"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_odi6t"]
+atlas = ExtResource("4_tsqir")
+region = Rect2(0, 256, 64, 64)
+
+[sub_resource type="Resource" id="Resource_fl0c6"]
+script = ExtResource("3_bhjoc")
+scaling_type = 2
+stacking_rule = 6
+max_stacks = 3
+metadata/_custom_type_script = "uid://btu5sgbysqdfq"
+
+[sub_resource type="Resource" id="Resource_w485n"]
+script = ExtResource("5_vyauu")
+id = "sleep"
+name = "Sleep"
+icon = SubResource("AtlasTexture_odi6t")
+stacking_rule = 6
+max_stacks = 3
+stat_modifiers = Array[ExtResource("3_bhjoc")]([SubResource("Resource_fl0c6")])
+metadata/_custom_type_script = "uid://bdxyu3e5w0856"
 
 [sub_resource type="Resource" id="Resource_blisn"]
 script = ExtResource("1_blisn")
-effect_type = 6
-target_type = 3
+effect_id = "sleep"
+effect_name = "Sleep"
+effect_type = 4
+target_type = 2
 timing = 1
-status_effect = 16
-chance_percent = 20.0
-status_effect = 16
-target_type = 3
-timing = 1
-chance_percent = 20.0
+critical_multiplier = 1.5
+status_ref = SubResource("Resource_w485n")
+status_apply_chance = 50.0
+flash_color = Color(1, 1, 1, 1)
 metadata/_custom_type_script = "uid://ch7hoesea8vrf"
 
 [resource]

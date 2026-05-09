@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Skill" load_steps=3 format=3 uid="uid://cdxn2sr63qtxh"]
+[gd_resource type="Resource" script_class="Skill" format=3 uid="uid://cdxn2sr63qtxh"]
 
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_8qhnf"]
 [ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="2_itory"]
