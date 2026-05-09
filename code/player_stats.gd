@@ -166,22 +166,15 @@ func use_item(item: Item, target: Array) -> bool:
 		
 		# Apply revive effect
 		if item.revive_amount > 0 and t.hp <= 0:
-			t.hp = min(item.revive_amount, t.max_stats[&"hp"])
+			t.hp = min(item.revive_amount, t.get_max_stat(&"hp"))
 			
 		# Apply heal effects
-		if item.heal_amount > 0 and t.hp < t.max_stats[&"hp"] and t.hp > 0:
-			t.hp = min(t.hp + item.heal_amount, t.max_stats[&"hp"])
+		if item.heal_amount > 0 and t.hp < t.get_max_stat(&"hp") and t.hp > 0:
+			t.hp = min(t.hp + item.heal_amount, t.get_max_stat(&"hp"))
 	
 		# Apply mana restore
-		if item.mana_amount > 0 and t.mp < t.max_stats[&"mp"]:
-			t.mp = min(t.mp + item.mana_amount, t.max_stats[&"mp"])
-	
-	
-		# Remove status effects (heals_effects is Array[int] of effect enum values)
-		if item.heals_effects:
-			for effect_key in item.heals_effects:
-				if t.effects.has(effect_key):
-					t.effects.erase(effect_key)
+		if item.mana_amount > 0 and t.mp < t.get_max_stat(&"mp"):
+			t.mp = min(t.mp + item.mana_amount, t.get_max_stat(&"mp"))
 							
 		if item.consume_effects:
 			for effect in item.consume_effects:

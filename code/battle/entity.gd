@@ -336,12 +336,7 @@ func has_modifier(modifier_id: String) -> bool:
 
 # ==================== STATUS SYSTEM ====================
 
-func apply_status(
-	status_def: StatusDefinition,
-	stacks: int = 1,
-	duration: int = -1,
-	source: Entity = null
-) -> bool:
+func apply_status(status_def: StatusDefinition, stacks: int = 1, duration: int = -1, source: Entity = null) -> bool:
 	"""
 	Apply a status effect to this entity.
 	
@@ -420,14 +415,26 @@ func apply_status(
 
 func _apply_status_modifiers(status_instance: Dictionary):
 	"""Apply all stat modifiers from a status instance."""
+	print("entity.gd: _apply_status_modifiers: START - status_id=%s, modifier_count=%d" % [status_instance.definition.id, status_instance.definition.stat_modifiers.size()])
 	var def = status_instance.definition
 	var mod_prefix = "status_" + def.id + "_"
-	
+
+	# Clear existing applied modifiers to prevent duplicates when re-applying
+	for mod_id in status_instance.applied_modifiers:
+		remove_modifier(mod_id)
+		status_instance.applied_modifiers.clear()
+
 	for i in range(def.stat_modifiers.size()):
 		var base_mod = def.stat_modifiers[i]
 		var mod_id = mod_prefix + str(i)
-		apply_modifier(mod_id, base_mod, status_instance.source)
-		status_instance.applied_modifiers.append(mod_id)
+		print("entity.gd: _apply_status_modifiers: applying modifier[%d], mod_id=%s, stat_key=%s, value=%f" % [i, mod_id, base_mod.stat_key, base_mod.value])
+		if apply_modifier(mod_id, base_mod, status_instance.source):
+			status_instance.applied_modifiers.append(mod_id)
+			print("entity.gd: _apply_status_modifiers: modifier[%d] applied successfully" % i)
+		else:
+			print("entity.gd: _apply_status_modifiers: modifier[%d] FAILED to apply" % i)
+			print("entity.gd: _apply_status_modifiers: END - applied_modifiers_count=%d" % status_instance.applied_modifiers.size())
+			"""Apply all stat modifiers from a status instance."""
 
 func _remove_status_internal(status_id: String, source: Entity = null):
 	"""Internal removal that cleans up modifiers and calls callbacks."""
@@ -789,36 +796,74 @@ var magic_power: int:
 	get: return get_base_stat(&"magic")
 	set(v): base_stats[&"magic"] = v
 
-var magic_defense: int:
+var defense: int:
 	get: return get_base_stat(&"def")
 	set(v): base_stats[&"def"] = v
-
-func equip_stats_change():
-	"""Legacy function - equipment bonuses should be applied via modifiers."""
-	pass
-
-func get_effective_damage() -> int:
-	return get_effective_stat(&"atk")
-
-func get_effective_defense() -> int:
-	return get_effective_stat(&"def")
-
-func is_immune_to(effect) -> bool:
-	"""Legacy - check immunity via status definitions instead."""
-	return false
-
-func duplicate_deep_custom() -> Entity:
-	"""Create a deep copy of this entity for battle instantiation."""
-	var new_entity = duplicate(true)
-	new_entity.hp = new_entity.get_max_stat(&"hp")
-	new_entity.mp = new_entity.get_max_stat(&"mp")
-	new_entity._stat_modifiers.clear()
-	new_entity._statuses.clear()
-	new_entity._cache_dirty = true
-	return new_entity
 
 func is_party_member() -> bool:
 	return role == Role.PARTY
 
 func is_enemy() -> bool:
 	return role == Role.ENEMY
+	
+var equipment_bonus: Dictionary = {}
+
+func equip_stats_change():
+	"""
+	Directly modify base_stats by adding equipment bonuses.
+	This ensures displayed stats and combat calculations use the correct values.
+	Called when equipment changes or battle starts.
+	"""
+	print("entity.gd: apply_equipment_bonuses: START - name=%s" % name)
+
+	# First, remove any existing equipment bonuses to prevent double-dipping
+	clear_equipment_bonuses()
+
+	var total_bonus: Dictionary = {}
+
+	# Iterate through all equipment slots and accumulate bonuses
+	for slot in equipped.keys():
+		var item: Item = equipped[slot]
+		if not item:
+			continue
+
+		print("entity.gd: apply_equipment_bonuses: processing slot=%s, item=%s, bonuses=%s" % [slot, item.item_name, item.item_bonuses])
+
+		# Accumulate all bonuses from this item
+		for stat_key in item.item_bonuses:
+			var bonus_value: int = item.item_bonuses[stat_key]
+			if bonus_value == 0:
+				continue
+
+			if not total_bonus.has(stat_key):
+				total_bonus[stat_key] = 0
+				total_bonus[stat_key] += bonus_value
+
+		# Apply accumulated bonuses directly to base_stats
+		for stat_key in total_bonus:
+			var bonus_value = total_bonus[stat_key]
+			var original_base = base_stats.get(stat_key, 0)
+			base_stats[stat_key] = original_base + bonus_value
+			equipment_bonus[stat_key] = bonus_value
+			print("entity.gd: apply_equipment_bonuses: base_stats[%s] changed from %d to %d (bonus=%d)" % [stat_key, original_base, base_stats[stat_key], bonus_value])
+
+			print("entity.gd: apply_equipment_bonuses: END - final base_stats=%s" % base_stats)
+
+func clear_equipment_bonuses():
+	"""
+	Remove equipment bonuses from base_stats to revert to true base values.
+	Called before re-applying bonuses or when unequipping items.
+	"""
+	print("entity.gd: clear_equipment_bonuses: START - name=%s, current_bonus=%s" % [name, equipment_bonus])
+
+	# Subtract tracked bonuses from base_stats to revert to true base
+	for stat_key in equipment_bonus:
+		var bonus_value = equipment_bonus[stat_key]
+		if base_stats.has(stat_key):
+			var current_base = base_stats[stat_key]
+			base_stats[stat_key] = current_base - bonus_value
+			print("entity.gd: clear_equipment_bonuses: base_stats[%s] reverted from %d to %d" % [stat_key, current_base, base_stats[stat_key]])
+
+	# Clear the tracking dictionary
+	equipment_bonus.clear()
+	print("entity.gd: clear_equipment_bonuses: END - base_stats=%s" % base_stats)
