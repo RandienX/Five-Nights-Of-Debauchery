@@ -46,11 +46,11 @@ func check_enemy_death_and_xp():
 				actor.xp -= actor.xp_to_level_up
 				actor.level += 1
 				actor.xp_to_level_up = ceil(actor.xp_to_level_up * actor.level_up_xp_multiplier)
-				for stat in ["hp", "mp", "atk", "def", "speed"]:
+				for stat in [&"hp", &"mp", &"atk", &"def", &"speed"]:
 					actor.max_stats[stat] += int(actor.level_up_gains[stat] if actor.level_up_gains.has(stat) else 1)
 					actor.base_stats[stat] += int(actor.level_up_gains[stat] if actor.level_up_gains.has(stat) else 1)
-				actor.hp = actor.max_stats["hp"]
-				actor.mp = actor.max_stats["mp"]
+				actor.hp = actor.max_stats[&"hp"]
+				actor.mp = actor.max_stats[&"mp"]
 				root.get_node("Control/enemy_ui/CenterContainer/output").text = actor.name + " leveled up to " + str(actor.level) + "! "
 				await get_tree().create_timer(1.0).timeout
 				

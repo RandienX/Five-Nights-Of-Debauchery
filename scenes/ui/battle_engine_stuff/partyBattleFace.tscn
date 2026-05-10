@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://xhaq6ip61aoh"]
+[gd_scene format=3 uid="uid://xhaq6ip61aoh"]
 
 [ext_resource type="Texture2D" uid="uid://ok0s30ywbc5e" path="res://assets/party/Classics+Swag.png" id="1_3yrrq"]
 [ext_resource type="Script" uid="uid://dws0ekf7hl76q" path="res://scenes/ui/battle_engine_stuff/party_battle_face.gd" id="1_lvow5"]
@@ -46,7 +46,7 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 corner_detail = 1
 
-[node name="Control" type="Control"]
+[node name="Control" type="Control" unique_id=1485663117]
 z_index = 2
 layout_mode = 3
 anchors_preset = 2
@@ -59,25 +59,25 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 script = ExtResource("1_lvow5")
 
-[node name="bg" type="Node2D" parent="."]
+[node name="bg" type="Node2D" parent="." unique_id=881875157]
 position = Vector2(116, 116)
 scale = Vector2(2.2727268, 2.2727268)
 
-[node name="ColorRect" type="ColorRect" parent="bg"]
+[node name="ColorRect" type="ColorRect" parent="bg" unique_id=1996246408]
 z_index = -1
 offset_left = -51.333344
 offset_top = -51.333344
 offset_right = 51.666656
 offset_bottom = 51.666656
 
-[node name="ColorRect2" type="ColorRect" parent="bg"]
+[node name="ColorRect2" type="ColorRect" parent="bg" unique_id=559826499]
 z_index = -1
 offset_left = -51.0
 offset_top = 51.0
 offset_right = 52.0
 offset_bottom = 96.0
 
-[node name="ColorRect5" type="ColorRect" parent="bg"]
+[node name="ColorRect5" type="ColorRect" parent="bg" unique_id=1455895567]
 z_index = -1
 offset_left = -48.000004
 offset_top = 51.333374
@@ -85,7 +85,7 @@ offset_right = 49.333332
 offset_bottom = 93.333374
 color = Color(0.12955844, 0.12955847, 0.12955844, 1)
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1940078544]
 z_index = 5
 position = Vector2(117.00001, 115.00004)
 scale = Vector2(2.3125, 2.3125002)
@@ -93,7 +93,7 @@ texture = ExtResource("1_3yrrq")
 region_enabled = true
 region_rect = Rect2(0, 0, 96, 96)
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1269111088]
 layout_mode = 0
 offset_left = -0.6666565
 offset_top = 225.09091
@@ -106,26 +106,27 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="GridContainer" type="GridContainer" parent="MarginContainer"]
+[node name="GridContainer" type="GridContainer" parent="MarginContainer" unique_id=1293672837]
 layout_mode = 2
-theme_override_constants/h_separation = -80
 columns = 2
 
-[node name="HP" type="Label" parent="MarginContainer/GridContainer"]
+[node name="HP" type="Label" parent="MarginContainer/GridContainer" unique_id=1337415999]
 z_index = 1
+custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_lvow5")
 theme_override_font_sizes/font_size = 24
 text = "HP:"
 
-[node name="HPAMOUNT" type="Label" parent="MarginContainer/GridContainer"]
+[node name="HPAMOUNT" type="Label" parent="MarginContainer/GridContainer" unique_id=1148936476]
 z_index = 1
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_lvow5")
 theme_override_font_sizes/font_size = 24
 text = "999/999"
 
-[node name="ProgressBar" type="ProgressBar" parent="MarginContainer/GridContainer/HPAMOUNT"]
+[node name="ProgressBar" type="ProgressBar" parent="MarginContainer/GridContainer/HPAMOUNT" unique_id=1991316936]
 z_index = -1
 layout_mode = 1
 anchors_preset = -1
@@ -141,21 +142,22 @@ step = 1.0
 value = 10.0
 show_percentage = false
 
-[node name="MP" type="Label" parent="MarginContainer/GridContainer"]
+[node name="MP" type="Label" parent="MarginContainer/GridContainer" unique_id=1933546496]
 z_index = 1
+custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_lvow5")
 theme_override_font_sizes/font_size = 24
 text = "MP:"
 
-[node name="MPAMOUNT" type="Label" parent="MarginContainer/GridContainer"]
+[node name="MPAMOUNT" type="Label" parent="MarginContainer/GridContainer" unique_id=929718831]
 z_index = 1
 layout_mode = 2
 theme_override_fonts/font = ExtResource("2_lvow5")
 theme_override_font_sizes/font_size = 24
 text = "999/999"
 
-[node name="ProgressBar" type="ProgressBar" parent="MarginContainer/GridContainer/MPAMOUNT"]
+[node name="ProgressBar" type="ProgressBar" parent="MarginContainer/GridContainer/MPAMOUNT" unique_id=294750906]
 z_index = -1
 layout_mode = 1
 anchors_preset = -1
@@ -172,7 +174,7 @@ step = 1.0
 value = 10.0
 show_percentage = false
 
-[node name="EffectContainer" type="GridContainer" parent="."]
+[node name="EffectContainer" type="GridContainer" parent="." unique_id=2053086458]
 custom_minimum_size = Vector2(192, 64)
 layout_mode = 1
 anchors_preset = -1

@@ -112,11 +112,18 @@ func update_skill_selection():
 func navigate_skills(direction: int):
 	var new_index = current_skill_index + direction
 	
-	# Loop around if needed
 	if new_index < 0:
-		new_index = skill_boxes.size() - 1
+		if skill_boxes.size() % 2 == 0:
+			new_index = skill_boxes.size() - 1 if new_index % skill_boxes.size() == -1 else skill_boxes.size() - 2
+		else:
+			new_index = skill_boxes.size() - 2 if new_index % skill_boxes.size() == -1 else skill_boxes.size() - 1
+		if abs(direction) == 1:
+			new_index = skill_boxes.size() - 1
 	elif new_index >= skill_boxes.size():
-		new_index = 0
+		if skill_boxes.size() % 2 == 0:
+			new_index = direction - 1 if new_index % skill_boxes.size() != 0 else 0
+		else:
+			new_index = direction - 1 if new_index % skill_boxes.size() == 0 else 0
 	
 	# Skip unaffordable skills when navigating
 	var attempts = 0
@@ -125,9 +132,17 @@ func navigate_skills(direction: int):
 			break
 		new_index += direction
 		if new_index < 0:
-			new_index = skill_boxes.size() - 1
+			if skill_boxes.size() % 2 == 0:
+				new_index = skill_boxes.size() - 1 if new_index % skill_boxes.size() == -1 else skill_boxes.size() - 2
+			else:
+				new_index = skill_boxes.size() - 2 if new_index % skill_boxes.size() == -1 else skill_boxes.size() - 1
+			if abs(direction) == 1:
+				new_index = skill_boxes.size() - 1
 		elif new_index >= skill_boxes.size():
-			new_index = 0
+			if skill_boxes.size() % 2 == 0:
+				new_index = direction - 1 if new_index % skill_boxes.size() != 0 else 0
+			else:
+				new_index = direction - 1 if new_index % skill_boxes.size() == 0 else 0
 		attempts += 1
 	
 	# Only update if we found an affordable skill
@@ -141,14 +156,14 @@ func select_skill():
 	
 	if not skill_affordable[current_skill_index]:
 		root.get_node("Control/enemy_ui/CenterContainer/output").text = "Not enough MP!"
-		await root.get_tree().create_timer(0.5).timeout
+		await root.get_tree().create_timer(0.5 * Settings.battle_speed).timeout
 		return
 	
 	var skill = available_skills[current_skill_index]
 	
 	if skill.mana_cost > root.current_attacker.mp:
 		root.get_node("Control/enemy_ui/CenterContainer/output").text = "Not enough MP!"
-		await root.get_tree().create_timer(0.5).timeout
+		await root.get_tree().create_timer(0.5 * Settings.battle_speed).timeout
 		return
 	
 	if skill.target_type == 0: #SingleEnemy

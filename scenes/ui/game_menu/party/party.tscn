@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://dltckkr0ugpkd"]
+[gd_scene load_steps=9 format=3 uid="uid://dltckkr0ugpkd"]
 
 [ext_resource type="Script" uid="uid://b3wlt38nky0eq" path="res://scenes/ui/game_menu/party/party_menu_main.gd" id="1_nnuli"]
 [ext_resource type="PackedScene" uid="uid://dhu0rjvcqicb7" path="res://scenes/ui/game_menu/party/equipment_selection/equipment_selection.tscn" id="2_4iig4"]
@@ -6,9 +6,51 @@
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_nnuli"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eqsro"]
+content_margin_right = 98.0
+bg_color = Color(0.19793725, 0.19793722, 0.19793728, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.15847227, 0.15847233, 0.15847221, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+corner_detail = 1
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o0w63"]
+bg_color = Color(0.88235295, 0.84705883, 0, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.70275724, 0.5586243, 0, 1)
+border_blend = true
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+corner_detail = 2
+
 [sub_resource type="Theme" id="Theme_4iig4"]
 
-[node name="PartyMenu" type="Control" node_paths=PackedStringArray("members_container", "member_detail_panel", "member_name_label", "member_level_label", "member_portrait", "hp_progress", "mp_progress", "hp_label", "mp_label", "stats_grid", "equipment_container", "equipment_slots", "skills_list", "no_member_label")]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ks36d"]
+bg_color = Color(0.10448422, 0.6758198, 0.99999994, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.19215687, 0.48235294, 1, 1)
+border_blend = true
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+corner_detail = 1
+
+[node name="PartyMenu" type="Control" node_paths=PackedStringArray("members_container", "member_detail_panel", "member_name_label", "member_level_label", "member_description_label", "member_portrait", "hp_progress", "mp_progress", "hp_label", "mp_label", "stats_grid", "equipment_container", "equipment_slots", "skills_list", "no_member_label")]
 layout_mode = 3
 anchor_right = 0.75000006
 anchor_bottom = 1.0
@@ -20,15 +62,16 @@ members_container = NodePath("MarginContainer/VBoxContainer/HSplitContainer/Memb
 member_detail_panel = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel")
 member_name_label = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/MemberNameLabel")
 member_level_label = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/MemberLevelLabel")
+member_description_label = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Stats & Desc/VBoxContainer/DescLabel")
 member_portrait = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait")
 hp_progress = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer/HBoxContainer/HPProgress")
 mp_progress = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer/HBoxContainer2/MPProgress")
 hp_label = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer/HBoxContainer/HPLabel")
 mp_label = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer/HBoxContainer2/MPLabel")
-stats_grid = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/StatsGrid")
-equipment_container = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/EquipmentContainer")
-equipment_slots = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/EquipmentContainer/EquipmentSlots")
-skills_list = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/SkillsList")
+stats_grid = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Stats & Desc/VBoxContainer/StatsGrid")
+equipment_container = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Equipment/VBoxContainer/EquipmentContainer")
+equipment_slots = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Equipment/VBoxContainer/EquipmentContainer/EquipmentSlots")
+skills_list = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Skills/VBoxContainer/SkillsList")
 no_member_label = NodePath("MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/NoMemberLabel")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
@@ -132,6 +175,8 @@ layout_mode = 2
 [node name="HPProgress" type="ProgressBar" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/HBoxContainer/MemberPortrait/VBoxContainer/HBoxContainer"]
 custom_minimum_size = Vector2(192, 24)
 layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
+theme_override_styles/fill = SubResource("StyleBoxFlat_o0w63")
 step = 1.0
 value = 100.0
 show_percentage = false
@@ -147,6 +192,8 @@ layout_mode = 2
 custom_minimum_size = Vector2(192, 24)
 layout_mode = 2
 theme = SubResource("Theme_4iig4")
+theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
+theme_override_styles/fill = SubResource("StyleBoxFlat_ks36d")
 step = 1.0
 value = 100.0
 show_percentage = false
@@ -155,42 +202,81 @@ show_percentage = false
 layout_mode = 2
 text = "50/50"
 
-[node name="StatsLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+[node name="TabContainer" type="TabContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+current_tab = 0
+
+[node name="Stats & Desc" type="Control" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer"]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Stats & Desc"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="StatsLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Stats & Desc/VBoxContainer"]
 custom_minimum_size = Vector2(380, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = " Stats:"
 
-[node name="StatsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+[node name="StatsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Stats & Desc/VBoxContainer"]
 custom_minimum_size = Vector2(392, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/h_separation = 80
 columns = 3
 
-[node name="EquipmentLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+[node name="DescLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Stats & Desc/VBoxContainer"]
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="Equipment" type="Control" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Equipment"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="EquipmentLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Equipment/VBoxContainer"]
 custom_minimum_size = Vector2(380, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = " Equipment:"
 
-[node name="EquipmentContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+[node name="EquipmentContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Equipment/VBoxContainer"]
 custom_minimum_size = Vector2(392, 0)
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="EquipmentSlots" type="GridContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/EquipmentContainer"]
+[node name="EquipmentSlots" type="GridContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Equipment/VBoxContainer/EquipmentContainer"]
 custom_minimum_size = Vector2(392, 0)
 layout_mode = 2
 columns = 2
 
-[node name="SkillsLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+[node name="Skills" type="Control" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Skills"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="SkillsLabel" type="Label" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Skills/VBoxContainer"]
 custom_minimum_size = Vector2(380, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = " Skills:"
 
-[node name="SkillsList" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer"]
+[node name="SkillsList" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MemberDetailPanel/MarginContainer/ScrollContainer/VBoxContainer/TabContainer/Skills/VBoxContainer"]
 custom_minimum_size = Vector2(392, 0)
 layout_mode = 2
 theme_override_constants/separation = 4

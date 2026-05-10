@@ -17,6 +17,8 @@ var saved_party_plan_index: int = 0
 var selected_party_member: int = 0
 var item_ref: Item
 
+const Skill = preload("res://code/battle/skill.gd")
+
 func item_select_input(event):
 	if event.is_action_pressed("left"):
 		if item_target_type == 0:
@@ -142,9 +144,17 @@ func navigate_items(direction: int):
 	var new_index = current_item_index + direction
 	
 	if new_index < 0:
-		new_index = item_boxes.size() - 1
+		if item_boxes.size() % 2 == 0:
+			new_index = item_boxes.size() - 1 if new_index % item_boxes.size() == -1 else item_boxes.size() - 2
+		else:
+			new_index = item_boxes.size() - 2 if new_index % item_boxes.size() == -1 else item_boxes.size() - 1
+		if abs(direction) == 1:
+			new_index = item_boxes.size() - 1
 	elif new_index >= item_boxes.size():
-		new_index = 0
+		if item_boxes.size() % 2 == 0:
+			new_index = direction - 1 if new_index % item_boxes.size() != 0 else 0
+		else:
+			new_index = direction - 1 if new_index % item_boxes.size() == 0 else 0
 	
 	var attempts = 0
 	while attempts < item_boxes.size():
@@ -152,9 +162,17 @@ func navigate_items(direction: int):
 			break
 		new_index += direction
 		if new_index < 0:
-			new_index = item_boxes.size() - 1
+			if item_boxes.size() % 2 == 0:
+				new_index = item_boxes.size() - 1 if new_index % item_boxes.size() == -1 else item_boxes.size() - 2
+			else:
+				new_index = item_boxes.size() - 2 if new_index % item_boxes.size() == -1 else item_boxes.size() - 1
+			if abs(direction) == 1:
+				new_index = item_boxes.size() - 1
 		elif new_index >= item_boxes.size():
-			new_index = 0
+			if item_boxes.size() % 2 == 0:
+				new_index = direction - 1 if new_index % item_boxes.size() != 0 else 0
+			else:
+				new_index = direction - 1 if new_index % item_boxes.size() == 0 else 0
 		attempts += 1
 	
 	if item_amounts[new_index] > 0:
@@ -182,18 +200,27 @@ func select_item():
 			root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select target..."
 			return
 		elif item_attack.target_type == 1: #Self 
+			item_ref = item
 			root.add_attack(root.current_attacker, [root.current_attacker], item_attack)
 			root.action_history.append(root.current_attacker)
+			PlayerStats.remove_item(item, 1)
+			item_amounts[current_item_index] -= 1
 			close_items_menu()
 			await root.advance_planning()
 		elif item_attack.target_type == 2: #Party
+			item_ref = item
 			root.add_attack(root.current_attacker, root.party, item_attack)
 			root.action_history.append(root.current_attacker)
+			PlayerStats.remove_item(item, 1)
+			item_amounts[current_item_index] -= 1
 			close_items_menu()
 			await root.advance_planning()
 		elif item_attack.target_type == 3: #AllEnemies
+			item_ref = item
 			root.add_attack(root.current_attacker, root.enemy_instances, item_attack)
 			root.action_history.append(root.current_attacker)
+			PlayerStats.remove_item(item, 1)
+			item_amounts[current_item_index] -= 1
 			close_items_menu()
 			await root.advance_planning()
 		elif item_attack.target_type == 4: #SingleAlly
@@ -202,8 +229,11 @@ func select_item():
 			root.get_node("Control/enemy_ui/CenterContainer/output").text = "Select ally..."
 			return
 		elif item_attack.target_type == 5: #RandomEnemy
+			item_ref = item
 			root.add_attack(root.current_attacker, root.enemy_instances[randi_range(0, root.enemy_instances.duplicate().size()-1)], item_attack)
 			root.action_history.append(root.current_attacker)
+			PlayerStats.remove_item(item, 1)
+			item_amounts[current_item_index] -= 1
 			close_items_menu()
 			await root.advance_planning()
 		return
@@ -270,13 +300,17 @@ func confirm_item_target():
 				PlayerStats.remove_item(item, 1)
 				item_amounts[current_item_index] -= 1
 			else:
-				PlayerStats.use_item(item, [target])
-			
-			root.get_node("WhoMoves").visible = true
-			root.move_who_moves(saved_party_plan_index)
-			root.action_history.append(root.current_attacker)
-			root.advance_planning()
+				var item_use_skill = Skill.new()
+				item_use_skill.skill_name = item.item_name
+				item_use_skill.is_item_skill = true
+				item_use_skill.target_type = 1
+				item_ref = item
+				root.add_attack(root.current_attacker, [target], item_use_skill)
+				root.action_history.append(root.current_attacker)
+				PlayerStats.remove_item(item, 1)
+				item_amounts[current_item_index] -= 1
 			close_items_menu()
+			await root.advance_planning()
 
 func close_items_menu():
 	items_container.visible = false
