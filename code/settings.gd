@@ -42,18 +42,27 @@ func _ready() -> void:
 	_apply_display_settings()
 
 func _apply_audio_settings() -> void:
+	_apply_master_volume()
+	_apply_music_volume()
+	_apply_sfx_volume()
+	_apply_voice_volume()
+
+func _apply_master_volume() -> void:
 	var master_bus = AudioServer.get_bus_index("Master")
 	if master_bus >= 0:
 		AudioServer.set_bus_volume_db(master_bus, linear_to_db(master_volume))
-	
+
+func _apply_music_volume() -> void:
 	var music_bus = AudioServer.get_bus_index("Music")
 	if music_bus >= 0:
 		AudioServer.set_bus_volume_db(music_bus, linear_to_db(music_volume))
-	
+
+func _apply_sfx_volume() -> void:
 	var sfx_bus = AudioServer.get_bus_index("SFX")
 	if sfx_bus >= 0:
 		AudioServer.set_bus_volume_db(sfx_bus, linear_to_db(sfx_volume))
-	
+
+func _apply_voice_volume() -> void:
 	var voice_bus = AudioServer.get_bus_index("Voice")
 	if voice_bus >= 0:
 		AudioServer.set_bus_volume_db(voice_bus, linear_to_db(voice_volume))

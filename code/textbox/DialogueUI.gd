@@ -7,7 +7,7 @@ extends Control
 @export_group("Layout")
 @export var text_label: RichTextLabel
 @export var choices_container: VBoxContainer
-@export var portrait_texture: Sprite2D
+@export var portrait_texture: Sprite2D 
 
 @export_group("Typewriter")
 @export var chars_per_second: float = 30.0
@@ -22,6 +22,7 @@ var full_text: String = ""
 var current_index: int = 0
 var type_timer: Timer
 var auto_advance_timer: Timer
+var voiceline_player: AudioStreamPlayer
 
 # Choice navigation
 var choice_buttons: Array[Button] = []
@@ -31,10 +32,11 @@ var is_choosing: bool = false
 func _ready() -> void:
 	_setup_timers()
 	_hide_ui()
+	voiceline_player = $"../AudioStreamPlayer"
 
 func _setup_timers() -> void:
 	type_timer = Timer.new()
-	type_timer.wait_time = 1.0 / chars_per_second
+	type_timer.wait_time = 1.0 / (chars_per_second * (chars_per_second / Settings.text_speed))
 	type_timer.timeout.connect(_on_type_tick)
 	add_child(type_timer)
 	
@@ -62,39 +64,14 @@ func _show_ui() -> void:
 	visible = true
 
 func _on_dialogue_started(_data: Object) -> void:
-	print("=== DEBUG START ===")
-	print("Target Object: ", _data)
-	print("Target Script: ", _data.get_script())
-
-	var all_props = _data.get_property_list()
-	print("Total Properties Count: ", all_props.size())
-
-	var found_script_vars = false
-
-	for p in all_props:
-		var name = p["name"]
-		var usage = p["usage"]
-		var type = p["type"]
-
-		if usage & 8192: 
-			var val = _data.get(name)
-			print("SCRIPT VAR FOUND: ", name, " | Type: ", type, " | Value: ", val)
-			found_script_vars = true
-
-	if not found_script_vars:
-		print("No script variables found with USAGE_SCRIPT_VARIABLE flag.")
-		print("Dumping first 10 raw properties for inspection:")
-	for i in range(min(10, all_props.size())):
-		print(all_props[i])
-
 	_show_ui()
-	print("=== DEBUG END ===")
 
 func display_node(node: DialogueNode) -> void:
 	# Clear previous choices
 	if choices_container:
 		for child in choices_container.get_children():
 			child.queue_free()
+	choices_container.visible = false
 	choice_buttons.clear()
 	current_choice_index = 0
 	is_choosing = false
@@ -105,7 +82,11 @@ func display_node(node: DialogueNode) -> void:
 		portrait_texture.visible = true
 	elif portrait_texture:
 		portrait_texture.visible = false
-
+		
+	# Play voiceline if available
+	if voiceline_player and node.voiceline:
+		voiceline_player.stream = node.voiceline
+		voiceline_player.play()
 	# Start typewriter effect
 	_on_text_displayed(node.text)
 
@@ -150,6 +131,7 @@ func _on_choice_available(choice: DialogueChoice) -> void:
 	button.set_meta("choice", choice)
 	choices_container.add_child(button)
 	choice_buttons.append(button)
+	choices_container.visible = true
 	
 func _update_choice_selection():
 	# Update visual selection of choice buttons (similar to SkillManager.navigate_skills)
@@ -184,25 +166,27 @@ func _on_choice_pressed(choice: DialogueChoice) -> void:
 		runner.select_choice(choice)
 
 func _on_dialogue_ended(_node: DialogueNode) -> void:
+	if voiceline_player:
+		voiceline_player.stop()
 	_hide_ui()
 
 # Input handling for skipping typewriter or advancing
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if not visible or not runner or not runner.is_running:
 		return
 		
 	if is_choosing and not choice_buttons.is_empty():
 		if event is InputEventKey and event.pressed:
-			if event.keycode == KEY_UP:
+			if event.is_action("up"):
 				_navigate_choices(-1)
 				get_viewport().set_input_as_handled()
 				return
-		elif event.keycode == KEY_DOWN:
+		elif event.is_action("down"):
 			_navigate_choices(1)
 			get_viewport().set_input_as_handled()
 			return
-		elif event.keycode == KEY_ENTER or event.keycode == KEY_SPACE:
-		# Select current choice
+		elif event.is_action("use") or event.keycode == KEY_SPACE:
+			# Select current choice
 			if current_choice_index >= 0 and current_choice_index < choice_buttons.size():
 				var selected_button = choice_buttons[current_choice_index]
 				var selected_choice = selected_button.get_meta("choice")
@@ -210,10 +194,20 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				return
 	
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		_handle_advance_input()
-	elif event is InputEventKey and event.pressed and (event.keycode == KEY_ENTER or event.keycode == KEY_SPACE):
-		_handle_advance_input()
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:	if current_index < full_text.length():
+		if current_index < full_text.length():
+			while current_index < full_text.length():
+				_on_type_tick()
+			_finish_typing()
+		else:
+			_handle_advance_input()
+	elif event is InputEventKey and event.pressed and event.is_action("use"):
+		if current_index < full_text.length():
+			while current_index < full_text.length():
+				_on_type_tick()
+			_finish_typing()
+		else:
+			_handle_advance_input()
 
 func _handle_advance_input() -> void:
 	if is_typing:

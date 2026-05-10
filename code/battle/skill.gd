@@ -29,7 +29,6 @@ class_name Skill
 @export var on_use_effects: Array[BattleEffect] = []
 @export var on_hit_effects: Array[BattleEffect] = []
 @export var on_miss_effects: Array[BattleEffect] = []
-@export var legacy_effects: Dictionary[BattleEffect.StatusEffect, Array] = {}  # {effect: [level, duration]}
 
 @export_group("Item Usage")
 @export var is_item_skill: bool = false

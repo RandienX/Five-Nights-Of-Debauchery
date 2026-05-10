@@ -48,6 +48,9 @@ func _on_body_entered(body: Node) -> void:
 	if (once_per_session and _has_triggered) or require_input_to_start:
 		return
 	
+	if name in $"../..".textboxes_deactivated:
+		return
+	
 	_has_triggered = true
 	_start_dialogue()
 

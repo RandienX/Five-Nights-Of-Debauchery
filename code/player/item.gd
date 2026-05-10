@@ -24,29 +24,28 @@ class_name Item
 @export var can_use_outside_battle: bool = true
 
 @export_group("Stat Bonuses")
-@export var item_bonuses: Dictionary[String, int] = {
-"hp": 0,
-"mp": 0,
-"atk": 10,
-"def": 5,
-"speed": 0,
-"magic": 0,
+@export var item_bonuses: Dictionary[StringName, int] = {
+&"hp": 0,
+&"mp": 0,
+&"atk": 10,
+&"def": 5,
+&"speed": 0,
+&"magic": 0,
 }
 
 @export_category("Weapon")
 @export_enum("One-Handed", "Two-Handed") var weapon_type: int = 0
-@export var weapon_effects_given: Dictionary[BattleEffect.StatusEffect, Array] = {}
+@export var weapon_effects_given: Dictionary[BattleEffect, Array] = {}
 
 @export_category("Armor")
 @export_enum("Head", "Chest", "Legs", "Shield", "Accessory") var armor_type: int = 0
-@export var startup_effects_given: Dictionary[BattleEffect.StatusEffect, Array] = {}
+@export var startup_effects_given: Dictionary[BattleEffect, Array] = {}
 @export var armor_value: int = 0
 
 @export_category("Consumable")
 @export var consume_effects: Array[BattleEffect] = []
 @export var is_item_attack: bool = false
 @export var item_attack: Skill
-@export var heals_effects: Array[BattleEffect.StatusEffect] = []
 @export var heal_amount: int = 0
 @export var mana_amount: int = 0
 @export var revive_amount: int = 0
