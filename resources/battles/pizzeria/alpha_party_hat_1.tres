@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Battle" load_steps=13 format=3 uid="uid://d0alullmmxp3b"]
+[gd_resource type="Resource" script_class="Battle" format=3 uid="uid://d0alullmmxp3b"]
 
 [ext_resource type="Texture2D" uid="uid://cfoscxh3td7hk" path="res://assets/battleui/backgrounds/FNaF 1 - Dining Area.png" id="1_k1x70"]
 [ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="2_en6lr"]

@@ -1,7 +1,10 @@
-[gd_resource type="Resource" script_class="Skill" load_steps=3 format=3 uid="uid://dglgbjt53w88p"]
+[gd_resource type="Resource" script_class="Skill" format=3 uid="uid://dglgbjt53w88p"]
 
 [ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_mdiom"]
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_qjd3v"]
+[ext_resource type="Resource" uid="uid://rbt1cq360t4t" path="res://resources/effects/power.tres" id="2_3bk2c"]
+[ext_resource type="Resource" uid="uid://dorm3svi3bt6p" path="res://resources/effects/speed.tres" id="3_itigi"]
+[ext_resource type="Resource" uid="uid://dlvvu0lpq6atk" path="res://resources/effects/tough.tres" id="4_e6oql"]
 
 [resource]
 script = ExtResource("1_mdiom")
@@ -9,4 +12,5 @@ skill_name = "Party Favors"
 target_type = 2
 mana_cost = 20
 accuracy = 0.95
+on_hit_effects = Array[ExtResource("1_qjd3v")]([ExtResource("2_3bk2c"), ExtResource("3_itigi"), ExtResource("4_e6oql")])
 metadata/_custom_type_script = "uid://o74imedfcjis"

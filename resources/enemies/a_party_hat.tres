@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Entity" load_steps=6 format=3 uid="uid://jacdqq8darrf"]
+[gd_resource type="Resource" script_class="Entity" format=3 uid="uid://jacdqq8darrf"]
 
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_c2520"]
 [ext_resource type="Texture2D" uid="uid://cgsaxwoxv55ux" path="res://assets/battlesprites/Party Hat.png" id="1_vdjy6"]
@@ -15,13 +15,13 @@ portrait = ExtResource("1_vdjy6")
 battle_sprite = ExtResource("1_vdjy6")
 back_sprite = ExtResource("1_vdjy6")
 path_to = "res://resources/enemies/a_party_hat.tres"
-base_stats = Dictionary[String, int]({
-"atk": 5,
-"def": 1,
-"hp": 50,
-"magic": 0,
-"mp": 50,
-"speed": 3
+base_stats = Dictionary[StringName, int]({
+&"atk": 5,
+&"def": 1,
+&"hp": 50,
+&"magic": 0,
+&"mp": 50,
+&"speed": 3
 })
 hp = 50
 default_attack = ExtResource("2_rrxtr")

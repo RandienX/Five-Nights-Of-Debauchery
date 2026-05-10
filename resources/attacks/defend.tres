@@ -1,11 +1,31 @@
-[gd_resource type="Resource" script_class="Skill" load_steps=3 format=3 uid="uid://57rsbbakliog"]
+[gd_resource type="Resource" script_class="Skill" format=3 uid="uid://57rsbbakliog"]
 
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_1260s"]
 [ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_sei50"]
+[ext_resource type="Script" uid="uid://bdv44ymylf45" path="res://code/battle/battle_effect_condition.gd" id="2_cexbe"]
+[ext_resource type="Resource" uid="uid://bfxhb5jphucqp" path="res://resources/effects/defend.tres" id="2_r8hc6"]
+[ext_resource type="Script" uid="uid://btu5sgbysqdfq" path="res://code/battle/battle_effect_stat_modifier.gd" id="3_hqqf8"]
+
+[sub_resource type="Resource" id="Resource_mn0sx"]
+script = ExtResource("3_hqqf8")
+stat_key = "mp"
+value = 10.0
+scaling_type = 2
+duration_type = 0
+duration_turns = 1
+metadata/_custom_type_script = "uid://btu5sgbysqdfq"
+
+[sub_resource type="Resource" id="Resource_cexbe"]
+script = ExtResource("1_1260s")
+effect_id = "defend_mp"
+effect_name = "DefMP"
+effect_type = 6
+stat_modifiers = Array[ExtResource("3_hqqf8")]([SubResource("Resource_mn0sx")])
+metadata/_custom_type_script = "uid://ch7hoesea8vrf"
 
 [resource]
 script = ExtResource("1_sei50")
 skill_name = "Defend"
 target_type = 1
-level_to_unlock = 0
+on_use_effects = Array[ExtResource("1_1260s")]([ExtResource("2_r8hc6"), SubResource("Resource_cexbe")])
 metadata/_custom_type_script = "uid://o74imedfcjis"

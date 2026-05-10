@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Item" load_steps=4 format=3 uid="uid://bw0e1yparf4hs"]
+[gd_resource type="Resource" script_class="Item" format=3 uid="uid://bw0e1yparf4hs"]
 
 [ext_resource type="Script" uid="uid://dn31qme1ukrys" path="res://code/player/item.gd" id="1_6r8v1"]
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_fmrlp"]

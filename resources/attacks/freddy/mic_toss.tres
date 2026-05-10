@@ -1,14 +1,46 @@
-[gd_resource type="Resource" script_class="Skill" load_steps=3 format=3 uid="uid://dn2gyrpdrrwdk"]
+[gd_resource type="Resource" script_class="Skill" format=3 uid="uid://dn2gyrpdrrwdk"]
 
 [ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_bepge"]
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_l43ub"]
+[ext_resource type="Script" uid="uid://bdv44ymylf45" path="res://code/battle/battle_effect_condition.gd" id="2_fl0jm"]
+[ext_resource type="Script" uid="uid://btu5sgbysqdfq" path="res://code/battle/battle_effect_stat_modifier.gd" id="3_5vf5q"]
+[ext_resource type="Script" uid="uid://bdxyu3e5w0856" path="res://code/battle/battle_effect_status_definition.gd" id="4_5vf5q"]
+
+[sub_resource type="Resource" id="Resource_7ddfk"]
+script = ExtResource("3_5vf5q")
+stat_key = "hp"
+value = -9999.0
+duration_type = 0
+stacking_rule = 0
+max_stacks = 1
+metadata/_custom_type_script = "uid://btu5sgbysqdfq"
+
+[sub_resource type="Resource" id="Resource_udnms"]
+script = ExtResource("4_5vf5q")
+id = "instakill"
+name = "Instakill"
+duration_value = 1
+stat_modifiers = Array[ExtResource("3_5vf5q")]([SubResource("Resource_7ddfk")])
+metadata/_custom_type_script = "uid://bdxyu3e5w0856"
+
+[sub_resource type="Resource" id="Resource_d8wla"]
+script = ExtResource("1_l43ub")
+effect_id = "instakill"
+effect_name = "Instakill"
+effect_type = 4
+target_type = 2
+timing = 1
+base_value = 9999.0
+status_ref = SubResource("Resource_udnms")
+status_apply_chance = 1.0
+metadata/_custom_type_script = "uid://ch7hoesea8vrf"
 
 [resource]
 script = ExtResource("1_bepge")
 skill_name = "Mic Toss"
-level_to_unlock = 0
 mana_cost = 5
 accuracy = 0.95
 attack_multiplier = 1.1
 attack_bonus = 5
+on_hit_effects = Array[ExtResource("1_l43ub")]([SubResource("Resource_d8wla")])
 metadata/_custom_type_script = "uid://o74imedfcjis"

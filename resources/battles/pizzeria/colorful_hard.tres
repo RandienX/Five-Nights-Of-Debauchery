@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Battle" load_steps=19 format=3 uid="uid://dyc4hjj71g568"]
+[gd_resource type="Resource" script_class="Battle" format=3 uid="uid://dyc4hjj71g568"]
 
 [ext_resource type="Texture2D" uid="uid://d17hfygtn4iu2" path="res://assets/battleui/backgrounds/FNaF 1 - Office.png" id="1_kdm4a"]
 [ext_resource type="Script" uid="uid://dfxuook11sb3a" path="res://code/battle/battle_condition.gd" id="2_kdm4a"]

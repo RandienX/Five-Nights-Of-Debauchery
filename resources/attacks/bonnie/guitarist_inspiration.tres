@@ -1,11 +1,25 @@
-[gd_resource type="Resource" script_class="Skill" load_steps=3 format=3 uid="uid://b5yjitpcodq3o"]
+[gd_resource type="Resource" script_class="Skill" format=3 uid="uid://b5yjitpcodq3o"]
 
 [ext_resource type="Script" uid="uid://o74imedfcjis" path="res://code/battle/skill.gd" id="1_bgllm"]
 [ext_resource type="Script" uid="uid://ch7hoesea8vrf" path="res://code/battle/battle_effect.gd" id="1_rey4x"]
+[ext_resource type="Script" uid="uid://bdv44ymylf45" path="res://code/battle/battle_effect_condition.gd" id="2_7554d"]
+[ext_resource type="Script" uid="uid://btu5sgbysqdfq" path="res://code/battle/battle_effect_stat_modifier.gd" id="3_wkjte"]
+[ext_resource type="Resource" uid="uid://dorm3svi3bt6p" path="res://resources/effects/speed.tres" id="4_gba6q"]
+
+[sub_resource type="Resource" id="Resource_p0ml4"]
+script = ExtResource("1_rey4x")
+effect_id = "heal"
+effect_name = "Heal"
+effect_type = 1
+target_type = 5
+base_value = 20.0
+scaling_type = 2
+metadata/_custom_type_script = "uid://ch7hoesea8vrf"
 
 [resource]
 script = ExtResource("1_bgllm")
 skill_name = "Guitarist Inspiration"
 target_type = 2
 mana_cost = 25
+on_hit_effects = Array[ExtResource("1_rey4x")]([SubResource("Resource_p0ml4"), ExtResource("4_gba6q")])
 metadata/_custom_type_script = "uid://o74imedfcjis"
