@@ -1,10 +1,10 @@
-[gd_scene load_steps=32 format=4 uid="uid://d3empkhhumb1"]
+[gd_scene format=4 uid="uid://d3empkhhumb1"]
 
 [ext_resource type="Script" uid="uid://duek0uk444kjf" path="res://code/root_script.gd" id="1_4a4t6"]
 [ext_resource type="Script" uid="uid://s2os42vdwf6y" path="res://code/battle/battle.gd" id="2_yobt7"]
 [ext_resource type="Resource" uid="uid://d0alullmmxp3b" path="res://resources/battles/pizzeria/alpha_party_hat_1.tres" id="3_ml5db"]
-[ext_resource type="Texture2D" uid="uid://tpsaxglf4u38" path="res://assets/tilemaps/Walls.png" id="4_gnhpg"]
-[ext_resource type="Texture2D" uid="uid://c5te14cvg4qke" path="res://assets/tilemaps/Objects.png" id="5_ppajj"]
+[ext_resource type="TileSet" uid="uid://cpxfb26nr2i26" path="res://assets/tilemaps/tilesets/wall_tileset.tres" id="4_5tfqc"]
+[ext_resource type="TileSet" uid="uid://de5yt04up4w5d" path="res://assets/tilemaps/tilesets/object_tileset.tres" id="5_u86nv"]
 [ext_resource type="PackedScene" uid="uid://yq7stgud35n5" path="res://scenes/objects/player.tscn" id="6_2grc0"]
 [ext_resource type="Texture2D" uid="uid://0dhqip2ffp2h" path="res://assets/mapsprites/Toys 2.png" id="6_ppajj"]
 [ext_resource type="PackedScene" uid="uid://cgs08pp0l2gmg" path="res://scenes/objects/textbox_maker.tscn" id="7_2grc0"]
@@ -15,366 +15,8 @@
 [ext_resource type="Script" uid="uid://cns0ts3txlu6v" path="res://code/textbox/DialogueChoice.gd" id="10_5tfqc"]
 [ext_resource type="Script" uid="uid://t5qfe8igpeg3" path="res://code/textbox/DialogueEffect.gd" id="11_u86nv"]
 [ext_resource type="Texture2D" uid="uid://ok0s30ywbc5e" path="res://assets/party/Classics+Swag.png" id="12_gucuy"]
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_feixl"]
-texture = ExtResource("4_gnhpg")
-texture_region_size = Vector2i(32, 32)
-0:0/0 = 0
-1:0/0 = 0
-2:0/0 = 0
-3:0/0 = 0
-4:0/0 = 0
-5:0/0 = 0
-6:0/0 = 0
-0:1/0 = 0
-1:1/0 = 0
-2:1/0 = 0
-3:1/0 = 0
-4:1/0 = 0
-5:1/0 = 0
-
-[sub_resource type="TileSet" id="TileSet_tenmc"]
-tile_size = Vector2i(32, 32)
-sources/0 = SubResource("TileSetAtlasSource_feixl")
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5tfqc"]
-texture = ExtResource("4_gnhpg")
-texture_region_size = Vector2i(32, 32)
-0:0/0 = 0
-1:0/0 = 0
-1:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 12, -16, 12, 16, -16, 16)
-2:0/0 = 0
-2:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(16, -16, -12, -16, -12, 16, 16, 16)
-3:0/0 = 0
-3:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
-4:0/0 = 0
-1:1/0 = 0
-1:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(12, -16, -16, -16, -16, 16, 12, 16)
-2:1/0 = 0
-2:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-12, -16, 16, -16, 16, 16, -12, 16)
-3:1/0 = 0
-3:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
-4:1/0 = 0
-0:1/0 = 0
-5:0/0 = 0
-5:1/0 = 0
-6:0/0 = 0
-6:1/0 = 0
-7:1/0 = 0
-7:0/0 = 0
-0:2/0 = 0
-1:2/0 = 0
-1:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, -12, -16, -12)
-2:2/0 = 0
-2:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, -12, -16, -12, -12, -16, -12)
-2:2/0/physics_layer_0/polygon_1/points = PackedVector2Array(16, -16, -16, -16, -16, 16, -12, 16, -12, -12, 16, -12)
-3:2/0 = 0
-3:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
-1:3/0 = 0
-1:3/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, -12, -16, -12, -12, -16, -12)
-
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_rkg1h"]
-load_path = "res://.godot/imported/Pizza B.png-6723de64f078fb51891bba94021e3fa8.ctex"
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_u86nv"]
-texture = SubResource("CompressedTexture2D_rkg1h")
-texture_region_size = Vector2i(32, 32)
-1:0/0 = 0
-2:0/0 = 0
-3:0/0 = 0
-4:0/0 = 0
-5:0/0 = 0
-6:0/0 = 0
-7:0/0 = 0
-8:0/0 = 0
-9:0/0 = 0
-10:0/0 = 0
-11:0/0 = 0
-12:0/0 = 0
-13:0/0 = 0
-14:0/0 = 0
-15:0/0 = 0
-1:1/0 = 0
-2:1/0 = 0
-3:1/0 = 0
-4:1/0 = 0
-5:1/0 = 0
-6:1/0 = 0
-7:1/0 = 0
-8:1/0 = 0
-9:1/0 = 0
-10:1/0 = 0
-11:1/0 = 0
-12:1/0 = 0
-13:1/0 = 0
-14:1/0 = 0
-15:1/0 = 0
-0:2/0 = 0
-1:2/0 = 0
-2:2/0 = 0
-3:2/0 = 0
-4:2/0 = 0
-5:2/0 = 0
-6:2/0 = 0
-7:2/0 = 0
-8:2/0 = 0
-9:2/0 = 0
-10:2/0 = 0
-11:2/0 = 0
-12:2/0 = 0
-13:2/0 = 0
-14:2/0 = 0
-15:2/0 = 0
-0:3/0 = 0
-1:3/0 = 0
-2:3/0 = 0
-3:3/0 = 0
-4:3/0 = 0
-5:3/0 = 0
-6:3/0 = 0
-7:3/0 = 0
-8:3/0 = 0
-9:3/0 = 0
-10:3/0 = 0
-11:3/0 = 0
-12:3/0 = 0
-13:3/0 = 0
-14:3/0 = 0
-15:3/0 = 0
-0:4/0 = 0
-1:4/0 = 0
-2:4/0 = 0
-3:4/0 = 0
-4:4/0 = 0
-5:4/0 = 0
-6:4/0 = 0
-7:4/0 = 0
-8:4/0 = 0
-9:4/0 = 0
-10:4/0 = 0
-11:4/0 = 0
-12:4/0 = 0
-13:4/0 = 0
-14:4/0 = 0
-15:4/0 = 0
-0:5/0 = 0
-1:5/0 = 0
-2:5/0 = 0
-3:5/0 = 0
-4:5/0 = 0
-5:5/0 = 0
-6:5/0 = 0
-7:5/0 = 0
-8:5/0 = 0
-9:5/0 = 0
-10:5/0 = 0
-11:5/0 = 0
-12:5/0 = 0
-13:5/0 = 0
-14:5/0 = 0
-15:5/0 = 0
-0:6/0 = 0
-1:6/0 = 0
-2:6/0 = 0
-3:6/0 = 0
-4:6/0 = 0
-5:6/0 = 0
-6:6/0 = 0
-7:6/0 = 0
-8:6/0 = 0
-9:6/0 = 0
-10:6/0 = 0
-11:6/0 = 0
-12:6/0 = 0
-13:6/0 = 0
-14:6/0 = 0
-15:6/0 = 0
-0:7/0 = 0
-1:7/0 = 0
-2:7/0 = 0
-3:7/0 = 0
-4:7/0 = 0
-5:7/0 = 0
-6:7/0 = 0
-7:7/0 = 0
-8:7/0 = 0
-9:7/0 = 0
-10:7/0 = 0
-11:7/0 = 0
-12:7/0 = 0
-13:7/0 = 0
-14:7/0 = 0
-15:7/0 = 0
-0:8/0 = 0
-1:8/0 = 0
-2:8/0 = 0
-3:8/0 = 0
-4:8/0 = 0
-5:8/0 = 0
-6:8/0 = 0
-7:8/0 = 0
-8:8/0 = 0
-9:8/0 = 0
-10:8/0 = 0
-11:8/0 = 0
-12:8/0 = 0
-13:8/0 = 0
-14:8/0 = 0
-15:8/0 = 0
-0:9/0 = 0
-1:9/0 = 0
-2:9/0 = 0
-3:9/0 = 0
-4:9/0 = 0
-5:9/0 = 0
-6:9/0 = 0
-7:9/0 = 0
-8:9/0 = 0
-9:9/0 = 0
-10:9/0 = 0
-11:9/0 = 0
-12:9/0 = 0
-13:9/0 = 0
-14:9/0 = 0
-15:9/0 = 0
-0:10/0 = 0
-1:10/0 = 0
-2:10/0 = 0
-3:10/0 = 0
-4:10/0 = 0
-5:10/0 = 0
-6:10/0 = 0
-7:10/0 = 0
-8:10/0 = 0
-9:10/0 = 0
-10:10/0 = 0
-11:10/0 = 0
-12:10/0 = 0
-13:10/0 = 0
-14:10/0 = 0
-15:10/0 = 0
-0:11/0 = 0
-1:11/0 = 0
-2:11/0 = 0
-3:11/0 = 0
-4:11/0 = 0
-5:11/0 = 0
-6:11/0 = 0
-7:11/0 = 0
-8:11/0 = 0
-9:11/0 = 0
-10:11/0 = 0
-11:11/0 = 0
-12:11/0 = 0
-13:11/0 = 0
-14:11/0 = 0
-15:11/0 = 0
-0:12/0 = 0
-1:12/0 = 0
-2:12/0 = 0
-3:12/0 = 0
-4:12/0 = 0
-5:12/0 = 0
-6:12/0 = 0
-7:12/0 = 0
-8:12/0 = 0
-9:12/0 = 0
-10:12/0 = 0
-11:12/0 = 0
-12:12/0 = 0
-13:12/0 = 0
-14:12/0 = 0
-15:12/0 = 0
-0:13/0 = 0
-1:13/0 = 0
-2:13/0 = 0
-3:13/0 = 0
-4:13/0 = 0
-5:13/0 = 0
-6:13/0 = 0
-7:13/0 = 0
-8:13/0 = 0
-9:13/0 = 0
-10:13/0 = 0
-11:13/0 = 0
-12:13/0 = 0
-13:13/0 = 0
-14:13/0 = 0
-15:13/0 = 0
-0:14/0 = 0
-1:14/0 = 0
-2:14/0 = 0
-3:14/0 = 0
-4:14/0 = 0
-5:14/0 = 0
-6:14/0 = 0
-7:14/0 = 0
-8:14/0 = 0
-9:14/0 = 0
-10:14/0 = 0
-11:14/0 = 0
-12:14/0 = 0
-13:14/0 = 0
-14:14/0 = 0
-15:14/0 = 0
-0:15/0 = 0
-1:15/0 = 0
-2:15/0 = 0
-3:15/0 = 0
-4:15/0 = 0
-5:15/0 = 0
-6:15/0 = 0
-7:15/0 = 0
-8:15/0 = 0
-9:15/0 = 0
-10:15/0 = 0
-11:15/0 = 0
-12:15/0 = 0
-13:15/0 = 0
-14:15/0 = 0
-15:15/0 = 0
-
-[sub_resource type="TileSet" id="TileSet_gucuy"]
-tile_size = Vector2i(32, 32)
-physics_layer_0/collision_layer = 1
-sources/2 = SubResource("TileSetAtlasSource_5tfqc")
-sources/3 = SubResource("TileSetAtlasSource_u86nv")
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_uo5u6"]
-texture = ExtResource("5_ppajj")
-texture_region_size = Vector2i(32, 32)
-1:0/0 = 0
-2:0/0 = 0
-1:1/0 = 0
-2:1/0 = 0
-0:0/size_in_atlas = Vector2i(1, 3)
-0:0/0 = 0
-0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -48, 16, -48, 16, 40, -16, 40)
-3:0/0 = 0
-3:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 8, -16, 8)
-4:1/0 = 0
-4:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -8, 16, -8, 16, 8, -16, 8)
-5:1/0 = 0
-5:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -8, 16, -8, 16, 8, -16, 8)
-4:0/0 = 0
-5:0/0 = 0
-
-[sub_resource type="TileSet" id="TileSet_28tpx"]
-tile_size = Vector2i(32, 32)
-physics_layer_0/collision_layer = 1
-sources/1 = SubResource("TileSetAtlasSource_uo5u6")
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_urk2m"]
-texture = ExtResource("5_ppajj")
-texture_region_size = Vector2i(32, 32)
-1:0/0 = 0
-2:0/0 = 0
-2:1/0 = 0
-1:1/0 = 0
-
-[sub_resource type="TileSet" id="TileSet_pnfeg"]
-tile_size = Vector2i(32, 32)
-sources/1 = SubResource("TileSetAtlasSource_urk2m")
+[ext_resource type="AudioStream" uid="uid://diqbgsqledu5t" path="res://assets/tts_lines/dining_hall/inhale_dong.mp3" id="13_5tfqc"]
+[ext_resource type="AudioStream" uid="uid://bpwep5m8km6ag" path="res://assets/sound/fnaf-1-office-running-sfx-made-with-Voicemod.mp3" id="17_u86nv"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_tenmc"]
 size = Vector2(20, 31)
@@ -397,6 +39,7 @@ label = "start"
 text = "Inhale my dong enragement child."
 speaker = "Freddy"
 portrait = SubResource("AtlasTexture_28tpx")
+voiceline = ExtResource("13_5tfqc")
 on_exit_effects = Array[ExtResource("11_u86nv")]([SubResource("Resource_uo5u6")])
 metadata/_custom_type_script = "uid://dag3ualk0velp"
 
@@ -408,7 +51,7 @@ metadata/_custom_type_script = "uid://nfr8xstn6iuk"
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ywghk"]
 size = Vector2(32, 32)
 
-[node name="RootScene" type="Node2D" node_paths=PackedStringArray("player")]
+[node name="RootScene" type="Node2D" unique_id=2055121524 node_paths=PackedStringArray("player")]
 script = ExtResource("1_4a4t6")
 room_name = "Pizzeria - Closet"
 possible_battles = Array[ExtResource("2_yobt7")]([ExtResource("3_ml5db")])
@@ -416,37 +59,33 @@ player = NodePath("player")
 room_size = Rect2(0, 0, 18, 15)
 metadata/_custom_type_script = "uid://duek0uk444kjf"
 
-[node name="TileMap" type="Node2D" parent="."]
+[node name="TileMap" type="Node2D" parent="." unique_id=1158853708]
 
-[node name="roof" type="TileMapLayer" parent="TileMap"]
-z_index = 5
-tile_set = SubResource("TileSet_tenmc")
-
-[node name="walls" type="TileMapLayer" parent="TileMap"]
+[node name="walls" type="TileMapLayer" parent="TileMap" unique_id=554390853]
 tile_map_data = PackedByteArray("AAAAAAAAAgAAAAEAAAAAAAEAAgAAAAEAAAAAAAIAAgAAAAEAAAAAAAMAAgAAAAEAAAAAAAQAAgAAAAEAAAAAAAUAAgAAAAEAAAAAAAYAAgAAAAEAAAAAAAcAAgAAAAEAAAAAAAgAAgAAAAEAAAAAAAkAAgAAAAEAAAAAAAoAAgAAAAEAAAAAAAsAAgAAAAEAAAAAAAwAAgAAAAEAAAAAAA0AAgAAAAEAAAAAAA4AAgAAAAEAAAABAAAAAgAAAAEAAAABAAEAAgAAAAEAAAABAAIAAgAAAAEAAAABAAMAAgAAAAEAAAABAAQAAgAAAAEAAAABAAUAAgAAAAEAAAABAAYAAgAAAAEAAAABAAcAAgAAAAEAAAABAAgAAgAAAAEAAAABAAkAAgAAAAEAAAABAAoAAgAAAAEAAAABAAsAAgAAAAEAAAABAAwAAgAAAAEAAAABAA0AAgAAAAEAAAABAA4AAgAAAAEAAAACAAAAAgAAAAEAAAACAAEAAgAAAAEAAAACAAIAAgAAAAEAAAACAAMAAgAAAAEAAAACAAQAAgAAAAEAAAACAAUAAgAAAAEAAAACAAYAAgAAAAEAAAACAAcAAgAAAAEAAAACAAgAAgAAAAEAAAACAAkAAgAAAAEAAAACAAoAAgAAAAEAAAACAAsAAgAAAAEAAAACAAwAAgAAAAEAAAACAA0AAgAAAAEAAAACAA4AAgAAAAEAAAADAAAAAgAAAAEAAAADAAEAAgAAAAEAAAADAAIAAgAAAAEAAAADAAMAAgAAAAEAAAADAAQAAgAAAAEAAAADAAUAAgAAAAEAAAADAAYAAgAAAAEAAAADAAcAAgAAAAEAAAADAAgAAgAAAAEAAAADAAkAAgAAAAEAAAADAAoAAgAAAAEAAAADAAsAAgAAAAEAAAADAAwAAgAAAAEAAAADAA0AAgAAAAEAAAADAA4AAgAAAAEAAAAEAAAAAgAAAAEAAAAEAAEAAgAAAAEAAAAEAAIAAgAAAAEAAAAEAAMAAgAAAAEAAAAEAAQAAgAAAAEAAAAEAAUAAgAAAAEAAAAEAAYAAgAAAAEAAAAEAAcAAgAAAAEAAAAEAAgAAgAAAAEAAAAEAAkAAgAAAAEAAAAEAAoAAgAAAAEAAAAEAAsAAgAAAAEAAAAEAAwAAgAAAAEAAAAEAA0AAgAAAAEAAAAEAA4AAgAAAAEAAAAFAAAAAgAAAAEAAAAFAAEAAgAAAAEAAAAFAAIAAgAAAAEAAAAFAAMAAgAAAAEAAAAFAAQAAgAAAAEAAAAFAAUAAgAAAAEAAAAFAAYAAgAAAAEAAAAFAAcAAgAAAAEAAAAFAAgAAgAAAAEAAAAFAAkAAgAAAAEAAAAFAAoAAgAAAAEAAAAFAAsAAgAAAAEAAAAFAAwAAgAAAAEAAAAFAA0AAgAAAAEAAAAFAA4AAgAAAAEAAAAGAAAAAgAAAAEAAAAGAAEAAgAAAAEAAAAGAAIAAgABAAMAADAGAAMAAgABAAIAAHAGAAQAAgABAAIAAHAGAAUAAgABAAIAAHAGAAYAAgABAAIAAHAGAAcAAgABAAIAAHAGAAgAAgABAAIAAHAGAAkAAgABAAMAAFAGAAoAAgAAAAEAAAAGAAsAAgAAAAEAAAAGAAwAAgAAAAEAAAAGAA0AAgAAAAEAAAAGAA4AAgAAAAEAAAAHAAAAAgAAAAEAAAAHAAEAAgAAAAEAAAAHAAIAAgABAAIAACAHAAMAAgADAAAAACAHAAQAAgADAAAAAAAHAAUAAgADAAIAAAAHAAYAAgAAAAAAAAAHAAcAAgAAAAAAAAAHAAgAAgAAAAAAAAAHAAkAAgABAAIAABAHAAoAAgAAAAEAAAAHAAsAAgAAAAEAAAAHAAwAAgAAAAEAAAAHAA0AAgAAAAEAAAAHAA4AAgAAAAEAAAAIAAAAAgAAAAEAAAAIAAEAAgAAAAEAAAAIAAIAAgABAAIAACAIAAMAAgADAAAAACAIAAQAAgADAAAAAAAIAAUAAgADAAIAAAAIAAYAAgAAAAAAAAAIAAcAAgAAAAAAAAAIAAgAAgAAAAAAAAAIAAkAAgABAAIAABAIAAoAAgAAAAEAAAAIAAsAAgAAAAEAAAAIAAwAAgAAAAEAAAAIAA0AAgAAAAEAAAAIAA4AAgAAAAEAAAAJAAAAAgAAAAEAAAAJAAEAAgAAAAEAAAAJAAIAAgABAAIAACAJAAMAAgADAAAAACAJAAQAAgADAAAAAAAJAAUAAgADAAIAAAAJAAYAAgAAAAAAAAAJAAcAAgAAAAAAAAAJAAgAAgAAAAAAAAAJAAkAAgABAAIAABAJAAoAAgAAAAEAAAAJAAsAAgAAAAEAAAAJAAwAAgAAAAEAAAAJAA0AAgAAAAEAAAAJAA4AAgAAAAEAAAAKAAAAAgAAAAEAAAAKAAEAAgAAAAEAAAAKAAIAAgABAAMAAGAKAAMAAgABAAIAAGAKAAQAAgABAAIAAGAKAAUAAgABAAIAAGAKAAYAAgACAAIAAGAKAAcAAgAAAAAAAAAKAAgAAgACAAIAAAAKAAkAAgABAAMAAAAKAAoAAgAAAAEAAAAKAAsAAgAAAAEAAAAKAAwAAgAAAAEAAAAKAA0AAgAAAAEAAAAKAA4AAgAAAAEAAAALAAAAAgAAAAEAAAALAAEAAgAAAAEAAAALAAIAAgAAAAEAAAALAAMAAgAAAAEAAAALAAQAAgAAAAEAAAALAAUAAgAAAAEAAAALAAYAAgAAAAEAAAALAAcAAgAAAAEAAAALAAgAAgAAAAEAAAALAAkAAgAAAAEAAAALAAoAAgAAAAEAAAALAAsAAgAAAAEAAAALAAwAAgAAAAEAAAALAA0AAgAAAAEAAAALAA4AAgAAAAEAAAAMAAAAAgAAAAEAAAAMAAEAAgAAAAEAAAAMAAIAAgAAAAEAAAAMAAMAAgAAAAEAAAAMAAQAAgAAAAEAAAAMAAUAAgAAAAEAAAAMAAYAAgAAAAEAAAAMAAcAAgAAAAEAAAAMAAgAAgAAAAEAAAAMAAkAAgAAAAEAAAAMAAoAAgAAAAEAAAAMAAsAAgAAAAEAAAAMAAwAAgAAAAEAAAAMAA0AAgAAAAEAAAAMAA4AAgAAAAEAAAANAAAAAgAAAAEAAAANAAEAAgAAAAEAAAANAAIAAgAAAAEAAAANAAMAAgAAAAEAAAANAAQAAgAAAAEAAAANAAUAAgAAAAEAAAANAAYAAgAAAAEAAAANAAcAAgAAAAEAAAANAAgAAgAAAAEAAAANAAkAAgAAAAEAAAANAAoAAgAAAAEAAAANAAsAAgAAAAEAAAANAAwAAgAAAAEAAAANAA0AAgAAAAEAAAANAA4AAgAAAAEAAAAOAAAAAgAAAAEAAAAOAAEAAgAAAAEAAAAOAAIAAgAAAAEAAAAOAAMAAgAAAAEAAAAOAAQAAgAAAAEAAAAOAAUAAgAAAAEAAAAOAAYAAgAAAAEAAAAOAAcAAgAAAAEAAAAOAAgAAgAAAAEAAAAOAAkAAgAAAAEAAAAOAAoAAgAAAAEAAAAOAAsAAgAAAAEAAAAOAAwAAgAAAAEAAAAOAA0AAgAAAAEAAAAOAA4AAgAAAAEAAAAPAAAAAgAAAAEAAAAPAAEAAgAAAAEAAAAPAAIAAgAAAAEAAAAPAAMAAgAAAAEAAAAPAAQAAgAAAAEAAAAPAAUAAgAAAAEAAAAPAAYAAgAAAAEAAAAPAAcAAgAAAAEAAAAPAAgAAgAAAAEAAAAPAAkAAgAAAAEAAAAPAAoAAgAAAAEAAAAPAAsAAgAAAAEAAAAPAAwAAgAAAAEAAAAPAA0AAgAAAAEAAAAPAA4AAgAAAAEAAAAQAAAAAgAAAAEAAAAQAAEAAgAAAAEAAAAQAAIAAgAAAAEAAAAQAAMAAgAAAAEAAAAQAAQAAgAAAAEAAAAQAAUAAgAAAAEAAAAQAAYAAgAAAAEAAAAQAAcAAgAAAAEAAAAQAAgAAgAAAAEAAAAQAAkAAgAAAAEAAAAQAAoAAgAAAAEAAAAQAAsAAgAAAAEAAAAQAAwAAgAAAAEAAAAQAA0AAgAAAAEAAAAQAA4AAgAAAAEAAAARAAAAAgAAAAEAAAARAAEAAgAAAAEAAAARAAIAAgAAAAEAAAARAAMAAgAAAAEAAAARAAQAAgAAAAEAAAARAAUAAgAAAAEAAAARAAYAAgAAAAEAAAARAAcAAgAAAAEAAAARAAgAAgAAAAEAAAARAAkAAgAAAAEAAAARAAoAAgAAAAEAAAARAAsAAgAAAAEAAAARAAwAAgAAAAEAAAARAA0AAgAAAAEAAAARAA4AAgAAAAEAAAA=")
-tile_set = SubResource("TileSet_gucuy")
+tile_set = ExtResource("4_5tfqc")
 
-[node name="objects" type="TileMapLayer" parent="TileMap"]
-tile_set = SubResource("TileSet_28tpx")
+[node name="objects" type="TileMapLayer" parent="TileMap" unique_id=947248077]
+tile_set = ExtResource("5_u86nv")
 
-[node name="objects_top" type="TileMapLayer" parent="TileMap/objects"]
-tile_set = SubResource("TileSet_pnfeg")
+[node name="objects_top" type="TileMapLayer" parent="TileMap/objects" unique_id=1654477143]
+tile_set = ExtResource("5_u86nv")
 
-[node name="bb_shop" type="Sprite2D" parent="TileMap/objects"]
+[node name="bb_shop" type="Sprite2D" parent="TileMap/objects" unique_id=594348877]
 position = Vector2(272, 207)
 texture = ExtResource("6_ppajj")
 region_enabled = true
 region_rect = Rect2(128, 0, 32, 32)
 
-[node name="StaticBody2D" type="StaticBody2D" parent="TileMap/objects/bb_shop"]
+[node name="StaticBody2D" type="StaticBody2D" parent="TileMap/objects/bb_shop" unique_id=311262615]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="TileMap/objects/bb_shop/StaticBody2D"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TileMap/objects/bb_shop/StaticBody2D" unique_id=1303681708]
 position = Vector2(0, 0.5)
 shape = SubResource("RectangleShape2D_tenmc")
 
-[node name="Textboxes" type="Node2D" parent="."]
+[node name="Textboxes" type="Node2D" parent="." unique_id=1898347500]
 
-[node name="TextboxMaker" parent="Textboxes" node_paths=PackedStringArray("textbox_node") instance=ExtResource("7_2grc0")]
+[node name="TextboxMaker" parent="Textboxes" unique_id=111865902 node_paths=PackedStringArray("textbox_node") instance=ExtResource("7_2grc0")]
 position = Vector2(272, 208)
 dialogue_data = SubResource("Resource_tenmc")
 textbox_node = NodePath("../../Dialogue")
@@ -454,23 +93,33 @@ once_per_session = false
 require_input_to_start = true
 player_node_path = NodePath("../../player")
 
-[node name="player" parent="." instance=ExtResource("6_2grc0")]
+[node name="player" parent="." unique_id=124558449 instance=ExtResource("6_2grc0")]
 position = Vector2(336, 223)
 move_speed = 100.0
 
-[node name="Dialogue" type="CanvasLayer" parent="."]
+[node name="Dialogue" type="CanvasLayer" parent="." unique_id=1533219490]
 
-[node name="SceneTriggers" type="Node2D" parent="."]
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="Dialogue" unique_id=927939004]
+volume_db = 4.0
+bus = &"Voice"
 
-[node name="ChangeRoomTrigger" type="Area2D" parent="SceneTriggers"]
+[node name="SceneTriggers" type="Node2D" parent="." unique_id=266672886]
+
+[node name="ChangeRoomTrigger" type="Area2D" parent="SceneTriggers" unique_id=969938719]
 position = Vector2(-192, 225)
 script = ExtResource("7_8673g")
 player_position = Vector2(48, 94)
 next_room_path = "res://scenes/maps/pizzeria/2-4.tscn"
 metadata/_custom_type_script = "uid://c7gylu1ll5qfu"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="SceneTriggers/ChangeRoomTrigger"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SceneTriggers/ChangeRoomTrigger" unique_id=1275668902]
 position = Vector2(560, 15)
 shape = SubResource("RectangleShape2D_ywghk")
+
+[node name="BackgroundMusic" type="AudioStreamPlayer" parent="." unique_id=1753340418]
+stream = ExtResource("17_u86nv")
+volume_db = 1.75
+autoplay = true
+bus = &"Music"
 
 [connection signal="body_entered" from="SceneTriggers/ChangeRoomTrigger" to="SceneTriggers/ChangeRoomTrigger" method="_on_body_entered"]
