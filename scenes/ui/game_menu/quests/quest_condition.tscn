@@ -1,0 +1,67 @@
+[gd_scene format=3 uid="uid://e71ksnih51d2"]
+
+[ext_resource type="Texture2D" uid="uid://cn5hpouiu2idk" path="res://assets/item_textures/pizza.png" id="1_nbs26"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eqsro"]
+content_margin_right = 98.0
+bg_color = Color(0.19793725, 0.19793722, 0.19793728, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.15847227, 0.15847233, 0.15847221, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+corner_detail = 1
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o0w63"]
+bg_color = Color(0.88235295, 0.84705883, 0, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.70275724, 0.5586243, 0, 1)
+border_blend = true
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+corner_detail = 2
+
+[node name="QuestCondition" type="VBoxContainer" unique_id=1918374101]
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1541217929]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="HBoxContainer" unique_id=2085279443]
+custom_minimum_size = Vector2(48, 48)
+custom_maximum_size = Vector2(48, 48)
+layout_mode = 2
+texture = ExtResource("1_nbs26")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer" unique_id=1595339011]
+layout_mode = 2
+
+[node name="Condition" type="Label" parent="HBoxContainer/VBoxContainer" unique_id=886687114]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Get 10 Small Pizzas."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ProgressBar" type="ProgressBar" parent="HBoxContainer/VBoxContainer" unique_id=966836241]
+custom_minimum_size = Vector2(345, 24)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_eqsro")
+theme_override_styles/fill = SubResource("StyleBoxFlat_o0w63")
+max_value = 10.0
+step = 1.0
+value = 1.0
+show_percentage = false
+
+[node name="Label" type="Label" parent="." unique_id=424778830]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "------------------------------- AND ------------------------------"
