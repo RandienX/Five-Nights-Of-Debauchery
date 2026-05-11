@@ -1,0 +1,84 @@
+[gd_scene format=3 uid="uid://bn3nlg2ahfj7i"]
+
+[ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="1_t100s"]
+[ext_resource type="PackedScene" uid="uid://e71ksnih51d2" path="res://scenes/ui/game_menu/quests/quest_condition.tscn" id="2_5tq7q"]
+
+[node name="Quest" type="Control" unique_id=727009099]
+layout_mode = 3
+anchor_right = 0.624
+anchor_bottom = 0.29500002
+offset_right = -138.13599
+offset_bottom = -0.16000366
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="NinePatchRect" type="NinePatchRect" parent="." unique_id=1886741479]
+custom_minimum_size = Vector2(520, 190)
+custom_maximum_size = Vector2(520, -1)
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+texture = ExtResource("1_t100s")
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1662911978]
+custom_minimum_size = Vector2(520, 190)
+custom_maximum_size = Vector2(520, -1)
+layout_mode = 0
+offset_right = 400.0
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1811395538]
+layout_mode = 2
+
+[node name="QuestName" type="Label" parent="MarginContainer/VBoxContainer" unique_id=491562828]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Name of quest."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StepLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=475150661]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "1/x    To do list:"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1335163272]
+layout_mode = 2
+
+[node name="ListBackward" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=2147231169]
+custom_minimum_size = Vector2(40, 0)
+custom_maximum_size = Vector2(-1, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 40
+text = "<"
+flat = true
+
+[node name="ConditionContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1781161419]
+custom_minimum_size = Vector2(420, 132)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ConditionCon" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConditionContainer" unique_id=1216644280]
+layout_mode = 2
+
+[node name="QuestCondition" parent="MarginContainer/VBoxContainer/HBoxContainer/ConditionContainer/ConditionCon" unique_id=1918374101 instance=ExtResource("2_5tq7q")]
+layout_mode = 2
+
+[node name="ListForward" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=413342387]
+custom_minimum_size = Vector2(40, 0)
+custom_maximum_size = Vector2(-1, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 40
+text = ">"
+flat = true
