@@ -1,28 +1,27 @@
-# Examples 1:
-(empty — output nothing)
+```
+# Godot specific ignores
+*.import
+*.uid
+export_presets.cfg
+.autosave/
 
-# Example 2 (Project with artifacts):
-# Compiled and build artifacts
-*.pyc
-__pycache__/
-*.o
-*.obj
-dist/
-build/
+# Build artifacts
+*.so
+*.dll
+*.dylib
+*.exe
+*.bin
+
 # Dependencies
-.venv/
-venv/
-node_modules/
+*.gdip
+*.gdnlib
+
 # Logs and temp files
 *.log
 *.tmp
-*.swp
-# Environment
-.env
-.env.local
-.env.*
-# Editors
-.vscode/
-.idea/
-# Original rules preserved
-*.log
+*.temp
+
+# System files
+.DS_Store
+Thumbs.db
+```
