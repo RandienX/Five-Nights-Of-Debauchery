@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://e71ksnih51d2"]
 
+[ext_resource type="Script" uid="uid://cq88ep53hrrgp" path="res://scenes/ui/game_menu/quests/quest_condition_ui.gd" id="1_8oy7s"]
 [ext_resource type="Texture2D" uid="uid://cn5hpouiu2idk" path="res://assets/item_textures/pizza.png" id="1_nbs26"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eqsro"]
@@ -31,6 +32,7 @@ corner_radius_bottom_left = 2
 corner_detail = 2
 
 [node name="QuestCondition" type="VBoxContainer" unique_id=1918374101]
+script = ExtResource("1_8oy7s")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1541217929]
 layout_mode = 2
