@@ -1,6 +1,5 @@
-@icon("res://icon.svg")
-class_name QuestPointCondition
 extends Resource
+class_name QuestCondition
 ## Condition for a quest point - evaluates whether a specific requirement is met
 
 enum ConditionType {
@@ -9,7 +8,6 @@ enum ConditionType {
 	DONE_THING,         ## Generic action completed (target_key = action identifier)
 	DONE_DIALOGUE,      ## Dialogue tree/node completed (target_key = dialogue ID)
 	KILLED_ENEMY,       ## Enemy type defeated (target_key = enemy resource path or name)
-	VISITED_LOCATION,   ## Location/scene visited (target_key = scene path or location ID)
 	TALKED_TO_NPC,      ## NPC interaction completed (target_key = NPC node name or ID)
 	BATTLE_WON,         ## Battle completed (target_key = battle resource path or ID)
 	CUSTOM,             ## Custom condition evaluated via signal/Callable
@@ -25,6 +23,18 @@ enum ConditionType {
 @export var description: String = ""  ## Human-readable description for UI
 @export var hide_in_ui: bool = false  ## If true, don't show this condition in progress UI
 
+func get_progress_percent() -> float:
+	if progress_target == 0: return 1.0
+	return clamp(progress_current / progress_target, 0.0, 1.0)
+
+func is_complete() -> bool:
+	return progress_current >= progress_target
+
+func duplicate_state() -> QuestCondition:
+	var new_cond = duplicate()
+	new_cond.progress_current = progress_current
+	return new_cond
+	
 ## Evaluate this condition against current game state
 func evaluate() -> bool:
 	match type:
@@ -38,8 +48,6 @@ func evaluate() -> bool:
 			return _evaluate_done_dialogue()
 		ConditionType.KILLED_ENEMY:
 			return _evaluate_killed_enemy()
-		ConditionType.VISITED_LOCATION:
-			return _evaluate_visited_location()
 		ConditionType.TALKED_TO_NPC:
 			return _evaluate_talked_to_npc()
 		ConditionType.BATTLE_WON:
@@ -82,57 +90,47 @@ func _evaluate_has_status() -> bool:
 
 func _evaluate_done_thing() -> bool:
 	# Check Global.scene_data or custom tracking
-	if Global and Global.scene_data.has("done_things"):
-		var done_things: Dictionary = Global.scene_data["done_things"]
+	if Global and Global.scene_data[load(Global.current_scene).room_name].has("done_things"):
+		var done_things: Dictionary = Global.scene_data[load(Global.current_scene).room_name]["done_things"]
 		if done_things.has(target_key):
 			progress_current = done_things[target_key] if done_things[target_key] is float else 1.0
 			return progress_current >= progress_target
 	return false
 
 func _evaluate_done_dialogue() -> bool:
-	if Global and Global.scene_data.has("completed_dialogues"):
-		var dialogues: Array = Global.scene_data["completed_dialogues"]
+	if Global and Global.scene_data[load(Global.current_scene).room_name].has("completed_dialogues"):
+		var dialogues: Array = Global.scene_data[load(Global.current_scene).room_name]["completed_dialogues"]
 		if target_key in dialogues:
 			progress_current = 1.0
 			return true
 	return false
 
 func _evaluate_killed_enemy() -> bool:
-	if Global and Global.scene_data.has("enemies_killed"):
-		var kills: Dictionary = Global.scene_data["enemies_killed"]
+	if Global and Global.enemies_killed:
+		var kills: Dictionary = Global.enemies_killed
 		if kills.has(target_key):
 			progress_current = float(kills[target_key])
 			return progress_current >= progress_target
 	return false
 
-func _evaluate_visited_location() -> bool:
-	if Global and Global.scene_data.has("visited_locations"):
-		var locations: Array = Global.scene_data["visited_locations"]
-		if target_key in locations:
-			progress_current = 1.0
-			return true
-	return false
-
 func _evaluate_talked_to_npc() -> bool:
-	if Global and Global.scene_data.has("talked_to_npcs"):
-		var npcs: Array = Global.scene_data["talked_to_npcs"]
+	if Global and Global.scene_data[load(Global.current_scene).room_name].has("talked_to_npcs"):
+		var npcs: Array = Global.scene_data[load(Global.current_scene).room_name]["talked_to_npcs"]
 		if target_key in npcs:
 			progress_current = 1.0
 			return true
 	return false
 
 func _evaluate_battle_won() -> bool:
-	if Global and Global.scene_data.has("battles_won"):
-		var battles: Array = Global.scene_data["battles_won"]
-		if target_key in battles:
-			progress_current = 1.0
-			return true
+	if Global and Global.battles_won.has(target_key):
+		var battles: int = Global.battles_won[target_key]
+		progress_current = float(battles)
+		return true
 	return false
 
 func _evaluate_custom() -> bool:
 	# Emit signal for external evaluation
 	QuestSystem.emit_signal("custom_condition_evaluated", self)
-	# Default to current progress if no listener updates it
 	return progress_current >= progress_target
 
 ## Helper to find item resource by key

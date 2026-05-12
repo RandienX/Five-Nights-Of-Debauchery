@@ -1,6 +1,5 @@
-@icon("res://icon.svg")
-class_name QuestPoint
 extends Resource
+class_name QuestPoint
 ## A quest point contains conditions that must be met using logic gates
 
 enum LogicGate {

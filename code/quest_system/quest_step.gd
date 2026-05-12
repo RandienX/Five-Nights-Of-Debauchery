@@ -1,76 +1,60 @@
-@icon("res://icon.svg")
 class_name QuestStep
 extends Resource
-## A quest step contains multiple points that must be completed in sequence
 
-@export_group("Step Definition")
-@export var step_name: String = "Quest Step"
-@export var description: String = ""  ## Displayed in UI
+enum LogicGate {
+	AND, # All conditions must be met
+	OR,  # At least one condition must be met
+	CUSTOM # Handled by custom logic in Quest resource
+}
 
-@export_group("Points")
-@export var points: Array[QuestPoint] = []  ## Points to complete (in order)
+@export var step_name: String = "New Step"
+@export var conditions: Array[QuestCondition] = []
+@export var logic_gate: LogicGate = LogicGate.AND
 
-@export_group("State")
-var current_point_index: int = 0  ## Index of the active point
+# Runtime state (not saved directly in resource, managed by Quest instance)
+var _condition_states: Array[QuestCondition] = []
 
-## Get the current active point
-func get_current_point() -> QuestPoint:
-	if current_point_index < 0 or current_point_index >= points.size():
-		return null
-	return points[current_point_index]
+func initialize_runtime():
+	_condition_states.clear()
+	for cond in conditions:
+		_condition_states.append(cond.duplicate_state())
 
-## Evaluate the current step - returns true if step is complete
-func evaluate() -> bool:
-	if points.is_empty():
-		return true
-	
-	var current_point = get_current_point()
-	if not current_point:
-		return true
-	
-	# Evaluate current point
-	current_point.evaluate()
-	
-	# If current point is YES, advance to next
-	if current_point.state == QuestPoint.QuestState.YES:
-		current_point_index += 1
-		# Check if all points are done
-		if current_point_index >= points.size():
-			return true
-	
-	return false
+func get_condition_state(index: int) -> QuestCondition:
+	if index < 0 or index >= _condition_states.size(): return null
+	return _condition_states[index]
 
-## Get overall step progress (0.0 to 1.0)
-func get_progress_ratio() -> float:
-	if points.is_empty():
-		return 1.0
-	
-	# Each point contributes equally to step progress
-	var completed_points = current_point_index
-	var current_point_progress = 0.0
-	
-	if current_point_index < points.size():
-		current_point_progress = points[current_point_index].get_progress_ratio()
-	
-	return (float(completed_points) + current_point_progress) / float(points.size())
+func update_condition_progress(index: int, amount: float):
+	if index < 0 or index >= _condition_states.size(): return
+	var cond = _condition_states[index]
+	cond.progress_current = min(cond.progress_current + amount, cond.progress_target)
 
-## Get current state for UI feedback
-func get_state() -> QuestPoint.QuestState:
-	if points.is_empty():
-		return QuestPoint.QuestState.YES
+func evaluate() -> Dictionary:
+	# Returns: { state: Enum, completed_indices: Array, failed_indices: Array }
+	# We map internal logic to the global State Machine enums loosely here for the step
+	var completed_count = 0
+	var failed_count = 0
+	var completed_indices = []
 	
-	var current_point = get_current_point()
-	if not current_point:
-		return QuestPoint.QuestState.YES
-	
-	return current_point.state
+	for i in range(_condition_states.size()):
+		var cond = _condition_states[i]
+		if cond.is_complete():
+			completed_count += 1
+			completed_indices.append(i)
+		else:
+			failed_count += 1
 
-## Reset the step
-func reset():
-	current_point_index = 0
-	for point in points:
-		point.reset()
+	var all_met = (completed_count == _condition_states.size())
+	var any_met = (completed_count > 0)
+	var none_met = (completed_count == 0)
 
-## Check if step is complete
-func is_complete() -> bool:
-	return current_point_index >= points.size()
+	var step_complete = false
+	match logic_gate:
+		LogicGate.AND: step_complete = all_met
+		LogicGate.OR: step_complete = any_met
+		LogicGate.CUSTOM: step_complete = all_met # Fallback
+
+	return {
+		"complete": step_complete,
+		"completed_indices": completed_indices,
+		"progress_ratio": float(completed_count) / max(1, _condition_states.size())
+	}

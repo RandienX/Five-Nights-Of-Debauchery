@@ -264,6 +264,12 @@ func _on_tab_opened() -> void:
 
 func _on_tab_closed() -> void:
 	achievement_tab_closed.emit()
+	
+func _on_visibility_changed() -> void:
+	if visible:
+		_on_tab_opened()
+	else:
+		_on_tab_closed()
 
 func _exit_tree() -> void:
 	_disconnect_from_achievement_system()

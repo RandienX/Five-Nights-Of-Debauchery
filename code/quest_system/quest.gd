@@ -1,213 +1,104 @@
-@icon("res://icon.svg")
 class_name Quest
 extends Resource
-## Main Quest resource containing steps and rewards
 
-@export_group("Quest Definition")
-@export var quest_name: String = "New Quest"
-@export var description: String = ""  ## Full quest description for UI
-@export var quest giver: String = ""  ## NPC or source of the quest
-@export var category: String = "Main"  ## Quest category (Main, Side, Hidden, etc.)
+enum QuestState { NO, PROGRESS, DONE, FAIL, YES }
 
-@export_group("Content")
-@export var steps: Array[QuestStep] = []  ## Sequential steps to complete
-@export var rewards: Array[QuestEffect] = []  ## Effects applied on completion
+@export var quest_id: String = ""
+@export var quest_name: String = ""
+@export var steps: Array[QuestStep] = []
+@export var completion_effects: Array[QuestEffect] = []
 
-@export_group("Metadata")
-@export var icon: Texture2D = null  ## Optional icon for UI
-@export var is_repeatable: bool = false  ## Can be completed multiple times
-@export var is_optional: bool = false  ## Side quest vs main quest
-@export var priority: int = 0  ## Higher priority quests show first in UI
-
-@export_group("Tracking")
-var state: QuestPoint.QuestState = QuestPoint.QuestState.NO
+# Runtime State
 var current_step_index: int = 0
-var is_active: bool = false
-var is_completed: bool = false
-var times_completed: int = 0
-var unique_id: String = ""  ## For save/load tracking
+var state: QuestState = QuestState.NO
+var _is_completed: bool = false
 
-## Initialize quest with unique ID if not set
-func initialize() -> void:
-	if unique_id.is_empty():
-		unique_id = _generate_unique_id()
-	is_active = true
-	state = QuestPoint.QuestState.NO
-	
-	# Execute immediate effects
-	for effect in rewards:
-		if effect.execute_immediately:
-			effect.execute()
+func initialize():
+	current_step_index = 0
+	state = QuestState.NO
+	_is_completed = false
+	for step in steps:
+		step.initialize_runtime()
 
-## Get current active step
 func get_current_step() -> QuestStep:
 	if current_step_index < 0 or current_step_index >= steps.size():
 		return null
 	return steps[current_step_index]
 
-## Evaluate quest progress - returns true if quest is complete
-func evaluate() -> bool:
-	if not is_active:
-		return is_completed
+func progress_condition(condition_index: int, amount: float = 1.0) -> bool:
+	var step = get_current_step()
+	if not step: return false
 	
-	if steps.is_empty():
-		is_completed = true
-		state = QuestPoint.QuestState.YES
+	var old_state = step.evaluate()
+	step.update_condition_progress(condition_index, amount)
+	var new_state = step.evaluate()
+	
+	if new_state["complete"] != old_state["complete"]:
+		if new_state["complete"]:
+			state = QuestState.DONE # Flash green/yellow
+		else:
+			state = QuestState.PROGRESS # Update bars
 		return true
-	
-	var current_step = get_current_step()
-	if not current_step:
-		# All steps complete
-		is_completed = true
-		state = QuestPoint.QuestState.YES
-		_execute_rewards()
+	elif new_state["progress_ratio"] > old_state["progress_ratio"]:
+		state = QuestState.PROGRESS
 		return true
-	
-	# Evaluate current step
-	current_step.evaluate()
-	
-	# Update quest state based on step state
-	state = current_step.get_state()
-	
-	# If step complete, advance
-	if current_step.is_complete():
-		current_step_index += 1
-		# Recursively evaluate to check next step
-		return evaluate()
-	
+		
 	return false
 
-## Get overall quest progress (0.0 to 1.0)
-func get_progress_ratio() -> float:
-	if steps.is_empty():
-		return 1.0 if is_completed else 0.0
+func advance_step() -> bool:
+	if _is_completed: return false
 	
-	var completed_steps = current_step_index
-	var current_step_progress = 0.0
+	current_step_index += 1
+	if current_step_index >= steps.size():
+		complete_quest()
+		return true
 	
-	if current_step_index < steps.size():
-		current_step_progress = steps[current_step_index].get_progress_ratio()
-	
-	return (float(completed_steps) + current_step_progress) / float(steps.size())
+	state = QuestState.YES # Trigger effects for previous step if needed, now moving to next
+	return false
 
-## Complete the quest and execute rewards
-func complete() -> void:
-	if is_completed:
-		return
-	
-	is_completed = true
-	is_active = false
-	times_completed += 1
-	state = QuestPoint.QuestState.YES
-	
-	_execute_rewards()
-	
-	if QuestSystem:
-		QuestSystem.emit_signal("quest_completed", self)
+func complete_quest():
+	_is_completed = true
+	state = QuestState.YES
+	for effect in completion_effects:
+		effect.execute(null) # Pass appropriate owner if needed
 
-## Execute all reward effects
-func _execute_rewards() -> void:
-	for effect in rewards:
-		if not effect.execute_immediately:  # Skip already-executed
-			effect.execute()
-
-## Reset quest for repeat
-func reset() -> void:
-	current_step_index = 0
-	is_completed = false
-	is_active = true
-	state = QuestPoint.QuestState.NO
-	
+func get_save_data() -> Dictionary:
+	var steps_data = []
 	for step in steps:
-		step.reset()
-
-## Fail the quest
-func fail() -> void:
-	is_active = false
-	state = QuestPoint.QuestState.FAIL
+		var conds_data = []
+		for cond in step._condition_states:
+			conds_data.append({
+				"key": cond.target_key,
+				"current": cond.progress_current,
+				"target": cond.progress_target
+			})
+		steps_data.append(conds_data)
 	
-	if QuestSystem:
-		QuestSystem.emit_signal("quest_failed", self)
-
-## Generate unique ID based on quest name and timestamp
-func _generate_unique_id() -> String:
-	var hash = quest_name.hash()
-	return "quest_%d_%d" % [hash, Time.get_unix_time_from_system()]
-
-## Serialize quest state for save data
-func to_dict() -> Dictionary:
 	return {
-		"quest_name": quest_name,
-		"unique_id": unique_id,
-		"is_active": is_active,
-		"is_completed": is_completed,
-		"current_step_index": current_step_index,
-		"times_completed": times_completed,
-		"state": state,
-		"steps_data": _serialize_steps()
+		"id": quest_id,
+		"step_index": current_step_index,
+		"completed": _is_completed,
+		"steps": steps_data
 	}
 
-## Serialize step data
-func _serialize_steps() -> Array:
-	var data: Array = []
-	for i in range(steps.size()):
+func load_save_data(data: Dictionary):
+	if data.get("id") != quest_id: return
+	current_step_index = data.get("step_index", 0)
+	_is_completed = data.get("completed", false)
+	
+	var saved_steps = data.get("steps", [])
+	for i in range(min(saved_steps.size(), steps.size())):
+		var saved_conds = saved_steps[i]
 		var step = steps[i]
-		var step_data = {
-			"step_name": step.step_name,
-			"current_point_index": step.current_point_index,
-			"points_data": _serialize_points(step)
-		}
-		data.append(step_data)
-	return data
-
-## Serialize point data within a step
-func _serialize_points(step: QuestStep) -> Array:
-	var data: Array = []
-	for point in step.points:
-		var point_data = {
-			"point_name": point.point_name,
-			"state": point.state,
-			"conditions_data": _serialize_conditions(point)
-		}
-		data.append(point_data)
-	return data
-
-## Serialize condition data within a point
-func _serialize_conditions(point: QuestPoint) -> Array:
-	var data: Array = []
-	for condition in point.conditions:
-		var cond_data = {
-			"type": condition.type,
-			"target_key": condition.target_key,
-			"progress_current": condition.progress_current,
-			"progress_target": condition.progress_target
-		}
-		data.append(cond_data)
-	return data
-
-## Deserialize quest state from save data
-static func from_dict(data: Dictionary) -> Quest:
-	var quest = Quest.new()
-	quest.quest_name = data.get("quest_name", "Unknown Quest")
-	quest.unique_id = data.get("unique_id", "")
-	quest.is_active = data.get("is_active", false)
-	quest.is_completed = data.get("is_completed", false)
-	quest.current_step_index = data.get("current_step_index", 0)
-	quest.times_completed = data.get("times_completed", 0)
-	quest.state = data.get("state", QuestPoint.QuestState.NO)
+		step.initialize_runtime() # Reset runtime
+		for j in range(min(saved_conds.size(), step._condition_states.size())):
+			var s_cond = saved_conds[j]
+			var r_cond = step._condition_states[j]
+			r_cond.progress_current = s_cond.get("current", 0)
 	
-	# Note: Steps and conditions need to be populated from the original resource
-	# This is handled by QuestSystem when loading
-	return quest
-
-## Get display-ready information
-func get_display_info() -> Dictionary:
-	return {
-		"name": quest_name,
-		"description": description,
-		"category": category,
-		"progress": get_progress_ratio() * 100,
-		"current_step": get_current_step().step_name if get_current_step() else "Complete!",
-		"is_completed": is_completed,
-		"is_active": is_active
-	}
+	if _is_completed:
+		state = QuestState.YES
+	elif current_step_index >= steps.size():
+		complete_quest()
+	else:
+		state = QuestState.NO
