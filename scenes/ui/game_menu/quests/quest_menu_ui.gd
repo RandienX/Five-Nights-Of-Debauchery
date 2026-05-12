@@ -92,11 +92,11 @@ func _on_quest_removed(quest: Quest) -> void:
 func _on_quest_completed(quest: Quest) -> void:
 	_on_quest_removed(quest)
 
-func _on_quest_progress_updated(quest: Quest, step_index: int, point_index: int) -> void:
-	if quest.unique_id in _quest_items:
-		var item = _quest_items[quest.unique_id]
+func _on_quest_progress_updated(quest: Quest, point_index: int) -> void:
+	if quest.quest_id in _quest_items:
+		var item = _quest_items[quest.quest_id]
 		if item and item.has_method("update_progress"):
-			item.update_progress(quest, step_index, point_index)
+			item.update_progress(quest, point_index)
 
 func _on_tab_opened() -> void:
 	refresh_quest_list()

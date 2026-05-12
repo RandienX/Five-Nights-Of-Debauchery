@@ -2,8 +2,8 @@ extends Control
 class_name QuestItemUI
 ## QuestItemUI - Individual quest display item
 ##
-## Displays a single quest with name, step info, and condition list.
-## Handles navigation between steps and visual feedback for progress.
+## Displays a single quest with name, point info, and condition list.
+## Handles navigation between points and visual feedback for progress.
 
 @export var quest_name_label: Label = %QuestName if has_node("%QuestName") else null
 @export var step_label: Label = %StepLabel if has_node("%StepLabel") else null
@@ -12,7 +12,7 @@ class_name QuestItemUI
 @export var list_forward: Button = %ListForward if has_node("%ListForward") else null
 
 var _quest: Quest = null
-var _current_step_index: int = 0
+var _current_point_index: int = 0
 var _condition_items: Array[Control] = []
 var _flash_tween: Tween = null
 
@@ -36,14 +36,14 @@ func update_display() -> void:
 	if quest_name_label:
 		quest_name_label.text = _quest.quest_name
 
-	# Update step label
+	# Update point/step label
 	if step_label:
-		var total_steps = _quest.steps.size()
-		var current_step = _quest.get_current_step()
-		if current_step:
-			step_label.text = "Step %d/%d: %s" % [_quest.current_step_index + 1, total_steps, current_step.step_name]
+		var total_points = _quest.points.size()
+		var current_point = _quest.get_current_point()
+		if current_point:
+			step_label.text = "Point %d/%d: %s" % [_quest.current_point_index + 1, total_points, current_point.step_name]
 		else:
-			step_label.text = "Step %d/%d: Complete!" % [total_steps, total_steps]
+			step_label.text = "Point %d/%d: Complete!" % [total_points, total_points]
 
 	# Update conditions
 	_update_conditions()
@@ -61,11 +61,7 @@ func _update_conditions() -> void:
 	if not condition_container:
 		return
 
-	var current_step = _quest.get_current_step()
-	if not current_step:
-		return
-
-	var current_point = current_step.get_current_point()
+	var current_point = _quest.get_current_point()
 	if not current_point:
 		return
 
@@ -73,7 +69,7 @@ func _update_conditions() -> void:
 	for condition in current_point.conditions:
 		_create_condition_item(condition, current_point)
 
-func _create_condition_item(condition: QuestCondition, point: QuestPoint) -> void:
+func _create_condition_item(condition: QuestPointCondition, point: QuestPoint) -> void:
 	if not condition_container:
 		return
 
@@ -98,8 +94,8 @@ func _update_buttons() -> void:
 		if not _quest:
 				return
 
-		var current_step = _quest.get_current_step()
-		if not current_step:
+		var current_point = _quest.get_current_point()
+		if not current_point:
 				# Quest complete - disable navigation
 				if list_backward:
 						list_backward.disabled = true
@@ -107,28 +103,28 @@ func _update_buttons() -> void:
 						list_forward.disabled = true
 				return
 
-		# Enable/disable based on step navigation possibility
+		# Enable/disable based on point navigation possibility
 		if list_backward:
-				list_backward.disabled = _quest.current_step_index <= 0
+				list_backward.disabled = _quest.current_point_index <= 0
 		if list_forward:
-				list_forward.disabled = _quest.current_step_index >= _quest.steps.size() - 1
+				list_forward.disabled = _quest.current_point_index >= _quest.points.size() - 1
 
 func _on_backward_pressed() -> void:
-	if _quest and _quest.current_step_index > 0:
-		_quest.current_step_index -= 1
+	if _quest and _quest.current_point_index > 0:
+		_quest.current_point_index -= 1
 		update_display()
 
 func _on_forward_pressed() -> void:
-	if _quest and _quest.current_step_index < _quest.steps.size() - 1:
-		_quest.current_step_index += 1
+	if _quest and _quest.current_point_index < _quest.points.size() - 1:
+		_quest.current_point_index += 1
 		update_display()
 
 ## Update progress from external source
-func update_progress(quest: Quest, step_index: int, point_index: int) -> void:
-	if quest.unique_id != _quest.unique_id:
+func update_progress(quest: Quest, point_index: int) -> void:
+	if quest.quest_id != _quest.quest_id:
 		return
 
-	_current_step_index = step_index
+	_current_point_index = point_index
 	update_display()
 
 ## Flash condition progress bar for DONE state

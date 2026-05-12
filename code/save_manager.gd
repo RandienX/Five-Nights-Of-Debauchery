@@ -219,6 +219,10 @@ func _capture_global_data() -> Dictionary:
 		"player_stats": PlayerStats.get_save_data()
 	}
 	
+	# Add quest system data if available
+	if QuestSystem:
+		data["quests"] = QuestSystem.get_save_data()
+	
 	return data
 
 func _get_all_autoload_names() -> PackedStringArray:
@@ -904,6 +908,10 @@ func _apply_global_data(global_data: Dictionary) -> void:
 	# Restore PlayerStats using its load_save_data() method if available
 	if global_data.has("player_stats"):
 		PlayerStats.load_save_data(global_data["player_stats"])
+	
+	# Restore quest system data if available
+	if global_data.has("quests") and QuestSystem:
+		QuestSystem.load_save_data(global_data["quests"])
 
 func _apply_scenes_data(scenes_data: Dictionary) -> void:
 	var current_scene: Node = get_tree().current_scene
