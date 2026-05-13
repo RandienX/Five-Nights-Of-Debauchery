@@ -1,14 +1,14 @@
 extends VBoxContainer
-class_name QuestConditionUI
-## QuestConditionUI - Individual quest condition display
+class_name QuestPointConditionUI
+## QuestPointConditionUI - Individual quest condition display
 ##
 ## Shows a single condition with icon, description, and progress bar.
 ## Handles visual feedback for progress and completion states.
 
-@onready var texture_rect: TextureRect = $HBoxContainer/TextureRect if has_node("HBoxContainer/TextureRect") else null
-@onready var condition_label: Label = $HBoxContainer/VBoxContainer/Condition if has_node("HBoxContainer/VBoxContainer/Condition") else null
-@onready var progress_bar: ProgressBar = $HBoxContainer/VBoxContainer/ProgressBar if has_node("HBoxContainer/VBoxContainer/ProgressBar") else null
-@onready var logic_label: Label = $Label if has_node("Label") else null
+@export var texture_rect: TextureRect = $HBoxContainer/TextureRect if has_node("HBoxContainer/TextureRect") else null
+@export var condition_label: Label = $HBoxContainer/VBoxContainer/Condition if has_node("HBoxContainer/VBoxContainer/Condition") else null
+@export var progress_bar: ProgressBar = $HBoxContainer/VBoxContainer/ProgressBar if has_node("HBoxContainer/VBoxContainer/ProgressBar") else null
+@export var logic_label: Label = $Label if has_node("Label") else null
 
 var _condition: QuestPointCondition = null
 var _point: QuestPoint = null
@@ -24,7 +24,13 @@ func initialize(condition: QuestPointCondition, point: QuestPoint) -> void:
 func update_display() -> void:
 	if not _condition:
 		return
-
+		
+	# For KILLED_ENEMY conditions, get fresh progress from Global
+	if _condition.type == QuestPointCondition.ConditionType.KILLED_ENEMY:
+		if Global.has_method("get_enemies_killed"):
+			var enemies_killed = Global.get_enemies_killed()
+			var kill_progress = _condition.get_kill_progress(enemies_killed)
+			_condition.progress_current = kill_progress
 	# Update condition text
 	if condition_label:
 		condition_label.text = _get_condition_description()

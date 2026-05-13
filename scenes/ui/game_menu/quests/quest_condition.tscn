@@ -31,8 +31,12 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 corner_detail = 2
 
-[node name="QuestCondition" type="VBoxContainer" unique_id=1918374101]
+[node name="QuestCondition" type="VBoxContainer" unique_id=1918374101 node_paths=PackedStringArray("texture_rect", "condition_label", "progress_bar", "logic_label")]
 script = ExtResource("1_8oy7s")
+texture_rect = NodePath("HBoxContainer/TextureRect")
+condition_label = NodePath("HBoxContainer/VBoxContainer/Condition")
+progress_bar = NodePath("HBoxContainer/VBoxContainer/ProgressBar")
+logic_label = NodePath("Label")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1541217929]
 layout_mode = 2
