@@ -15,7 +15,6 @@ DONE_DIALOGUE,      # Specific dialogue completed
 TALKED_TO_NPC,      # Talked to specific NPC
 KILLED_ENEMY,       # Defeated specific enemy type
 BATTLE_WON,         # Won a specific battle
-VISITED_LOCATION,   # Visited a specific location
 CUSTOM              # Custom condition logic
 }
 
@@ -125,8 +124,6 @@ func get_description() -> String:
 			return "Win battle: %s" % target_key
 		ConditionType.HAS_STATUS:
 			return "Have status: %s" % target_key
-		ConditionType.VISITED_LOCATION:
-			return "Visit: %s" % target_key
 		ConditionType.DONE_THING:
 			return "Complete: %s" % target_key
 		ConditionType.CUSTOM:
@@ -138,7 +135,6 @@ func get_description() -> String:
 func initialize_kill_baseline(global_enemies_killed: Dictionary) -> void:
 	if type == ConditionType.KILLED_ENEMY:
 		_initial_value_count = global_enemies_killed.get(target_key, 0)
-		# Set current progress to 0 initially, will be updated on evaluation
 		progress_current = 0.0
 
 ## Get current progress for KILLED_ENEMY conditions based on global counter delta
