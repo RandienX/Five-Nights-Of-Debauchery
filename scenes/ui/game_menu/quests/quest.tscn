@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://mcyjrkut0bsi" path="res://scenes/ui/game_menu/quests/quest_ui.gd" id="1_5tq7q"]
 [ext_resource type="Texture2D" uid="uid://byldo041hj3cn" path="res://assets/ui/button.png" id="1_t100s"]
-[ext_resource type="PackedScene" uid="uid://e71ksnih51d2" path="res://scenes/ui/game_menu/quests/quest_condition.tscn" id="2_5tq7q"]
 
 [node name="Quest" type="Control" unique_id=727009099 node_paths=PackedStringArray("quest_name_label", "step_label", "condition_container", "list_backward", "list_forward")]
 layout_mode = 3
@@ -77,9 +76,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="ConditionCon" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConditionContainer" unique_id=1216644280]
-layout_mode = 2
-
-[node name="QuestCondition" parent="MarginContainer/VBoxContainer/HBoxContainer/ConditionContainer/ConditionCon" unique_id=1918374101 instance=ExtResource("2_5tq7q")]
 layout_mode = 2
 
 [node name="ListForward" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=413342387]
