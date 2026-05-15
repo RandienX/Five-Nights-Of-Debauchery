@@ -218,6 +218,7 @@ func _update_all_quests() -> void:
 	_update_evaluator_state()
 
 	for quest in active_quests:
+		var old_point = quest.current_point_index
 		var state = quest.evaluate(evaluator)
 
 		match state:
@@ -229,6 +230,10 @@ func _update_all_quests() -> void:
 				_notify_quest_progress(quest, state)
 			QuestPoint.QuestState.FAIL:
 				_notify_quest_progress(quest, state)
+
+		# Emit signal if point changed (auto-advance happened)
+		if quest.current_point_index != old_point:
+			quest_progress_updated.emit(quest, quest.current_point_index)
 
 ## Update evaluator with current game state
 func _update_evaluator_state() -> void:

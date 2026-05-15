@@ -39,6 +39,8 @@ var _evaluator: QuestConditionEvaluator = null
 
 ## Initialize this quest
 func initialize(evaluator: QuestConditionEvaluator = null) -> void:
+	# Only reset state if not being initialized during load
+	# This allows load_save_data to restore the actual saved state
 	is_active = true
 	is_complete = false
 	is_failed = false
@@ -91,8 +93,8 @@ func update_progress(type: QuestPointCondition.ConditionType, target_key: String
 
 	var state = point.update_condition_progress(type, target_key, amount)
 
-	# Check if point is complete and advance
-	if state == QuestPoint.QuestState.YES and point.auto_advance:
+	# Check if point is complete and advance (DONE or YES means complete)
+	if (state == QuestPoint.QuestState.DONE or state == QuestPoint.QuestState.YES) and point.auto_advance:
 		_advance_to_next_point()
 
 	return state
@@ -201,7 +203,9 @@ func _serialize_points() -> Array:
 			"target_key": condition.target_key,
 			"progress_current": condition.progress_current,
 			"progress_target": condition.progress_target,
-			"initial_kill_count": condition._initial_kill_count
+			"initial_value_count": condition._initial_value_count,
+			"logic_gate": condition.logic_gate,
+			"connected_condition_indices": condition.connected_condition_indices
 			})
 
 		data.append(point_data)
@@ -234,6 +238,12 @@ func _deserialize_points(points_data: Array) -> void:
 			point.step_name = point_data["step_name"]
 		if point_data.has("is_complete"):
 			point.is_complete = point_data["is_complete"]
+		
+		if point_data.has("logic_gate"):
+			point.logic_gate = point_data["logic_gate"]
+		
+		if point_data.has("auto_advance"):
+			point.auto_advance = point_data["auto_advance"]
 
 		if point_data.has("logic_gate"):
 			point.logic_gate = point_data["logic_gate"]
@@ -253,5 +263,9 @@ func _deserialize_conditions(point: QuestPoint, conditions_data: Array) -> void:
 			condition.progress_current = cond_data["progress_current"]
 		if cond_data.has("progress_target"):
 			condition.progress_target = cond_data["progress_target"]
-		if cond_data.has("initial_kill_count"):
-			condition._initial_kill_count = cond_data["initial_kill_count"]
+		if cond_data.has("initial_value_count"):
+			condition._initial_value_count = cond_data["initial_value_count"]
+		if cond_data.has("logic_gate"):
+			condition.logic_gate = cond_data["logic_gate"]
+		if cond_data.has("connected_condition_indices"):
+			condition.connected_condition_indices = cond_data["connected_condition_indices"]

@@ -41,6 +41,7 @@ func evaluate(evaluator: QuestConditionEvaluator = null) -> QuestState:
 
 	var completed_count := 0
 	var has_not_violation := false
+	var any_done_state := false
 
 	# Use provided evaluator or create temporary one
 	var eval = evaluator if evaluator else QuestConditionEvaluator.new()
@@ -49,7 +50,8 @@ func evaluate(evaluator: QuestConditionEvaluator = null) -> QuestState:
 		# Update progress from evaluator
 		eval.get_progress(condition)
 
-		var is_met = condition.is_complete()
+		# Use is_complete_with_connections to check condition with logic gates
+		var is_met = condition.is_complete_with_connections(self, eval)
 
 		match logic_gate:
 			LogicGate.AND:
@@ -57,7 +59,7 @@ func evaluate(evaluator: QuestConditionEvaluator = null) -> QuestState:
 					completed_count += 1
 			LogicGate.OR:
 				if is_met:
-					return QuestState.YES  # Early exit for OR
+					return QuestState.DONE  # Early exit for OR - at least one complete
 			LogicGate.NOT:
 				if is_met:
 					has_not_violation = true
@@ -69,7 +71,7 @@ func evaluate(evaluator: QuestConditionEvaluator = null) -> QuestState:
 	match logic_gate:
 		LogicGate.AND:
 			if completed_count >= conditions.size():
-				return QuestState.YES
+				return QuestState.DONE
 			elif completed_count > 0 or _has_any_progress(eval):
 				return QuestState.PROGRESS
 			else:
