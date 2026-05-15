@@ -26,11 +26,16 @@ func update_display() -> void:
 		return
 		
 	# For KILLED_ENEMY conditions, get fresh progress from Global
-	if _condition.type == QuestPointCondition.ConditionType.KILLED_ENEMY:
-		if Global and Global.has("enemies_killed"):
-			var enemies_killed = Global.get("enemies_killed", {})
-			var kill_progress = _condition.get_kill_progress(enemies_killed)
+	if Global and Global.get("enemies_killed"):
+		var enemies_killed = Global.get("enemies_killed")
+		if _condition.type == QuestPointCondition.ConditionType.KILLED_ENEMY:
+			var kill_progress = _get_kill_progress(enemies_killed)
 			_condition.progress_current = kill_progress
+		elif _condition.type == QuestPointCondition.ConditionType.BATTLE_WON and Global.get("battles_won"):
+			var battle_won = Global.get("battles_won")
+			var battle_progress = _get_battle_progress(battle_won)
+			print(battle_progress)
+			_condition.progress_current = battle_progress
 	
 	# Update condition text
 	if condition_label:
@@ -50,6 +55,20 @@ func update_display() -> void:
 	if logic_label and _point:
 		logic_label.text = _get_logic_gate_string()
 		logic_label.visible = logic_label.text.length() > 0
+
+func _get_kill_progress(enemies_killed: Dictionary) -> float:
+	var current_total = enemies_killed.get(_condition.target_key, 0)
+	var kills_since_start = current_total - _condition._initial_value_count
+	return max(0.0, kills_since_start as float)
+
+func _get_battle_progress(battle_won: Dictionary) -> float:
+	var battle_state = battle_won.get(_condition.target_key, false)
+	var current_count = 1 if battle_state else 0
+	if typeof(battle_state) == TYPE_INT or typeof(battle_state) == TYPE_FLOAT:
+		current_count = battle_state
+
+	var wins_since_start = current_count - _condition._initial_value_count
+	return max(0.0, wins_since_start as float)
 
 func _get_condition_description() -> String:
 	if not _condition:

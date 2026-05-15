@@ -68,6 +68,14 @@ func _update_conditions() -> void:
 	# Create condition items for each condition
 	for condition in current_point.conditions:
 		_create_condition_item(condition, current_point)
+		
+	_refresh_condition_displays()
+
+func _refresh_condition_displays() -> void:
+	# Force all condition items to refresh their progress from Global
+	for item in _condition_items:
+		if is_instance_valid(item) and item.has_method("update_display"):
+			item.update_display()
 
 func _create_condition_item(condition: QuestPointCondition, point: QuestPoint) -> void:
 	if not condition_container:
