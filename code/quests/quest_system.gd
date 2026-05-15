@@ -233,8 +233,10 @@ func _update_all_quests() -> void:
 ## Update evaluator with current game state
 func _update_evaluator_state() -> void:
 	# Get enemies killed from Global
-	if Global and Global["enemies_killed"]:
-		evaluator.enemies_killed = Global.get("enemies_killed")
+	evaluator.enemies_killed = Global.get("enemies_killed")
+
+	# Get battle_won from Global (same pattern as enemies_killed)
+	evaluator.battle_won = Global.get("battles_won")
 
 ## Show notification for quest progress
 func _notify_quest_progress(quest: Quest, state: QuestPoint.QuestState) -> void:
@@ -308,47 +310,50 @@ func load_save_data(data: Dictionary) -> void:
 	active_quests.clear()
 	completed_quests.clear()
 	failed_quests.clear()
-
 	if data.has("active_quests"):
 		for quest_data in data["active_quests"]:
-			var quest_id = quest_data.get("quest_id", "")
+			var quest_id = quest_data.get("quest_id")
 			if not quest_id.is_empty():
 				var quest = _load_quest_stub(quest_id)
 				if quest:
-					quest.load_save_data(quest_data)
+					quest.initialize_without_reset(evaluator)  # Set up evaluator without resetting state
+					quest.load_save_data(quest_data)  # Then overwrite with saved data
 					quest.initialize(evaluator)
 					quests[quest_id] = quest
 					active_quests.append(quest)
 
 	if data.has("completed_quests"):
 		for quest_data in data["completed_quests"]:
-			var quest_id = quest_data.get("quest_id", "")
+			var quest_id = quest_data.get("quest_id")
 			if not quest_id.is_empty():
 				var quest = _load_quest_stub(quest_id)
 				if quest:
+					quest.initialize_without_reset(evaluator)
 					quest.load_save_data(quest_data)
 					quests[quest_id] = quest
 					completed_quests.append(quest)
 
 	if data.has("failed_quests"):
 		for quest_data in data["failed_quests"]:
-			var quest_id = quest_data.get("quest_id", "")
+			var quest_id = quest_data.get("quest_id")
 			if not quest_id.is_empty():
 				var quest = _load_quest_stub(quest_id)
 				if quest:
+					quest.initialize_without_reset(evaluator)
 					quest.load_save_data(quest_data)
 					quests[quest_id] = quest
 					failed_quests.append(quest)
 
 func _load_quest_stub(quest_id: String) -> Quest:
-	var paths = [
-	"res://resources/quests/%s.tres" % quest_id,
-	"res://resources/quests/%s.resource" % quest_id
-	]
-
-	for path in paths:
-		if ResourceLoader.exists(path):
-			var quest = load(path) as Quest
+	const quest_path = "res://resources/quests/"
+	
+	var path = "/%s.tres" % [quest_id]
+	var quest_folders = DirAccess.get_directories_at(quest_path)
+	
+	for folder in quest_folders:
+		var full_path = quest_path + folder + path
+		if ResourceLoader.exists(full_path):
+			var quest = load(full_path) as Quest
 			if quest:
 				return quest.duplicate()
 

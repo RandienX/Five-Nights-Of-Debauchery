@@ -15,7 +15,7 @@ class_name Quest
 
 @export_group("Quest Definition")
 @export var quest_name: String = "New Quest"
-@export var quest_id: String = ""  # Unique identifier
+@export var quest_id: String = ""  # Unique identifier NEEDS TO BE SAME AS FILE NAME
 @export var description: String = ""
 @export var category: String = ""  # Optional categorization
 
@@ -52,7 +52,17 @@ func initialize(evaluator: QuestConditionEvaluator = null) -> void:
 		for condition in point.conditions:
 			if condition.type == QuestPointCondition.ConditionType.KILLED_ENEMY:
 				_evaluator.initialize_kill_baseline(condition)
+				
+## Initialize this quest without resetting state (for loading from save)
+func initialize_without_reset(evaluator: QuestConditionEvaluator = null) -> void:
+	_evaluator = evaluator if evaluator else QuestConditionEvaluator.new()
 
+	# Initialize kill baselines without resetting progress
+	for point in points:
+		for condition in point.conditions:
+			if condition.type == QuestPointCondition.ConditionType.KILLED_ENEMY:
+				_evaluator.initialize_kill_baseline(condition)
+								
 ## Get the current active point
 func get_current_point() -> QuestPoint:
 	if points.is_empty():
@@ -181,6 +191,7 @@ func _serialize_points() -> Array:
 		"step_name": point.step_name,
 		"is_complete": point.is_complete,
 		"logic_gate": point.logic_gate,
+		"auto_advance": point.auto_advance,
 		"conditions_data": []
 		}
 
@@ -210,23 +221,34 @@ func load_save_data(data: Dictionary) -> void:
 
 	if data.has("points_data"):
 		_deserialize_points(data["points_data"])
+	# Restore metadata if present
+	if data.has("metadata"):
+		metadata = data["metadata"]
 
 func _deserialize_points(points_data: Array) -> void:
 	for i in range(min(points_data.size(), points.size())):
 		var point_data = points_data[i]
 		var point = points[i]
 
+		if point_data.has("step_name"):
+			point.step_name = point_data["step_name"]
 		if point_data.has("is_complete"):
 			point.is_complete = point_data["is_complete"]
 
-		if point_data.has("conditions_data"):
-			_deserialize_conditions(point, point_data["conditions_data"])
+		if point_data.has("logic_gate"):
+			point.logic_gate = point_data["logic_gate"]
+
+		if point_data.has("auto_advance"):
+			point.auto_advance = point_data["auto_advance"]
 
 func _deserialize_conditions(point: QuestPoint, conditions_data: Array) -> void:
 	for i in range(min(conditions_data.size(), point.conditions.size())):
 		var cond_data = conditions_data[i]
 		var condition = point.conditions[i]
-
+		if cond_data.has("type"):
+			condition.type = cond_data["type"]
+		if cond_data.has("target_key"):
+			condition.target_key = cond_data["target_key"]
 		if cond_data.has("progress_current"):
 			condition.progress_current = cond_data["progress_current"]
 		if cond_data.has("progress_target"):

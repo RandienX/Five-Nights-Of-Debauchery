@@ -14,7 +14,6 @@ DONE_DIALOGUE,      # Specific dialogue completed
 TALKED_TO_NPC,      # Talked to specific NPC
 KILLED_ENEMY,       # Defeated specific enemy type
 BATTLE_WON,         # Won a specific battle
-VISITED_LOCATION,   # Visited a specific location
 CUSTOM              # Custom condition logic
 }
 
@@ -30,8 +29,9 @@ CUSTOM              # Custom condition logic
 @export var metadata: Dictionary = {}  # Additional data for custom conditions
 @export var icon_override: Texture2D = null  # Optional icon override
 
-# Internal tracking for KILLED_ENEMY conditions to calculate delta
-var _initial_kill_count: int = 0
+# Internal tracking for conditions that track progress delta (e.g., KILLED_ENEMY, BATTLE_WON)
+# Stores the baseline value when the quest/point started, so we only count progress after quest start
+var _initial_value_count: Variant = 0  # Keep as Variant for future flexibility (int, float, etc.)
 
 ## Check if this condition is currently met
 func is_complete() -> bool:
@@ -63,8 +63,6 @@ func get_description() -> String:
 			return "Win battle: %s" % target_key
 		ConditionType.HAS_STATUS:
 			return "Have status: %s" % target_key
-		ConditionType.VISITED_LOCATION:
-			return "Visit: %s" % target_key
 		ConditionType.DONE_THING:
 			return "Complete: %s" % target_key
 		ConditionType.CUSTOM:
@@ -75,8 +73,7 @@ func get_description() -> String:
 ## Initialize kill count baseline when quest starts (for KILLED_ENEMY conditions)
 func initialize_kill_baseline(global_enemies_killed: Dictionary) -> void:
 	if type == ConditionType.KILLED_ENEMY:
-		_initial_kill_count = global_enemies_killed.get(target_key, 0)
-		# Set current progress to 0 initially, will be updated on evaluation
+		_initial_value_count = global_enemies_killed.get(target_key, 0)
 		progress_current = 0.0
 
 ## Get current progress for KILLED_ENEMY conditions based on global counter delta
@@ -85,5 +82,5 @@ func get_kill_progress(global_enemies_killed: Dictionary) -> float:
 		return progress_current
 
 	var current_total = global_enemies_killed.get(target_key, 0)
-	var kills_since_start = current_total - _initial_kill_count
+	var kills_since_start = current_total - _initial_value_count
 	return max(0.0, kills_since_start as float)
