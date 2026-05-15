@@ -30,6 +30,7 @@ NOT   # Connected condition must NOT be met
 @export var description: String = ""  # Optional custom description
 @export var progress_target: float = 1.0  # Required amount/steps
 @export var progress_current: float = 0.0  # Current progress
+@export var is_absolute: bool = false  # If true, track from 0. If false, track delta from quest start.
 @export var custom_script: String = ""  # Path to custom condition script (for CUSTOM type)
 
 @export_group("Logic Gate Connections")
@@ -121,7 +122,7 @@ func get_description() -> String:
 		ConditionType.TALKED_TO_NPC:
 			return "Talk to %s" % target_key
 		ConditionType.BATTLE_WON:
-			return "Win battle: %s" % target_key
+			return "Win battle with: %s" % target_key
 		ConditionType.HAS_STATUS:
 			return "Have status: %s" % target_key
 		ConditionType.DONE_THING:
@@ -133,8 +134,28 @@ func get_description() -> String:
 
 ## Initialize kill count baseline when quest starts (for KILLED_ENEMY conditions)
 func initialize_kill_baseline(global_enemies_killed: Dictionary) -> void:
-	if type == ConditionType.KILLED_ENEMY:
+	if type == ConditionType.KILLED_ENEMY and not is_absolute:
 		_initial_value_count = global_enemies_killed.get(target_key, 0)
+		# Set current progress to 0 initially, will be updated on evaluation
+		progress_current = 0.0
+	elif type == ConditionType.KILLED_ENEMY and is_absolute:
+		# For absolute mode, don't set a baseline, just start from current total
+		_initial_value_count = 0
+		progress_current = 0.0
+
+## Initialize battle won baseline when quest starts (for BATTLE_WON conditions)
+func initialize_battle_baseline(global_battle_won: Dictionary) -> void:
+	if type == ConditionType.BATTLE_WON and not is_absolute:
+		var battle_state = global_battle_won.get(target_key, false)
+		var initial_count = 1 if battle_state else 0
+		if typeof(battle_state) == TYPE_INT or typeof(battle_state) == TYPE_FLOAT:
+			initial_count = battle_state
+			_initial_value_count = initial_count
+			# Set current progress to 0 initially, will be updated on evaluation
+			progress_current = 0.0
+	elif type == ConditionType.BATTLE_WON and is_absolute:
+		# For absolute mode, don't set a baseline
+		_initial_value_count = 0
 		progress_current = 0.0
 
 ## Get current progress for KILLED_ENEMY conditions based on global counter delta

@@ -37,7 +37,6 @@ class_name Quest
 # Cached evaluator reference
 var _evaluator: QuestConditionEvaluator = null
 
-## Initialize this quest
 func initialize(evaluator: QuestConditionEvaluator = null) -> void:
 	# Only reset state if not being initialized during load
 	# This allows load_save_data to restore the actual saved state
@@ -47,23 +46,27 @@ func initialize(evaluator: QuestConditionEvaluator = null) -> void:
 	current_point_index = 0
 	_evaluator = evaluator if evaluator else QuestConditionEvaluator.new()
 
-	# Reset all points and initialize kill baselines
+	# Reset all points and initialize kill baselines and battle baselines
 	for point in points:
 		point.reset()
-		# Initialize kill baseline for KILLED_ENEMY conditions
+		# Initialize baselines for tracking conditions
 		for condition in point.conditions:
 			if condition.type == QuestPointCondition.ConditionType.KILLED_ENEMY:
 				_evaluator.initialize_kill_baseline(condition)
-				
+			elif condition.type == QuestPointCondition.ConditionType.BATTLE_WON:
+				_evaluator.initialize_battle_baseline(condition)
+
 ## Initialize this quest without resetting state (for loading from save)
 func initialize_without_reset(evaluator: QuestConditionEvaluator = null) -> void:
 	_evaluator = evaluator if evaluator else QuestConditionEvaluator.new()
-
-	# Initialize kill baselines without resetting progress
+	
+	# Initialize kill baselines and battle baselines without resetting progress
 	for point in points:
 		for condition in point.conditions:
 			if condition.type == QuestPointCondition.ConditionType.KILLED_ENEMY:
 				_evaluator.initialize_kill_baseline(condition)
+			elif condition.type == QuestPointCondition.ConditionType.BATTLE_WON:
+				_evaluator.initialize_battle_baseline(condition)
 								
 ## Get the current active point
 func get_current_point() -> QuestPoint:
@@ -93,8 +96,8 @@ func update_progress(type: QuestPointCondition.ConditionType, target_key: String
 
 	var state = point.update_condition_progress(type, target_key, amount)
 
-	# Check if point is complete and advance (DONE or YES means complete)
-	if (state == QuestPoint.QuestState.DONE or state == QuestPoint.QuestState.YES) and point.auto_advance:
+	# Check if point is complete and advance
+	if state == QuestPoint.QuestState.YES and point.auto_advance:
 		_advance_to_next_point()
 
 	return state
@@ -203,9 +206,7 @@ func _serialize_points() -> Array:
 			"target_key": condition.target_key,
 			"progress_current": condition.progress_current,
 			"progress_target": condition.progress_target,
-			"initial_value_count": condition._initial_value_count,
-			"logic_gate": condition.logic_gate,
-			"connected_condition_indices": condition.connected_condition_indices
+			"initial_kill_count": condition._initial_kill_count
 			})
 
 		data.append(point_data)
@@ -238,12 +239,6 @@ func _deserialize_points(points_data: Array) -> void:
 			point.step_name = point_data["step_name"]
 		if point_data.has("is_complete"):
 			point.is_complete = point_data["is_complete"]
-		
-		if point_data.has("logic_gate"):
-			point.logic_gate = point_data["logic_gate"]
-		
-		if point_data.has("auto_advance"):
-			point.auto_advance = point_data["auto_advance"]
 
 		if point_data.has("logic_gate"):
 			point.logic_gate = point_data["logic_gate"]
@@ -263,9 +258,5 @@ func _deserialize_conditions(point: QuestPoint, conditions_data: Array) -> void:
 			condition.progress_current = cond_data["progress_current"]
 		if cond_data.has("progress_target"):
 			condition.progress_target = cond_data["progress_target"]
-		if cond_data.has("initial_value_count"):
-			condition._initial_value_count = cond_data["initial_value_count"]
-		if cond_data.has("logic_gate"):
-			condition.logic_gate = cond_data["logic_gate"]
-		if cond_data.has("connected_condition_indices"):
-			condition.connected_condition_indices = cond_data["connected_condition_indices"]
+		if cond_data.has("initial_kill_count"):
+			condition._initial_kill_count = cond_data["initial_kill_count"]

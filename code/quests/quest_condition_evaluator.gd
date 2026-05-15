@@ -34,25 +34,25 @@ func evaluate(condition: QuestPointCondition) -> bool:
 
 		match condition.type:
 				QuestPointCondition.ConditionType.HAS_ITEM:
-						return _eval_has_item(condition.target_key, int(condition.progress_target))
+						return _eval_has_item(condition)
 
 				QuestPointCondition.ConditionType.HAS_STATUS:
-						return _eval_has_status(condition.target_key)
+						return _eval_has_status(condition)
 
 				QuestPointCondition.ConditionType.DONE_THING:
-						return _eval_done_thing(condition.target_key)
+						return _eval_done_thing(condition)
 
 				QuestPointCondition.ConditionType.DONE_DIALOGUE:
-						return _eval_done_dialogue(condition.target_key)
+						return _eval_done_dialogue(condition)
 
 				QuestPointCondition.ConditionType.TALKED_TO_NPC:
-						return _eval_talked_to_npc(condition.target_key)
+						return _eval_talked_to_npc(condition)
 
 				QuestPointCondition.ConditionType.KILLED_ENEMY:
 						return _eval_killed_enemy(condition)
 
 				QuestPointCondition.ConditionType.BATTLE_WON:
-						return _eval_battle_won(condition.target_key)
+						return _eval_battle_won(condition)
 
 				QuestPointCondition.ConditionType.CUSTOM:
 						return _eval_custom(condition)
@@ -68,25 +68,25 @@ func get_progress(condition: QuestPointCondition) -> float:
 
 		match condition.type:
 				QuestPointCondition.ConditionType.HAS_ITEM:
-						return _get_item_progress(condition.target_key, condition.progress_target)
+						return _get_item_progress(condition)
 
 				QuestPointCondition.ConditionType.KILLED_ENEMY:
 						return _get_kill_progress(condition)
 
 				QuestPointCondition.ConditionType.HAS_STATUS:
-						return 1.0 if _eval_has_status(condition.target_key) else 0.0
+						return 1.0 if _eval_has_status(condition) else 0.0
 
 				QuestPointCondition.ConditionType.DONE_THING:
-						return 1.0 if _eval_done_thing(condition.target_key) else 0.0
+						return 1.0 if _eval_done_thing(condition) else 0.0
 
 				QuestPointCondition.ConditionType.DONE_DIALOGUE:
-						return 1.0 if _eval_done_dialogue(condition.target_key) else 0.0
+						return 1.0 if _eval_done_dialogue(condition) else 0.0
 
 				QuestPointCondition.ConditionType.TALKED_TO_NPC:
-						return 1.0 if _eval_talked_to_npc(condition.target_key) else 0.0
+						return 1.0 if _eval_talked_to_npc(condition) else 0.0
 
 				QuestPointCondition.ConditionType.BATTLE_WON:
-						return 1.0 if _eval_battle_won(condition.target_key) else 0.0
+						return _get_battle_progress(condition)
 
 				QuestPointCondition.ConditionType.CUSTOM:
 						return _get_custom_progress(condition)
@@ -107,87 +107,124 @@ func update_point_conditions(point: QuestPoint) -> void:
 
 ## ==================== Internal Evaluation Methods ====================
 
-func _eval_has_item(item_id: String, amount: int) -> bool:
+func _eval_has_item(condition: QuestPointCondition) -> bool:
 		if has_item_func.is_valid():
-				return has_item_func.call(item_id, amount)
+				return has_item_func.call(condition.target_key, int(condition.progress_target))
 		# Fallback to PlayerStats
 		var player_stats = PlayerStats
 		if player_stats and player_stats.has_method("has_item_by_id"):
-				var item_resource = _load_resource_by_id(item_id)
+				var item_resource = _load_resource_by_id(condition.target_key)
 				if item_resource:
-						return player_stats.has_item_by_id(item_resource, amount)
-		push_warning("[QuestConditionEvaluator] has_item_func not set, cannot check for '%s'" % item_id)
+						return player_stats.has_item_by_id(item_resource, int(condition.progress_target))
+		push_warning("[QuestConditionEvaluator] has_item_func not set, cannot check for '%s'" % condition.target_key)
 		return false
 
-func _get_item_progress(item_id: String, target_amount: float) -> float:
+func _get_item_progress(condition: QuestPointCondition) -> float:
 		if has_item_func.is_valid():
 				# Assume it returns current amount if called with amount=0 or has a separate getter
 				pass
 		# Fallback - would need implementation based on your inventory system
-		return 0.0
+		return condition.progress_current
 
-func _eval_has_status(status_id: String) -> bool:
+func _eval_has_status(condition: QuestPointCondition) -> bool:
 		if has_status_func.is_valid():
-				return has_status_func.call(status_id)
-		push_warning("[QuestConditionEvaluator] has_status_func not set, cannot check for '%s'" % status_id)
+				return has_status_func.call(condition.target_key)
+		push_warning("[QuestConditionEvaluator] has_status_func not set, cannot check for '%s'" % condition.target_key)
 		return false
 
-func _eval_done_thing(thing_id: String) -> bool:
+func _eval_done_thing(condition: QuestPointCondition) -> bool:
 		if has_done_thing_func.is_valid():
-				return has_done_thing_func.call(thing_id)
+				return has_done_thing_func.call(condition.target_key)
 		# Fallback to root_script custom_data
 		var root = Engine.get_main_loop().root
 		if root and root.has_node("root_script"):
 				var root_script = root.get_node("root_script")
 				if root_script and root_script.has_method("get_done_things"):
-						return root_script.get_done_things().get(thing_id, false)
+						return root_script.get_done_things().get(condition.target_key, false)
 		# Fallback to custom_data
-		return custom_data.get("done_things", {}).get(thing_id, false)
+		return custom_data.get("done_things", {}).get(condition.target_key, false)
 
-func _eval_done_dialogue(dialogue_id: String) -> bool:
+func _eval_done_dialogue(condition: QuestPointCondition) -> bool:
 		if has_done_dialogue_func.is_valid():
-				return has_done_dialogue_func.call(dialogue_id)
+				return has_done_dialogue_func.call(condition.target_key)
 		# Fallback to root_script
 		var root = Engine.get_main_loop().root
 		if root and root.has_node("root_script"):
 				var root_script = root.get_node("root_script")
 				if root_script and root_script.has_method("has_completed_dialogue"):
-						return root_script.has_completed_dialogue(dialogue_id)
+						return root_script.has_completed_dialogue(condition.target_key)
 		# Fallback to custom_data
-		return custom_data.get("completed_dialogues", []).has(dialogue_id)
+		return custom_data.get("completed_dialogues", []).has(condition.target_key)
 
-func _eval_talked_to_npc(npc_id: String) -> bool:
+func _eval_talked_to_npc(condition: QuestPointCondition) -> bool:
 		if has_talked_to_npc_func.is_valid():
-				return has_talked_to_npc_func.call(npc_id)
+				return has_talked_to_npc_func.call(condition.target_key)
 		# Fallback to root_script
 		var root = Engine.get_main_loop().root
 		if root and root.has_node("root_script"):
 				var root_script = root.get_node("root_script")
 				if root_script and root_script.has_method("has_talked_to_npc"):
-						return root_script.has_talked_to_npc(npc_id)
+						return root_script.has_talked_to_npc(condition.target_key)
 		# Fallback to custom_data
-		return custom_data.get("talked_npcs", []).has(npc_id)
+		return custom_data.get("talked_npcs", []).has(condition.target_key)
 
 func _eval_killed_enemy(condition: QuestPointCondition) -> bool:
 		var current_total = enemies_killed.get(condition.target_key, 0)
-		var kills_since_start = current_total - condition._initial_value_count
-		var progress = max(0.0, kills_since_start as float)
+		var progress: float = 0.0
+		if condition.is_absolute:
+				progress = float(current_total)
+		else:
+				var kills_since_start = current_total - condition._initial_value_count
+				progress = max(0.0, kills_since_start as float)
 		condition.progress_current = progress
 		return progress >= condition.progress_target
 
 func _get_kill_progress(condition: QuestPointCondition) -> float:
 		var current_total = enemies_killed.get(condition.target_key, 0)
-		var kills_since_start = current_total - condition._initial_value_count
-		return max(0.0, kills_since_start as float)
+		if condition.is_absolute:
+				return float(current_total)
+		else:
+				var kills_since_start = current_total - condition._initial_value_count
+				return max(0.0, kills_since_start as float)
 
-func _eval_battle_won(battle_id: String) -> bool:
+func _eval_battle_won(condition: QuestPointCondition) -> bool:
 		if has_won_battle_func.is_valid():
-				return has_won_battle_func.call(battle_id)
+				var result = has_won_battle_func.call(condition.target_key)
+				# Update progress based on result
+				if condition.is_absolute:
+						condition.progress_current = 1.0 if result else 0.0
+				else:
+						# For delta mode, we need to track baseline
+						var battle_state = battle_won.get(condition.target_key, false)
+						var current_count = 1 if battle_state else 0
+						if typeof(battle_state) == TYPE_INT or typeof(battle_state) == TYPE_FLOAT:
+								current_count = battle_state
+						var wins_since_start = current_count - condition._initial_value_count
+						condition.progress_current = max(0.0, wins_since_start as float)
+				return condition.progress_current >= condition.progress_target
+
 		# Check global battle_won dictionary first (same pattern as enemies_killed)
-		if battle_won.has(battle_id):
-				return battle_won[battle_id]
+		var battle_state = battle_won.get(condition.target_key, false)
+		# Calculate progress: if battle_won is a boolean, convert to 0/1; if it's a count, use directly
+		var current_count = 1 if battle_state else 0
+		if typeof(battle_state) == TYPE_INT or typeof(battle_state) == TYPE_FLOAT:
+				current_count = battle_state
+
+		var progress: float = 0.0
+		if condition.is_absolute:
+				progress = float(current_count)
+		else:
+				var wins_since_start = current_count - condition._initial_value_count
+				progress = max(0.0, wins_since_start as float)
+
+		condition.progress_current = progress
+		return progress >= condition.progress_target
+
+func _eval_visited_location(condition: QuestPointCondition) -> bool:
+		if has_visited_location_func.is_valid():
+				return has_visited_location_func.call(condition.target_key)
 		# Fallback to custom_data
-		return custom_data.get("won_battles", []).has(battle_id)
+		return custom_data.get("visited_locations", []).has(condition.target_key)
 
 func _eval_custom(condition: QuestPointCondition) -> bool:
 		if condition.custom_script.is_empty():
@@ -216,6 +253,32 @@ func _get_custom_progress(condition: QuestPointCondition) -> float:
 				return script.get_progress(condition, self)
 
 		return condition.progress_current
+
+## Initialize battle won baseline when quest starts (for BATTLE_WON conditions)
+func initialize_battle_baseline(condition: QuestPointCondition) -> void:
+		if condition.type == QuestPointCondition.ConditionType.BATTLE_WON:
+				var battle_state = battle_won.get(condition.target_key, false)
+				var initial_count = 1 if battle_state else 0
+				if typeof(battle_state) == TYPE_INT or typeof(battle_state) == TYPE_FLOAT:
+						initial_count = battle_state
+				condition._initial_value_count = initial_count
+				condition.progress_current = 0.0
+
+## Get current progress for BATTLE_WON conditions based on global counter delta
+func _get_battle_progress(condition: QuestPointCondition) -> float:
+		if condition.type != QuestPointCondition.ConditionType.BATTLE_WON:
+				return condition.progress_current
+
+		var battle_state = battle_won.get(condition.target_key, false)
+		var current_count = 1 if battle_state else 0
+		if typeof(battle_state) == TYPE_INT or typeof(battle_state) == TYPE_FLOAT:
+				current_count = battle_state
+
+		if condition.is_absolute:
+				return float(current_count)
+		else:
+				var wins_since_start = current_count - condition._initial_value_count
+				return max(0.0, wins_since_start as float)
 
 ## Helper to load resource by ID (adjust based on your resource loading system)
 func _load_resource_by_id(resource_id: String) -> Resource:

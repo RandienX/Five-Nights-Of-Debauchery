@@ -11,7 +11,6 @@ signal quest_completed(quest: Quest)
 signal quest_progress_updated(quest: Quest, point_index: int)
 signal quest_state_changed(quest: Quest, state: QuestPoint.QuestState)
 
-# Singleton access
 static var instance: QuestSystemClass = null
 
 @export var update_interval: float = 1.0  # Seconds between quest updates
@@ -21,7 +20,6 @@ var active_quests: Array[Quest] = []
 var completed_quests: Array[Quest] = []
 var failed_quests: Array[Quest] = []
 
-# Condition evaluator (similar to DialogueConditionEvaluator)
 var evaluator: QuestConditionEvaluator
 
 # UI reference for notifications
@@ -90,6 +88,7 @@ func _has_talked_to_npc(npc_id: String) -> bool:
 
 func _has_won_battle(battle_id: String) -> bool:
 	# Hook to battle system
+	print("AAAAAAAAAAA")
 	return evaluator.custom_data.get("won_battles", []).has(battle_id)
 
 func _has_visited_location(location_id: String) -> bool:
