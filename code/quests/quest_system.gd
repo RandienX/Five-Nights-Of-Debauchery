@@ -218,6 +218,7 @@ func _update_all_quests() -> void:
 	_update_evaluator_state()
 
 	for quest in active_quests:
+		var old_point = quest.current_point_index
 		var state = quest.evaluate(evaluator)
 
 		match state:
@@ -230,11 +231,19 @@ func _update_all_quests() -> void:
 			QuestPoint.QuestState.FAIL:
 				_notify_quest_progress(quest, state)
 
+		# Emit signal if point changed (auto-advance happened)
+		if quest.current_point_index != old_point:
+			quest_progress_updated.emit(quest, quest.current_point_index)
+
 ## Update evaluator with current game state
 func _update_evaluator_state() -> void:
 	# Get enemies killed from Global
-	if Global and Global["enemies_killed"]:
-		evaluator.enemies_killed = Global.get("enemies_killed")
+	if Global and Global.has("enemies_killed"):
+		evaluator.enemies_killed = Global.get("enemies_killed", {})
+	
+	# Get battle_won from Global (same pattern as enemies_killed)
+	if Global and Global.has("battle_won"):
+		evaluator.battle_won = Global.get("battle_won", {})
 
 ## Show notification for quest progress
 func _notify_quest_progress(quest: Quest, state: QuestPoint.QuestState) -> void:
@@ -315,8 +324,8 @@ func load_save_data(data: Dictionary) -> void:
 			if not quest_id.is_empty():
 				var quest = _load_quest_stub(quest_id)
 				if quest:
-					quest.load_save_data(quest_data)
-					quest.initialize(evaluator)
+					quest.initialize_without_reset(evaluator)  # Set up evaluator without resetting state
+					quest.load_save_data(quest_data)  # Then overwrite with saved data
 					quests[quest_id] = quest
 					active_quests.append(quest)
 
@@ -326,6 +335,7 @@ func load_save_data(data: Dictionary) -> void:
 			if not quest_id.is_empty():
 				var quest = _load_quest_stub(quest_id)
 				if quest:
+					quest.initialize_without_reset(evaluator)
 					quest.load_save_data(quest_data)
 					quests[quest_id] = quest
 					completed_quests.append(quest)
@@ -336,6 +346,7 @@ func load_save_data(data: Dictionary) -> void:
 			if not quest_id.is_empty():
 				var quest = _load_quest_stub(quest_id)
 				if quest:
+					quest.initialize_without_reset(evaluator)
 					quest.load_save_data(quest_data)
 					quests[quest_id] = quest
 					failed_quests.append(quest)

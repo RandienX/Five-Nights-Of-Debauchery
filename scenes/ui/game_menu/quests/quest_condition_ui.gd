@@ -27,10 +27,11 @@ func update_display() -> void:
 		
 	# For KILLED_ENEMY conditions, get fresh progress from Global
 	if _condition.type == QuestPointCondition.ConditionType.KILLED_ENEMY:
-		if Global.has_method("get_enemies_killed"):
-			var enemies_killed = Global.get_enemies_killed()
+		if Global and Global.has("enemies_killed"):
+			var enemies_killed = Global.get("enemies_killed", {})
 			var kill_progress = _condition.get_kill_progress(enemies_killed)
 			_condition.progress_current = kill_progress
+	
 	# Update condition text
 	if condition_label:
 		condition_label.text = _get_condition_description()
@@ -112,17 +113,17 @@ func _get_logic_gate_string() -> String:
 	if not _point:
 		return ""
 
-	# Only show logic gate if there are multiple conditions or it's NOT
-	if _point.conditions.size() <= 1 and _point.logic_gate != QuestPoint.LogicGate.NOT:
+	# Show logic gate for each condition if it has connections or is NOT
+	if _condition.connected_condition_indices.is_empty() and _condition.logic_gate != QuestPointCondition.LogicGate.NOT:
 		return ""
 
-	match _point.logic_gate:
-		QuestPoint.LogicGate.AND:
-			return "------------------------------- AND ------------------------------"
-		QuestPoint.LogicGate.OR:
-			return "------------------------------- OR -------------------------------"
-		QuestPoint.LogicGate.NOT:
-			return "------------------------------- NOT ------------------------------ "
+	match _condition.logic_gate:
+		QuestPointCondition.LogicGate.AND:
+			return "---------- AND connected conditions ----------"
+		QuestPointCondition.LogicGate.OR:
+			return "---------- OR connected conditions -----------"
+		QuestPointCondition.LogicGate.NOT:
+			return "---------- NOT connected conditions ----------"
 
 	return ""
 

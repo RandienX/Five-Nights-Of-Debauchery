@@ -24,6 +24,7 @@ var has_done_dialogue_func: Callable = Callable()    # func(dialogue_id: String)
 
 # Global tracking data (passed in during evaluation)
 var enemies_killed: Dictionary = {}
+var battle_won: Dictionary = {}  # Track won battles: { battle_id: true, ... }
 var custom_data: Dictionary = {}
 
 ## Evaluate a single condition
@@ -102,7 +103,7 @@ func get_progress(condition: QuestPointCondition) -> float:
 ## Initialize kill baseline when quest starts
 func initialize_kill_baseline(condition: QuestPointCondition) -> void:
 	if condition.type == QuestPointCondition.ConditionType.KILLED_ENEMY:
-		condition._initial_kill_count = enemies_killed.get(condition.target_key, 0)
+		condition._initial_value_count = enemies_killed.get(condition.target_key, 0)
 		condition.progress_current = 0.0
 
 ## Update all condition progresses in a point
@@ -140,36 +141,57 @@ func _eval_has_status(status_id: String) -> bool:
 func _eval_done_thing(thing_id: String) -> bool:
 	if has_done_thing_func.is_valid():
 		return has_done_thing_func.call(thing_id)
+	# Fallback to root_script custom_data
+	var root = Engine.get_main_loop().root
+	if root and root.has_node("root_script"):
+		var root_script = root.get_node("root_script")
+		if root_script and root_script.has_method("get_done_things"):
+			return root_script.get_done_things().get(thing_id, false)
 	# Fallback to custom_data
 	return custom_data.get("done_things", {}).get(thing_id, false)
 
 func _eval_done_dialogue(dialogue_id: String) -> bool:
 	if has_done_dialogue_func.is_valid():
 		return has_done_dialogue_func.call(dialogue_id)
+	# Fallback to root_script
+	var root = Engine.get_main_loop().root
+	if root and root.has_node("root_script"):
+		var root_script = root.get_node("root_script")
+		if root_script and root_script.has_method("has_completed_dialogue"):
+			return root_script.has_completed_dialogue(dialogue_id)
 	# Fallback to custom_data
 	return custom_data.get("completed_dialogues", []).has(dialogue_id)
 
 func _eval_talked_to_npc(npc_id: String) -> bool:
 	if has_talked_to_npc_func.is_valid():
 		return has_talked_to_npc_func.call(npc_id)
+	# Fallback to root_script
+	var root = Engine.get_main_loop().root
+	if root and root.has_node("root_script"):
+		var root_script = root.get_node("root_script")
+		if root_script and root_script.has_method("has_talked_to_npc"):
+			return root_script.has_talked_to_npc(npc_id)
 	# Fallback to custom_data
 	return custom_data.get("talked_npcs", []).has(npc_id)
 
 func _eval_killed_enemy(condition: QuestPointCondition) -> bool:
 	var current_total = enemies_killed.get(condition.target_key, 0)
-	var kills_since_start = current_total - condition._initial_kill_count
+	var kills_since_start = current_total - condition._initial_value_count
 	var progress = max(0.0, kills_since_start as float)
 	condition.progress_current = progress
 	return progress >= condition.progress_target
 
 func _get_kill_progress(condition: QuestPointCondition) -> float:
 	var current_total = enemies_killed.get(condition.target_key, 0)
-	var kills_since_start = current_total - condition._initial_kill_count
+	var kills_since_start = current_total - condition._initial_value_count
 	return max(0.0, kills_since_start as float)
 
 func _eval_battle_won(battle_id: String) -> bool:
 	if has_won_battle_func.is_valid():
 		return has_won_battle_func.call(battle_id)
+	# Check global battle_won dictionary first (same pattern as enemies_killed)
+	if battle_won.has(battle_id):
+		return battle_won[battle_id]
 	# Fallback to custom_data
 	return custom_data.get("won_battles", []).has(battle_id)
 

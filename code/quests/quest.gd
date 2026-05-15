@@ -39,6 +39,8 @@ var _evaluator: QuestConditionEvaluator = null
 
 ## Initialize this quest
 func initialize(evaluator: QuestConditionEvaluator = null) -> void:
+	# Only reset state if not being initialized during load
+	# This allows load_save_data to restore the actual saved state
 	is_active = true
 	is_complete = false
 	is_failed = false
@@ -49,6 +51,16 @@ func initialize(evaluator: QuestConditionEvaluator = null) -> void:
 	for point in points:
 		point.reset()
 		# Initialize kill baseline for KILLED_ENEMY conditions
+		for condition in point.conditions:
+			if condition.type == QuestPointCondition.ConditionType.KILLED_ENEMY:
+				_evaluator.initialize_kill_baseline(condition)
+
+## Initialize this quest without resetting state (for loading from save)
+func initialize_without_reset(evaluator: QuestConditionEvaluator = null) -> void:
+	_evaluator = evaluator if evaluator else QuestConditionEvaluator.new()
+	
+	# Initialize kill baselines without resetting progress
+	for point in points:
 		for condition in point.conditions:
 			if condition.type == QuestPointCondition.ConditionType.KILLED_ENEMY:
 				_evaluator.initialize_kill_baseline(condition)
@@ -81,8 +93,8 @@ func update_progress(type: QuestPointCondition.ConditionType, target_key: String
 
 	var state = point.update_condition_progress(type, target_key, amount)
 
-	# Check if point is complete and advance
-	if state == QuestPoint.QuestState.YES and point.auto_advance:
+	# Check if point is complete and advance (DONE or YES means complete)
+	if (state == QuestPoint.QuestState.DONE or state == QuestPoint.QuestState.YES) and point.auto_advance:
 		_advance_to_next_point()
 
 	return state
@@ -181,6 +193,7 @@ func _serialize_points() -> Array:
 		"step_name": point.step_name,
 		"is_complete": point.is_complete,
 		"logic_gate": point.logic_gate,
+		"auto_advance": point.auto_advance,
 		"conditions_data": []
 		}
 
@@ -190,7 +203,9 @@ func _serialize_points() -> Array:
 			"target_key": condition.target_key,
 			"progress_current": condition.progress_current,
 			"progress_target": condition.progress_target,
-			"initial_kill_count": condition._initial_kill_count
+			"initial_value_count": condition._initial_value_count,
+			"logic_gate": condition.logic_gate,
+			"connected_condition_indices": condition.connected_condition_indices
 			})
 
 		data.append(point_data)
@@ -210,14 +225,26 @@ func load_save_data(data: Dictionary) -> void:
 
 	if data.has("points_data"):
 		_deserialize_points(data["points_data"])
+	
+	# Restore metadata if present
+	if data.has("metadata"):
+		metadata = data["metadata"]
 
 func _deserialize_points(points_data: Array) -> void:
 	for i in range(min(points_data.size(), points.size())):
 		var point_data = points_data[i]
 		var point = points[i]
 
+		if point_data.has("step_name"):
+			point.step_name = point_data["step_name"]
 		if point_data.has("is_complete"):
 			point.is_complete = point_data["is_complete"]
+		
+		if point_data.has("logic_gate"):
+			point.logic_gate = point_data["logic_gate"]
+		
+		if point_data.has("auto_advance"):
+			point.auto_advance = point_data["auto_advance"]
 
 		if point_data.has("conditions_data"):
 			_deserialize_conditions(point, point_data["conditions_data"])
@@ -227,9 +254,17 @@ func _deserialize_conditions(point: QuestPoint, conditions_data: Array) -> void:
 		var cond_data = conditions_data[i]
 		var condition = point.conditions[i]
 
+		if cond_data.has("type"):
+			condition.type = cond_data["type"]
+		if cond_data.has("target_key"):
+			condition.target_key = cond_data["target_key"]
 		if cond_data.has("progress_current"):
 			condition.progress_current = cond_data["progress_current"]
 		if cond_data.has("progress_target"):
 			condition.progress_target = cond_data["progress_target"]
-		if cond_data.has("initial_kill_count"):
-			condition._initial_kill_count = cond_data["initial_kill_count"]
+		if cond_data.has("initial_value_count"):
+			condition._initial_value_count = cond_data["initial_value_count"]
+		if cond_data.has("logic_gate"):
+			condition.logic_gate = cond_data["logic_gate"]
+		if cond_data.has("connected_condition_indices"):
+			condition.connected_condition_indices = cond_data["connected_condition_indices"]

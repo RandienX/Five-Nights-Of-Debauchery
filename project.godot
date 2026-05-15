@@ -21,7 +21,10 @@ config/icon="uid://diis85slboe5b"
 
 Global="*res://code/global.gd"
 Save="*res://code/saves.gd"
-SingletonSaveManager="*res://code/singleton_save_manager.gd"
+PlayerStats="*res://code/player_stats.gd"
+QuestSystem="*res://code/quests/quest_system.gd"
+SaveManager="*res://code/save_manager.gd"
+Settings="*res://code/settings.gd"
 
 [display]
 
